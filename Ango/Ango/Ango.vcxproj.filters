@@ -45,6 +45,9 @@
     <ClInclude Include="ConfigMng.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="MsgBoxEx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Ango.cpp">
@@ -66,6 +69,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ConfigMng.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MsgBoxEx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

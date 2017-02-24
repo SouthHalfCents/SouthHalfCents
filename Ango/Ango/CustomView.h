@@ -21,10 +21,10 @@ public:
 	void					InitCusView();				//初始化自定义界面
 	void					OnPaint();					//OnPaint重绘界面
 	void					SetNextView();
-	void					SetTargetView(int nId);
+	void					SetTargetView(DWORD dwID);
 
 	vector<DWORD>			m_vBitmapID;				
-	int						m_nCurrentID;
+	DWORD					m_dwCurrent;
 public:
 	void					ReInitCustView();			//运行过程中重新初始化修改界面
 	HRGN					BitmapToRegion(HBITMAP hBmp, COLORREF cTransparentColor, COLORREF cTolerance=NULL);	//加载BMP到显示区域

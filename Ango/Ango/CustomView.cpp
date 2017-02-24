@@ -4,8 +4,8 @@
 
 CCustomView::CCustomView()
 {
-	m_pCwnd	=	NULL;
-	m_nCurrentID = 0;
+	m_pCwnd		=	NULL;
+	m_dwCurrent = 0;
 }
 
 
@@ -23,11 +23,11 @@ void CCustomView::InitCusView()
 	if ( !m_pCwnd )
 		return;
 
-	if (m_vBitmapID.size() <= m_nCurrentID)
+	if (m_vBitmapID.size() <= m_dwCurrent)
 		return;
 
 
-	if (m_Bitmap.LoadBitmap(m_vBitmapID[m_nCurrentID]))
+	if (m_Bitmap.LoadBitmap(m_vBitmapID[m_dwCurrent]))
 	{
 		HRGN rgn;
 		rgn = BitmapToRegion((HBITMAP)m_Bitmap, RGB(0, 0, 0));
@@ -40,7 +40,7 @@ void CCustomView::InitCusView()
 
 void CCustomView::OnPaint()
 {
-	if (m_vBitmapID.size() <= m_nCurrentID)
+	if (m_vBitmapID.size() <= m_dwCurrent)
 		return;
 
 	CClientDC dc(m_pCwnd);
@@ -48,7 +48,7 @@ void CCustomView::OnPaint()
 	memDC.CreateCompatibleDC(&dc);
 
 	CBitmap bmp;
-	if (bmp.LoadBitmap(m_vBitmapID[m_nCurrentID]))
+	if (bmp.LoadBitmap(m_vBitmapID[m_dwCurrent]))
 	{
 		CBitmap *pOldBmp;
 		pOldBmp = memDC.SelectObject(&bmp);
@@ -69,37 +69,37 @@ void CCustomView::SetNextView()
 	if (nSize == 0)
 		return;
 
-	m_nCurrentID++;
-	if (nSize <= m_nCurrentID)
+	m_dwCurrent++;
+	if (nSize <= m_dwCurrent)
 	{
-		m_nCurrentID = 0;
+		m_dwCurrent = 0;
 	}
 
 	ReInitCustView();
 }
 
-void CCustomView::SetTargetView(int nId)
+void CCustomView::SetTargetView(DWORD dwID)
 {
 	size_t nSize = m_vBitmapID.size();
 	if (nSize == 0)
 		return;
 
-	if (nSize <= nId)
+	if (nSize <= dwID)
 		return;
 
-	if (nId < 0)
+	if (dwID < 0)
 		return;
 
-	m_nCurrentID = nId;
+	m_dwCurrent = dwID;
 	ReInitCustView();
 }
 
 void CCustomView::ReInitCustView()
 {
-	if (m_vBitmapID.size() <= m_nCurrentID)
+	if (m_vBitmapID.size() <= m_dwCurrent)
 		return;
 
-	if (m_Bitmap.LoadBitmap(m_vBitmapID[m_nCurrentID]))
+	if (m_Bitmap.LoadBitmap(m_vBitmapID[m_dwCurrent]))
 	{
 		HRGN rgn;
 		rgn = BitmapToRegion((HBITMAP)m_Bitmap, RGB(0, 0, 0));

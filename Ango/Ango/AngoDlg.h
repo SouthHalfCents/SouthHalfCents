@@ -43,6 +43,7 @@ protected:
 	afx_msg void				OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void				OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void				OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
+	afx_msg void				OnUpLayer();
 
 	//// 自定义消息
 	afx_msg LRESULT				OnNotifyIcon(WPARAM, LPARAM);
@@ -52,10 +53,13 @@ protected:
 
 
 public:
-	CCustomView					m_cusView;
-	CTrayIcon					m_trayIcon;
+	BOOL						m_bUplayer;				//最顶端显示
+	CCustomView					m_cusView;				//个性化界面
+	CTrayIcon					m_trayIcon;				//通知区域图标
 
-	CConfigMng*					m_pCfgMng;
 
+	CConfigMng*					m_pCfgMng;				//设置管理
+	void						test();
+	
 	
 };

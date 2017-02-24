@@ -5,10 +5,12 @@
 #include "stdafx.h"
 #include "Ango.h"
 #include "AngoDlg.h"
+#include "MsgBoxEx.h"
 #include "afxdialogex.h"
 
 #include "string"
 #include "Database.h"
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -25,6 +27,7 @@ CAngoDlg::CAngoDlg(CWnd* pParent /*=NULL*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_pCfgMng	=	NULL;
+	m_bUplayer	=	TRUE;
 }
 
 void CAngoDlg::DoDataExchange(CDataExchange* pDX)
@@ -45,6 +48,7 @@ BEGIN_MESSAGE_MAP(CAngoDlg, CDialogEx)
 	ON_COMMAND(ID_ABOUT_DLG, &CAngoDlg::OnAboutDlg)
 	ON_COMMAND(ID_EXIT_DLG, &CAngoDlg::OnExitDlg)
 	ON_COMMAND(ID_CONFIG, &CAngoDlg::OnConfig)
+	ON_COMMAND(ID_UP_LAYER, &CAngoDlg::OnUpLayer)
 END_MESSAGE_MAP()
 
 
@@ -79,9 +83,8 @@ BOOL CAngoDlg::OnInitDialog()
 
 	//自定义对话框界面
 	vector<DWORD> vData;
-	vData.push_back(IDB_BITMAP_MAIN_3);
-	vData.push_back(IDB_BITMAP_MAIN_2);
 	vData.push_back(IDB_BITMAP_MAIN_1);
+	vData.push_back(IDB_BITMAP_MAIN_2);
 	m_cusView.m_pCwnd = this;
 	m_cusView.InitBmpVector(vData);
 	m_cusView.InitCusView();
@@ -94,10 +97,16 @@ BOOL CAngoDlg::OnInitDialog()
 	int x = GetSystemMetrics(SM_CXSCREEN);//获取荧幕坐标的宽度，单位为像素
 	int y = GetSystemMetrics(SM_CYSCREEN);//获取荧幕坐标的高度，单位为像素
 	//MoveWindow((x-cr.Width() *2)/2 ,cr.top,cr.Width() *2,cr.Height() *2);//左上角
-	//MoveWindow(cr.left, cr.top, cr.Width(), cr.Height() / 2);//
-	MoveWindow(x-cr.Width() ,cr.top,cr.Width(),cr.Height());
+	
+	MoveWindow(x-cr.Width()+150 ,y-cr.Height()+150,cr.Width(),cr.Height());
+
+
+	CRect rtClient;
+	GetWindowRect(rtClient);
+	::SetWindowPos(m_hWnd, HWND_TOPMOST, rtClient.left, rtClient.top, rtClient.Width(), rtClient.Height(), SWP_SHOWWINDOW);
 
 	/*
+	//居中
 	CRect rcWindow;
 	GetWindowRect(&rcWindow);
 	int xSize = ::GetSystemMetrics(SM_CXSCREEN);
@@ -251,6 +260,7 @@ void CAngoDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	case 116:
 	{
 		//AfxMessageBox("F5键");
+		test();
 	}
 	break;
 
@@ -336,6 +346,24 @@ LRESULT CAngoDlg::OnNotifyIcon(WPARAM wparam, LPARAM lparam)
 
 
 //-------------------------------------------------------------------------------------------------------------------------
+void CAngoDlg::OnUpLayer()
+{
+	//设置在最上层，取消
+	if (m_bUplayer)
+	{
+		CRect rtClient;
+		GetWindowRect(rtClient);
+		::SetWindowPos(m_hWnd, HWND_NOTOPMOST, rtClient.left, rtClient.top, rtClient.Width(), rtClient.Height(), SWP_SHOWWINDOW);
+		m_bUplayer = FALSE;
+	}
+	else
+	{
+		CRect rtClient;
+		GetWindowRect(rtClient);
+		::SetWindowPos(m_hWnd, HWND_TOPMOST, rtClient.left, rtClient.top, rtClient.Width(), rtClient.Height(), SWP_SHOWWINDOW);
+		m_bUplayer = TRUE;
+	}
+}
 
 void CAngoDlg::OnShowDlg()
 {
@@ -363,7 +391,7 @@ void CAngoDlg::OnAboutDlg()
 
 void CAngoDlg::OnExitDlg()
 {
-	CDialog::OnCancel();
+	OnCancel();
 }
 
 
@@ -376,5 +404,19 @@ void CAngoDlg::OnConfig()
 }
 //-------------------------------------------------------------------------------------------------------------------------
 
+void CAngoDlg::test()
+{
+	AngoMsgBox::MessageBox(L"123");
+	AngoMsgBox::MessageBox(L"123",L"456",MB_OKCANCEL);
 
+	//MessageBox(L"这是一个最简单的消息框！");
+	//MessageBox(L"这是一个有标题的消息框！", L"标题");
+	//MessageBox(L"这是一个确定 取消的消息框！", L"标题", MB_OKCANCEL);
+	//MessageBox(L"这是一个警告的消息框！", L"标题", MB_ICONEXCLAMATION);
+	//MessageBox(L"这是一个两种属性的消息框！", L"标题", MB_ICONEXCLAMATION | MB_OKCANCEL);
+
+	//if(MessageBox(L"一种常用的应用", L"标题", MB_ICONEXCLAMATION | MB_CANCELTRYCONTINUE) == IDCANCEL)return;
+}
 //-------------------------------------------------------------------------------------------------------------------------
+
+
