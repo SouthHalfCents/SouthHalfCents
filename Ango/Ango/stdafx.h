@@ -52,3 +52,5 @@
 #endif
 
 
+#include <XTToolkitPro.h>    // Xtreme Toolkit Pro components
+#define DIALOG_BACKGROUND_COLOR RGB(197,222,255)

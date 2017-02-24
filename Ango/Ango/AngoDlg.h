@@ -13,7 +13,7 @@ public:
 	CAngoDlg(CWnd* pParent = NULL);	// 标准构造函数
 
 // 对话框数据
-	enum { IDD = IDD_ANGO_DIALOG };
+	enum { IDD = IDD_ANGO_MAIN };
 
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV 支持
@@ -21,18 +21,31 @@ public:
 
 // 实现
 protected:
-	HICON m_hIcon;
+	HICON					m_hIcon;
 
-	// 生成的消息映射函数
+	//// 
+	virtual BOOL			OnInitDialog();
+	afx_msg int				OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void			OnPaint();
+	afx_msg HCURSOR			OnQueryDragIcon();
+	afx_msg void			OnDestroy();
+
+	///// 响应菜单
+	afx_msg void			OnShowDlg();
+	afx_msg void			OnAboutDlg();
+	afx_msg void			OnExitDlg();
+	afx_msg void			OnConfig();
+	
+	//// 响应按键
+	virtual void			OnOK();							//重载
+	virtual void			OnCancel();						//重载
 	afx_msg void			OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void			OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void			OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-	afx_msg HCURSOR			OnQueryDragIcon();
 
-	virtual BOOL			OnInitDialog();
-	virtual void			OnOK();							//重载，防止按回车退出程序
-	virtual void			OnCancel();						//重载
+	//// 自定义消息
+	afx_msg LRESULT			OnNotifyIcon(WPARAM, LPARAM);
+
 	DECLARE_MESSAGE_MAP()
 
 
@@ -40,5 +53,9 @@ protected:
 	BOOL					OnReInitDialog();				//运行中重绘对话框界面
 
 
+public:
+	BOOL					m_bMin;				//是否最小化状态
+	NOTIFYICONDATA			m_ntIcon;			//添加通知区域图标
 
+	
 };

@@ -15,6 +15,7 @@
 
 BEGIN_MESSAGE_MAP(CAngoApp, CWinApp)
 	ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
+	
 END_MESSAGE_MAP()
 
 
@@ -99,4 +100,7 @@ BOOL CAngoApp::InitInstance()
 	//  而不是启动应用程序的消息泵。
 	return FALSE;
 }
+
+
+
 

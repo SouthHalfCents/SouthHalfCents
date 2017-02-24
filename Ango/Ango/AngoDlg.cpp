@@ -7,12 +7,15 @@
 #include "AngoDlg.h"
 #include "afxdialogex.h"
 
+#include "string"
 #include "Database.h"
+#include "BaseDialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
+using std::string;
 
 // CAngoDlg 对话框
 
@@ -21,6 +24,7 @@
 CAngoDlg::CAngoDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CAngoDlg::IDD, pParent)
 {
+	m_bMin	=	FALSE;
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
 
@@ -35,11 +39,19 @@ BEGIN_MESSAGE_MAP(CAngoDlg, CDialogEx)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_RBUTTONDOWN()
 	ON_WM_KEYDOWN()
+	ON_WM_CREATE()
+
+	ON_MESSAGE(MAIN_WM_NOTIFYICON, &CAngoDlg::OnNotifyIcon)   
+	ON_WM_DESTROY()
+	ON_COMMAND(ID_SHOW_DLG, &CAngoDlg::OnShowDlg)
+	ON_COMMAND(ID_ABOUT_DLG, &CAngoDlg::OnAboutDlg)
+	ON_COMMAND(ID_EXIT_DLG, &CAngoDlg::OnExitDlg)
+	ON_COMMAND(ID_CONFIG, &CAngoDlg::OnConfig)
 END_MESSAGE_MAP()
 
 
 // CAngoDlg 消息处理程序
-
+//-------------------------------------------------------------------------------------------------------------------------
 BOOL CAngoDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
@@ -66,7 +78,6 @@ BOOL CAngoDlg::OnInitDialog()
 
 	//隐藏任务栏
 	ModifyStyleEx(WS_EX_APPWINDOW, WS_EX_TOOLWINDOW);
-	//设置通知区域图标
 
 
 	CBitmap bmp;
@@ -169,6 +180,261 @@ HCURSOR CAngoDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+int CAngoDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
+{
+	if (CDialogEx::OnCreate(lpCreateStruct) == -1)
+		return -1;
+
+	m_ntIcon.cbSize = sizeof(NOTIFYICONDATA);							//该结构体变量的大小
+	m_ntIcon.hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);				//图标，通过资源ID得到
+	m_ntIcon.uID = IDR_MAINFRAME;
+	m_ntIcon.hWnd = this->m_hWnd;										//接收托盘图标通知消息的窗口句柄
+	WCHAR szTips[128] = L"Ango";										//鼠标设上面时显示的提示
+	wcscpy_s(m_ntIcon.szTip, 128, szTips);
+	m_ntIcon.uCallbackMessage = MAIN_WM_NOTIFYICON;						//应用程序定义的消息ID号
+	m_ntIcon.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;					//图标的属性：设置成员uCallbackMessage、hIcon、szTip有效
+	::Shell_NotifyIcon(NIM_ADD, &m_ntIcon);								//在系统通知区域增加这个图标
+
+	return 0;
+}
+void CAngoDlg::OnDestroy()
+{
+
+	//删除该通知状态图标
+	::Shell_NotifyIcon(NIM_DELETE, &m_ntIcon);
+
+	CDialogEx::OnDestroy();
+}
+//-------------------------------------------------------------------------------------------------------------------------
+
+//-------------------------------------------------------------------------------------------------------------------------
+//拖动无标题对话框窗口
+void CAngoDlg::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	SendMessage(WM_NCLBUTTONDOWN,HTCAPTION,0);
+	CDialogEx::OnLButtonDown(nFlags, point);
+}
+
+//拖动无标题对话框窗口
+void CAngoDlg::OnRButtonDown(UINT nFlags, CPoint point)
+{
+	CMenu popMenu;
+	popMenu.LoadMenu(IDR_MENU1);				//IDR_MENU_POPUP是在ResourceView中创建并编辑的一个菜单
+	CMenu* pmenu = popMenu.GetSubMenu(0);		//弹出的菜单实际上是IDR_MENU_POPUP菜单的某项的子菜单，这里是第一项
+	CPoint pos;
+	GetCursorPos(&pos);							//弹出菜单的位置，这里就是鼠标的当前位置
+	//显示该菜单，第一个参数的两个值分别表示在鼠标的右边显示、响应鼠标右击
+	pmenu->TrackPopupMenu( TPM_RIGHTBUTTON, pos.x, pos.y, AfxGetMainWnd(), 0);
+	CDialogEx::OnRButtonDown(nFlags, point);
+}
+
+
+void CAngoDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
+{
+	CString strMsg;
+	switch (nChar)
+	{
+
+	case 13:
+	{
+		strMsg = "回车键";
+	}
+	break;
+
+	case 16:
+	{
+		g_nCurrentBmpID = (g_nCurrentBmpID % 2) + 1;
+		OnReInitDialog();
+		OnPaint();
+		//MessageBox(L"Shift键");
+	}
+	break;
+
+	case 27:
+	{
+		strMsg = "ESC";
+		MessageBox(strMsg);
+		exit(0);
+	}
+	break;
+
+	case 112:
+	{
+
+		//AfxMessageBox("F1键");
+	}
+	break;
+
+	case 113:
+	{
+// 		CBaseDialog baseDlg;
+// 		baseDlg.DoModal();
+		//AfxMessageBox("F2键");
+	}
+	break;
+
+	case 114:
+	{
+		//AfxMessageBox("F3键");
+	}
+	break;
+
+	case 115:
+	{
+		//AfxMessageBox("F4键");
+	}
+	break;
+
+	case 116:
+	{
+		//AfxMessageBox("F5键");
+	}
+	break;
+
+	case 117:
+	{
+		//创建非模式对话框，不过要创建的是类成员  在C龙行天下Dlg类里声明  CF1Dlg F1Dlg;
+		//if(!IsWindow(m_F6Dlg.m_hWnd))
+		//{
+		//是否关联了对话框，关闭非模式对话框时，只是隐藏，没有销毁对话框资源
+		//m_F6Dlg.Create(IDD_F6_DIALOG,this);
+		//}
+		//m_F6Dlg.ShowWindow(SW_SHOW);
+
+		//AfxMessageBox("F6键");
+	}
+	break;
+	default:
+		strMsg = "其他键";
+	}
+
+	if (strMsg.GetLength())
+	{
+		MessageBox(strMsg);
+	}
+
+
+	CDialogEx::OnKeyDown(nChar, nRepCnt, nFlags);
+}
+
+
+
+void CAngoDlg::OnOK()
+{
+	CString strMsg = L"回车键";
+	MessageBox(strMsg);
+
+}
+
+void CAngoDlg::OnCancel()
+{
+	CDialog::OnCancel();
+}
+
+//-------------------------------------------------------------------------------------------------------------------------
+LRESULT CAngoDlg::OnNotifyIcon(WPARAM wparam, LPARAM lparam)
+{
+	if (lparam == WM_LBUTTONDOWN)
+	{
+		//恢复窗口或者最小化
+		if (m_bMin == TRUE)
+		{
+			AfxGetMainWnd()->ShowWindow(SW_SHOW);
+			AfxGetMainWnd()->ShowWindow(SW_RESTORE);
+			//这里貌似只有写这样两句才能保证恢复窗口后，该窗口处于活动状态（在最前面）
+			m_bMin = FALSE;
+		}
+		else
+		{
+			AfxGetMainWnd()->ShowWindow(SW_MINIMIZE);
+			m_bMin = TRUE;
+		}
+	}
+	else if (lparam == WM_RBUTTONDOWN)
+	{
+		//弹出右键菜单
+		CMenu popMenu;
+		popMenu.LoadMenu(IDR_MENU1);				//IDR_MENU_POPUP是在ResourceView中创建并编辑的一个菜单
+		CMenu* pmenu = popMenu.GetSubMenu(0);		//弹出的菜单实际上是IDR_MENU_POPUP菜单的某项的子菜单，这里是第一项
+		CPoint pos;
+		GetCursorPos(&pos);							//弹出菜单的位置，这里就是鼠标的当前位置
+		//显示该菜单，第一个参数的两个值分别表示在鼠标的右边显示、响应鼠标右击
+		pmenu->TrackPopupMenu( TPM_RIGHTBUTTON, pos.x, pos.y, AfxGetMainWnd(), 0);
+		
+	}
+	return 0;
+}
+
+
+//-------------------------------------------------------------------------------------------------------------------------
+
+void CAngoDlg::OnShowDlg()
+{
+	AfxGetMainWnd()->ShowWindow(SW_SHOW);
+	AfxGetMainWnd()->ShowWindow(SW_RESTORE);
+	//这里貌似只有写这样两句才能保证恢复窗口后，该窗口处于活动状态（在最前面）
+	m_bMin = FALSE;
+}
+
+void CAngoDlg::OnAboutDlg()
+{
+	CString strMsg;
+	strMsg = "说明";
+	MessageBox(strMsg);
+}
+
+void CAngoDlg::OnExitDlg()
+{
+	CDialog::OnCancel();
+}
+
+
+void CAngoDlg::OnConfig()
+{
+	// TODO:  在此添加命令处理程序代码
+}
+//-------------------------------------------------------------------------------------------------------------------------
+//运行中重绘对话框界面
+BOOL CAngoDlg::OnReInitDialog()
+{
+
+
+	CBitmap bmp;
+	if (g_nCurrentBmpID == 1)
+	{
+		if (bmp.LoadBitmap(IDB_BITMAP_MAIN_1))
+		{
+			HRGN rgn;
+			rgn = BitmapToRegion((HBITMAP)bmp, RGB(0, 0, 0));
+			SetWindowRgn(rgn, TRUE);
+			bmp.DeleteObject();
+		}
+	}
+	else if (g_nCurrentBmpID == 2)
+	{
+		if (bmp.LoadBitmap(IDB_BITMAP_MAIN_2))
+		{
+			HRGN rgn;
+			rgn = BitmapToRegion((HBITMAP)bmp, RGB(0, 0, 0));
+			SetWindowRgn(rgn, TRUE);
+			bmp.DeleteObject();
+		}
+	}
+	else
+	{
+		if (bmp.LoadBitmap(IDB_BITMAP_MAIN_2))
+		{
+			HRGN rgn;
+			rgn = BitmapToRegion((HBITMAP)bmp, RGB(0, 0, 0));
+			SetWindowRgn(rgn, TRUE);
+			bmp.DeleteObject();
+		}
+	}
+
+	return TRUE;
+}
+
+
 HRGN CAngoDlg::BitmapToRegion(HBITMAP hBmp, COLORREF cTransparentColor, COLORREF cTolerance)
 {
 	HRGN hRgn = NULL;
@@ -195,8 +461,8 @@ HRGN CAngoDlg::BitmapToRegion(HBITMAP hBmp, COLORREF cTransparentColor, COLORREF
 				0,							// biClrUsed; 
 				0							// biClrImportant; 
 			};
-			VOID * pbits32; 
-			HBITMAP hbm32 = CreateDIBSection(hMemDC,(BITMAPINFO *)&RGB32BITSBITMAPINFO, DIB_RGB_COLORS, &pbits32, NULL, 0);
+			VOID * pbits32;
+			HBITMAP hbm32 = CreateDIBSection(hMemDC, (BITMAPINFO *)&RGB32BITSBITMAPINFO, DIB_RGB_COLORS, &pbits32, NULL, 0);
 			if (hbm32)
 			{
 				HBITMAP holdBmp = (HBITMAP)SelectObject(hMemDC, hbm32);
@@ -274,15 +540,15 @@ HRGN CAngoDlg::BitmapToRegion(HBITMAP hBmp, COLORREF cTransparentColor, COLORREF
 									pData = (RGNDATA *)GlobalLock(hData);
 								}
 								RECT *pr = (RECT *)&pData->Buffer;
-								SetRect(&pr[pData->rdh.nCount], x0, y, x, y+1);
+								SetRect(&pr[pData->rdh.nCount], x0, y, x, y + 1);
 								if (x0 < pData->rdh.rcBound.left)
 									pData->rdh.rcBound.left = x0;
 								if (y < pData->rdh.rcBound.top)
 									pData->rdh.rcBound.top = y;
 								if (x > pData->rdh.rcBound.right)
 									pData->rdh.rcBound.right = x;
-								if (y+1 > pData->rdh.rcBound.bottom)
-									pData->rdh.rcBound.bottom = y+1;
+								if (y + 1 > pData->rdh.rcBound.bottom)
+									pData->rdh.rcBound.bottom = y + 1;
 								pData->rdh.nCount++;
 
 								// On Windows98, ExtCreateRegion() may fail if the number of rectangles is too
@@ -321,165 +587,12 @@ HRGN CAngoDlg::BitmapToRegion(HBITMAP hBmp, COLORREF cTransparentColor, COLORREF
 					GlobalFree(hData);
 					SelectObject(hDC, holdBmp);
 					DeleteDC(hDC);
-				}				
+				}
 				DeleteObject(SelectObject(hMemDC, holdBmp));
-			}			
+			}
 			DeleteDC(hMemDC);
 		}
-	}	
-	return hRgn;	
+	}
+	return hRgn;
 }
-
-//拖动无标题对话框窗口
-void CAngoDlg::OnLButtonDown(UINT nFlags, CPoint point)
-{
-	SendMessage(WM_NCLBUTTONDOWN,HTCAPTION,0);
-	CDialogEx::OnLButtonDown(nFlags, point);
-}
-
-//拖动无标题对话框窗口
-void CAngoDlg::OnRButtonDown(UINT nFlags, CPoint point)
-{
-	MessageBox(L"右键");
-	CDialogEx::OnRButtonDown(nFlags, point);
-}
-
-
-void CAngoDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
-{
-	CString strMsg;
-	switch (nChar)
-	{
-
-	case 13:
-	{
-		strMsg = "回车键";
-	}
-	break;
-
-	case 16:
-	{
-		g_nCurrentBmpID = (g_nCurrentBmpID % 2) + 1;
-		OnReInitDialog();
-		OnPaint();
-		//MessageBox(L"Shift键");
-	}
-	break;
-
-	case 27:
-	{
-		strMsg = "ESC";
-		MessageBox(strMsg);
-		exit(0);
-	}
-	break;
-
-	case 112:
-	{
-		//AfxMessageBox("F1键");
-	}
-	break;
-
-	case 113:
-	{
-		//AfxMessageBox("F2键");
-	}
-	break;
-
-	case 114:
-	{
-		//AfxMessageBox("F3键");
-	}
-	break;
-
-	case 115:
-	{
-		//AfxMessageBox("F4键");
-	}
-	break;
-
-	case 116:
-	{
-		//AfxMessageBox("F5键");
-	}
-	break;
-
-	case 117:
-	{
-		//创建非模式对话框，不过要创建的是类成员  在C龙行天下Dlg类里声明  CF1Dlg F1Dlg;
-		//if(!IsWindow(m_F6Dlg.m_hWnd))
-		//{
-		//是否关联了对话框，关闭非模式对话框时，只是隐藏，没有销毁对话框资源
-		//m_F6Dlg.Create(IDD_F6_DIALOG,this);
-		//}
-		//m_F6Dlg.ShowWindow(SW_SHOW);
-
-		//AfxMessageBox("F6键");
-	}
-	break;
-	default:
-		strMsg = "其他键";
-	}
-
-	if (strMsg.GetLength())
-	{
-		MessageBox(strMsg);
-	}
-
-
-	CDialogEx::OnKeyDown(nChar, nRepCnt, nFlags);
-}
-
-//运行中重绘对话框界面
-BOOL CAngoDlg::OnReInitDialog()
-{
-
-
-	CBitmap bmp;
-	if (g_nCurrentBmpID == 1)
-	{
-		if (bmp.LoadBitmap(IDB_BITMAP_MAIN_1))
-		{
-			HRGN rgn;
-			rgn = BitmapToRegion((HBITMAP)bmp, RGB(0, 0, 0));
-			SetWindowRgn(rgn, TRUE);
-			bmp.DeleteObject();
-		}
-	}
-	else if (g_nCurrentBmpID == 2)
-	{
-		if (bmp.LoadBitmap(IDB_BITMAP_MAIN_2))
-		{
-			HRGN rgn;
-			rgn = BitmapToRegion((HBITMAP)bmp, RGB(0, 0, 0));
-			SetWindowRgn(rgn, TRUE);
-			bmp.DeleteObject();
-		}
-	}
-	else
-	{
-		if (bmp.LoadBitmap(IDB_BITMAP_MAIN_2))
-		{
-			HRGN rgn;
-			rgn = BitmapToRegion((HBITMAP)bmp, RGB(0, 0, 0));
-			SetWindowRgn(rgn, TRUE);
-			bmp.DeleteObject();
-		}
-	}
-
-	return TRUE;  
-}
-
-void CAngoDlg::OnOK()
-{
-	CString strMsg = L"回车键";
-	MessageBox(strMsg);
-
-}
-
-void CAngoDlg::OnCancel()
-{
-	//CString strMsg = L"ESC键";
-	//MessageBox(strMsg);
-	CDialog::OnCancel();
-}
+//-------------------------------------------------------------------------------------------------------------------------
