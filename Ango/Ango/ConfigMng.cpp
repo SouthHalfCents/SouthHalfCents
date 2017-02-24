@@ -1,49 +1,47 @@
-// AngoDialog.cpp : 实现文件
+// ConfigMng.cpp : 实现文件
 //
 
 #include "stdafx.h"
 #include "Ango.h"
-#include "BaseDialog.h"
+#include "ConfigMng.h"
 #include "afxdialogex.h"
 
 
-// CAngoDialog 对话框
+// CConfigMng 对话框
 
-IMPLEMENT_DYNAMIC(CBaseDialog, CDialog)
+IMPLEMENT_DYNAMIC(CConfigMng, CDialogEx)
 
-CBaseDialog::CBaseDialog(CWnd* pParent /*=NULL*/)
-	: CDialog(CBaseDialog::IDD, pParent)
+CConfigMng::CConfigMng(CWnd* pParent /*=NULL*/)
+	: CDialogEx(CConfigMng::IDD, pParent)
 {
 	m_MyBrush.CreateSolidBrush(DIALOG_BACKGROUND_COLOR);
 	m_MyHBrush = CreateSolidBrush(DIALOG_BACKGROUND_COLOR);
 }
 
-CBaseDialog::~CBaseDialog()
+CConfigMng::~CConfigMng()
 {
 	if (m_MyBrush.GetSafeHandle())
 		m_MyBrush.DeleteObject();
 	DeleteObject(m_MyHBrush);
 }
 
-void CBaseDialog::DoDataExchange(CDataExchange* pDX)
+void CConfigMng::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
-
+	CDialogEx::DoDataExchange(pDX);
 }
 
 
-BEGIN_MESSAGE_MAP(CBaseDialog, CDialog)
+BEGIN_MESSAGE_MAP(CConfigMng, CDialogEx)
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 
-// CAngoDialog 消息处理程序
-HBRUSH CBaseDialog::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+// CConfigMng 消息处理程序
+HBRUSH CConfigMng::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
 	HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
 
-	// TODO:  在此更改 DC 的任何属性
 	if (nCtlColor != CTLCOLOR_EDIT && nCtlColor != CTLCOLOR_LISTBOX)
 	{
 		pDC->SetBkMode(TRANSPARENT);
@@ -53,17 +51,15 @@ HBRUSH CBaseDialog::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return hbr;
 }
 
-BOOL CBaseDialog::OnEraseBkgnd(CDC* pDC)
+BOOL CConfigMng::OnEraseBkgnd(CDC* pDC)
 {
-	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	CBrush *pOldBrush = pDC->SelectObject(&m_MyBrush);
 
 	CRect Rect;
 	GetClientRect(&Rect);
 
-	//pDC->Rectangle(&Rect); 
 	pDC->FillRect(&Rect, &m_MyBrush);
 	pDC->SelectObject(pOldBrush);
 	return TRUE;
-	//return CDialog::OnEraseBkgnd(pDC);
+
 }

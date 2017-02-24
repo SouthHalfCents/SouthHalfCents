@@ -1,26 +1,26 @@
 #pragma once
-#include "afxwin.h"
+
+//// 设置管理
 
 
-// CBaseDialog 对话框
 
-class CBaseDialog : public CDialog
+// CConfigMng 对话框
+
+class CConfigMng : public CDialogEx
 {
-	DECLARE_DYNAMIC(CBaseDialog)
+	DECLARE_DYNAMIC(CConfigMng)
 
 public:
-	CBaseDialog(CWnd* pParent = NULL);   // 标准构造函数
-	virtual ~CBaseDialog();
+	CConfigMng(CWnd* pParent = NULL);   // 标准构造函数
+	virtual ~CConfigMng();
 
 // 对话框数据
-	enum { IDD = IDD_BASE_DIALOG };
+	enum { IDD = IDD_CFGMNG_DLG };
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
-
 	DECLARE_MESSAGE_MAP()
 
-protected:
 	CBrush					m_MyBrush;
 	HBRUSH					m_MyHBrush;
 	afx_msg HBRUSH			OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);

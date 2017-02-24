@@ -9,7 +9,6 @@
 
 #include "string"
 #include "Database.h"
-#include "BaseDialog.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -24,8 +23,8 @@ using std::string;
 CAngoDlg::CAngoDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CAngoDlg::IDD, pParent)
 {
-	m_bMin	=	FALSE;
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_pCfgMng	=	NULL;
 }
 
 void CAngoDlg::DoDataExchange(CDataExchange* pDX)
@@ -42,7 +41,6 @@ BEGIN_MESSAGE_MAP(CAngoDlg, CDialogEx)
 	ON_WM_CREATE()
 
 	ON_MESSAGE(MAIN_WM_NOTIFYICON, &CAngoDlg::OnNotifyIcon)   
-	ON_WM_DESTROY()
 	ON_COMMAND(ID_SHOW_DLG, &CAngoDlg::OnShowDlg)
 	ON_COMMAND(ID_ABOUT_DLG, &CAngoDlg::OnAboutDlg)
 	ON_COMMAND(ID_EXIT_DLG, &CAngoDlg::OnExitDlg)
@@ -62,6 +60,8 @@ BOOL CAngoDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	
+	//隐藏任务栏
+	ModifyStyleEx(WS_EX_APPWINDOW, WS_EX_TOOLWINDOW);
 
 	// 唯一实例
 	HANDLE m_hMutex = CreateMutex(NULL, FALSE, L"Ango");
@@ -76,44 +76,42 @@ BOOL CAngoDlg::OnInitDialog()
 	}
 
 
-	//隐藏任务栏
-	ModifyStyleEx(WS_EX_APPWINDOW, WS_EX_TOOLWINDOW);
+
+	//自定义对话框界面
+	vector<DWORD> vData;
+	vData.push_back(IDB_BITMAP_MAIN_3);
+	vData.push_back(IDB_BITMAP_MAIN_2);
+	vData.push_back(IDB_BITMAP_MAIN_1);
+	m_cusView.m_pCwnd = this;
+	m_cusView.InitBmpVector(vData);
+	m_cusView.InitCusView();
 
 
-	CBitmap bmp;
-	if( g_nCurrentBmpID == 1 )
-	{
-		if (bmp.LoadBitmap(IDB_BITMAP_MAIN_1))
-		{
-			HRGN rgn;
-			rgn = BitmapToRegion((HBITMAP)bmp, RGB(0, 0, 0));
-			SetWindowRgn(rgn, TRUE);
-			bmp.DeleteObject();
-		}
-	}
-	else if( g_nCurrentBmpID == 2 )
-	{
-		if (bmp.LoadBitmap(IDB_BITMAP_MAIN_2))
-		{
-			HRGN rgn;
-			rgn = BitmapToRegion((HBITMAP)bmp, RGB(0, 0, 0));
-			SetWindowRgn(rgn, TRUE);
-			bmp.DeleteObject();
-		}
-	}
-	else
-	{
-		if (bmp.LoadBitmap(IDB_BITMAP_MAIN_2))
-		{
-			HRGN rgn;
-			rgn = BitmapToRegion((HBITMAP)bmp, RGB(0, 0, 0));
-			SetWindowRgn(rgn, TRUE);
-			bmp.DeleteObject();
-		}
-	}
+	//调整位置
+	CRect cr;
+	GetClientRect(&cr);//获取对话框客户区域大小
+	ClientToScreen(&cr);//转换为荧幕坐标
+	int x = GetSystemMetrics(SM_CXSCREEN);//获取荧幕坐标的宽度，单位为像素
+	int y = GetSystemMetrics(SM_CYSCREEN);//获取荧幕坐标的高度，单位为像素
+	//MoveWindow((x-cr.Width() *2)/2 ,cr.top,cr.Width() *2,cr.Height() *2);//左上角
+	//MoveWindow(cr.left, cr.top, cr.Width(), cr.Height() / 2);//
+	MoveWindow(x-cr.Width() ,cr.top,cr.Width(),cr.Height());
 
+	/*
+	CRect rcWindow;
+	GetWindowRect(&rcWindow);
+	int xSize = ::GetSystemMetrics(SM_CXSCREEN);
+	int ySize = ::GetSystemMetrics(SM_CYSCREEN);
+	int Width = rcWindow.Width();
+	int Height = rcWindow.Height();
 
+	rcWindow.left = (xSize - Width) / 2;
+	rcWindow.right = rcWindow.left + Width;
+	rcWindow.top = (ySize - Height) / 2;
+	rcWindow.bottom = rcWindow.top + Height;
 
+	MoveWindow(&rcWindow);
+	*/
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -142,33 +140,8 @@ void CAngoDlg::OnPaint()
 	}
 	else
 	{	
-		//设置界面
-		CClientDC dc(this);
-		CDC memDC;
-		memDC.CreateCompatibleDC(&dc);
-
-		CBitmap bmp;
-
-		if(g_nCurrentBmpID == 1)
-		{
-			bmp.LoadBitmap(IDB_BITMAP_MAIN_1);
-		}
-		else if(g_nCurrentBmpID == 2)
-		{
-			bmp.LoadBitmap(IDB_BITMAP_MAIN_2);
-		}
-		else
-		{
-			bmp.LoadBitmap(IDB_BITMAP_MAIN_1);
-		}
-
-		CBitmap *pOldBmp;
-		pOldBmp = memDC.SelectObject(&bmp);
-		BITMAP bm;
-		bmp.GetBitmap(&bm);
-		dc.BitBlt(0, 0, bm.bmWidth, bm.bmHeight, &memDC, 0, 0, SRCCOPY);
-		memDC.SelectObject(pOldBmp);
-		bmp.DeleteObject();
+		//自定义对话框界面
+		m_cusView.OnPaint();
 
 		CDialogEx::OnPaint();
 	}
@@ -185,26 +158,16 @@ int CAngoDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (CDialogEx::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
-	m_ntIcon.cbSize = sizeof(NOTIFYICONDATA);							//该结构体变量的大小
-	m_ntIcon.hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);				//图标，通过资源ID得到
-	m_ntIcon.uID = IDR_MAINFRAME;
-	m_ntIcon.hWnd = this->m_hWnd;										//接收托盘图标通知消息的窗口句柄
-	WCHAR szTips[128] = L"Ango";										//鼠标设上面时显示的提示
-	wcscpy_s(m_ntIcon.szTip, 128, szTips);
-	m_ntIcon.uCallbackMessage = MAIN_WM_NOTIFYICON;						//应用程序定义的消息ID号
-	m_ntIcon.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;					//图标的属性：设置成员uCallbackMessage、hIcon、szTip有效
-	::Shell_NotifyIcon(NIM_ADD, &m_ntIcon);								//在系统通知区域增加这个图标
+	//通知区域图标，托盘图标
+	m_trayIcon.m_pCwnd		=	this;
+	m_trayIcon.m_dwIconId	=	IDR_MAINFRAME;
+	m_trayIcon.m_strTips	=	"╮(￣▽￣)╭ ";
+	m_trayIcon.InitTrayIcon();
+
 
 	return 0;
 }
-void CAngoDlg::OnDestroy()
-{
 
-	//删除该通知状态图标
-	::Shell_NotifyIcon(NIM_DELETE, &m_ntIcon);
-
-	CDialogEx::OnDestroy();
-}
 //-------------------------------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------------------------------
@@ -243,8 +206,7 @@ void CAngoDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 	case 16:
 	{
-		g_nCurrentBmpID = (g_nCurrentBmpID % 2) + 1;
-		OnReInitDialog();
+		m_cusView.SetNextView();
 		OnPaint();
 		//MessageBox(L"Shift键");
 	}
@@ -267,14 +229,15 @@ void CAngoDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 	case 113:
 	{
-// 		CBaseDialog baseDlg;
-// 		baseDlg.DoModal();
+
 		//AfxMessageBox("F2键");
 	}
 	break;
 
 	case 114:
 	{
+		if (m_pCfgMng)
+			m_pCfgMng->ShowWindow(SW_HIDE);
 		//AfxMessageBox("F3键");
 	}
 	break;
@@ -328,6 +291,12 @@ void CAngoDlg::OnOK()
 
 void CAngoDlg::OnCancel()
 {
+	CString strMsg;
+	strMsg = "是否退出程序？";
+	if( MessageBox(strMsg, L"Ango", MB_OKCANCEL) == IDCANCEL)
+	{
+		return;
+	}
 	CDialog::OnCancel();
 }
 
@@ -337,17 +306,17 @@ LRESULT CAngoDlg::OnNotifyIcon(WPARAM wparam, LPARAM lparam)
 	if (lparam == WM_LBUTTONDOWN)
 	{
 		//恢复窗口或者最小化
-		if (m_bMin == TRUE)
+		if (m_trayIcon.m_bMin == TRUE)
 		{
 			AfxGetMainWnd()->ShowWindow(SW_SHOW);
 			AfxGetMainWnd()->ShowWindow(SW_RESTORE);
 			//这里貌似只有写这样两句才能保证恢复窗口后，该窗口处于活动状态（在最前面）
-			m_bMin = FALSE;
+			m_trayIcon.m_bMin = FALSE;
 		}
 		else
 		{
 			AfxGetMainWnd()->ShowWindow(SW_MINIMIZE);
-			m_bMin = TRUE;
+			m_trayIcon.m_bMin = TRUE;
 		}
 	}
 	else if (lparam == WM_RBUTTONDOWN)
@@ -370,10 +339,19 @@ LRESULT CAngoDlg::OnNotifyIcon(WPARAM wparam, LPARAM lparam)
 
 void CAngoDlg::OnShowDlg()
 {
-	AfxGetMainWnd()->ShowWindow(SW_SHOW);
-	AfxGetMainWnd()->ShowWindow(SW_RESTORE);
-	//这里貌似只有写这样两句才能保证恢复窗口后，该窗口处于活动状态（在最前面）
-	m_bMin = FALSE;
+	//恢复窗口或者最小化
+	if (m_trayIcon.m_bMin == TRUE)
+	{
+		AfxGetMainWnd()->ShowWindow(SW_SHOW);
+		AfxGetMainWnd()->ShowWindow(SW_RESTORE);
+		//这里貌似只有写这样两句才能保证恢复窗口后，该窗口处于活动状态（在最前面）
+		m_trayIcon.m_bMin = FALSE;
+	}
+	else
+	{
+		AfxGetMainWnd()->ShowWindow(SW_MINIMIZE);
+		m_trayIcon.m_bMin = TRUE;
+	}
 }
 
 void CAngoDlg::OnAboutDlg()
@@ -391,208 +369,12 @@ void CAngoDlg::OnExitDlg()
 
 void CAngoDlg::OnConfig()
 {
-	// TODO:  在此添加命令处理程序代码
+	m_pCfgMng = new CConfigMng;
+	m_pCfgMng->DoModal();
+	delete m_pCfgMng;
+	m_pCfgMng = NULL;
 }
 //-------------------------------------------------------------------------------------------------------------------------
-//运行中重绘对话框界面
-BOOL CAngoDlg::OnReInitDialog()
-{
 
 
-	CBitmap bmp;
-	if (g_nCurrentBmpID == 1)
-	{
-		if (bmp.LoadBitmap(IDB_BITMAP_MAIN_1))
-		{
-			HRGN rgn;
-			rgn = BitmapToRegion((HBITMAP)bmp, RGB(0, 0, 0));
-			SetWindowRgn(rgn, TRUE);
-			bmp.DeleteObject();
-		}
-	}
-	else if (g_nCurrentBmpID == 2)
-	{
-		if (bmp.LoadBitmap(IDB_BITMAP_MAIN_2))
-		{
-			HRGN rgn;
-			rgn = BitmapToRegion((HBITMAP)bmp, RGB(0, 0, 0));
-			SetWindowRgn(rgn, TRUE);
-			bmp.DeleteObject();
-		}
-	}
-	else
-	{
-		if (bmp.LoadBitmap(IDB_BITMAP_MAIN_2))
-		{
-			HRGN rgn;
-			rgn = BitmapToRegion((HBITMAP)bmp, RGB(0, 0, 0));
-			SetWindowRgn(rgn, TRUE);
-			bmp.DeleteObject();
-		}
-	}
-
-	return TRUE;
-}
-
-
-HRGN CAngoDlg::BitmapToRegion(HBITMAP hBmp, COLORREF cTransparentColor, COLORREF cTolerance)
-{
-	HRGN hRgn = NULL;
-
-	if (hBmp)
-	{
-		HDC hMemDC = CreateCompatibleDC(NULL);
-		if (hMemDC)
-		{
-			BITMAP bm;
-			GetObject(hBmp, sizeof(bm), &bm);
-
-			//创建一个32位色的位图，并选进内存设备环境
-			BITMAPINFOHEADER RGB32BITSBITMAPINFO = {
-				sizeof(BITMAPINFOHEADER),		// biSize 
-				bm.bmWidth,					// biWidth; 
-				bm.bmHeight,				// biHeight; 
-				1,							// biPlanes; 
-				32,							// biBitCount 
-				BI_RGB,						// biCompression; 
-				0,							// biSizeImage; 
-				0,							// biXPelsPerMeter; 
-				0,							// biYPelsPerMeter; 
-				0,							// biClrUsed; 
-				0							// biClrImportant; 
-			};
-			VOID * pbits32;
-			HBITMAP hbm32 = CreateDIBSection(hMemDC, (BITMAPINFO *)&RGB32BITSBITMAPINFO, DIB_RGB_COLORS, &pbits32, NULL, 0);
-			if (hbm32)
-			{
-				HBITMAP holdBmp = (HBITMAP)SelectObject(hMemDC, hbm32);
-
-				// Create a DC just to copy the bitmap into the memory DC
-				HDC hDC = CreateCompatibleDC(hMemDC);
-				if (hDC)
-				{
-					// Get how many bytes per row we have for the bitmap bits (rounded up to 32 bits)
-					BITMAP bm32;
-					GetObject(hbm32, sizeof(bm32), &bm32);
-					while (bm32.bmWidthBytes % 4)
-						bm32.bmWidthBytes++;
-
-					// Copy the bitmap into the memory DC
-					HBITMAP holdBmp = (HBITMAP)SelectObject(hDC, hBmp);
-					BitBlt(hMemDC, 0, 0, bm.bmWidth, bm.bmHeight, hDC, 0, 0, SRCCOPY);
-
-					// For better performances, we will use the ExtCreateRegion() function to create the
-					// region. This function take a RGNDATA structure on entry. We will add rectangles by
-					// amount of ALLOC_UNIT number in this structure.
-#define ALLOC_UNIT	100
-					DWORD maxRects = ALLOC_UNIT;
-					HANDLE hData = GlobalAlloc(GMEM_MOVEABLE, sizeof(RGNDATAHEADER) + (sizeof(RECT) * maxRects));
-					RGNDATA *pData = (RGNDATA *)GlobalLock(hData);
-					pData->rdh.dwSize = sizeof(RGNDATAHEADER);
-					pData->rdh.iType = RDH_RECTANGLES;
-					pData->rdh.nCount = pData->rdh.nRgnSize = 0;
-					SetRect(&pData->rdh.rcBound, MAXLONG, MAXLONG, 0, 0);
-
-					// Keep on hand highest and lowest values for the "transparent" pixels
-					BYTE lr = GetRValue(cTransparentColor);
-					BYTE lg = GetGValue(cTransparentColor);
-					BYTE lb = GetBValue(cTransparentColor);
-					BYTE hr = min(0xff, lr + GetRValue(cTolerance));
-					BYTE hg = min(0xff, lg + GetGValue(cTolerance));
-					BYTE hb = min(0xff, lb + GetBValue(cTolerance));
-
-					// Scan each bitmap row from bottom to top (the bitmap is inverted vertically)
-					BYTE *p32 = (BYTE *)bm32.bmBits + (bm32.bmHeight - 1) * bm32.bmWidthBytes;
-					for (int y = 0; y < bm.bmHeight; y++)
-					{
-						// Scan each bitmap pixel from left to right
-						for (int x = 0; x < bm.bmWidth; x++)
-						{
-							// Search for a continuous range of "non transparent pixels"
-							int x0 = x;
-							LONG *p = (LONG *)p32 + x;
-							while (x < bm.bmWidth)
-							{
-								BYTE b = GetRValue(*p);
-								if (b >= lr && b <= hr)
-								{
-									b = GetGValue(*p);
-									if (b >= lg && b <= hg)
-									{
-										b = GetBValue(*p);
-										if (b >= lb && b <= hb)
-											// This pixel is "transparent"
-											break;
-									}
-								}
-								p++;
-								x++;
-							}
-
-							if (x > x0)
-							{
-								// Add the pixels (x0, y) to (x, y+1) as a new rectangle in the region
-								if (pData->rdh.nCount >= maxRects)
-								{
-									GlobalUnlock(hData);
-									maxRects += ALLOC_UNIT;
-									hData = GlobalReAlloc(hData, sizeof(RGNDATAHEADER) + (sizeof(RECT) * maxRects), GMEM_MOVEABLE);
-									pData = (RGNDATA *)GlobalLock(hData);
-								}
-								RECT *pr = (RECT *)&pData->Buffer;
-								SetRect(&pr[pData->rdh.nCount], x0, y, x, y + 1);
-								if (x0 < pData->rdh.rcBound.left)
-									pData->rdh.rcBound.left = x0;
-								if (y < pData->rdh.rcBound.top)
-									pData->rdh.rcBound.top = y;
-								if (x > pData->rdh.rcBound.right)
-									pData->rdh.rcBound.right = x;
-								if (y + 1 > pData->rdh.rcBound.bottom)
-									pData->rdh.rcBound.bottom = y + 1;
-								pData->rdh.nCount++;
-
-								// On Windows98, ExtCreateRegion() may fail if the number of rectangles is too
-								// large (ie: > 4000). Therefore, we have to create the region by multiple steps.
-								if (pData->rdh.nCount == 2000)
-								{
-									HRGN h = ExtCreateRegion(NULL, sizeof(RGNDATAHEADER) + (sizeof(RECT) * maxRects), pData);
-									if (hRgn)
-									{
-										CombineRgn(hRgn, hRgn, h, RGN_OR);
-										DeleteObject(h);
-									}
-									else
-										hRgn = h;
-									pData->rdh.nCount = 0;
-									SetRect(&pData->rdh.rcBound, MAXLONG, MAXLONG, 0, 0);
-								}
-							}
-						}
-
-						// Go to next row (remember, the bitmap is inverted vertically)
-						p32 -= bm32.bmWidthBytes;
-					}
-
-					// Create or extend the region with the remaining rectangles
-					HRGN h = ExtCreateRegion(NULL, sizeof(RGNDATAHEADER) + (sizeof(RECT) * maxRects), pData);
-					if (hRgn)
-					{
-						CombineRgn(hRgn, hRgn, h, RGN_OR);
-						DeleteObject(h);
-					}
-					else
-						hRgn = h;
-
-					// Clean up
-					GlobalFree(hData);
-					SelectObject(hDC, holdBmp);
-					DeleteDC(hDC);
-				}
-				DeleteObject(SelectObject(hMemDC, holdBmp));
-			}
-			DeleteDC(hMemDC);
-		}
-	}
-	return hRgn;
-}
 //-------------------------------------------------------------------------------------------------------------------------

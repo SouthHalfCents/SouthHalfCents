@@ -36,7 +36,13 @@
     <ClInclude Include="Database.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="BaseDialog.h">
+    <ClInclude Include="CustomView.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TrayIcon.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ConfigMng.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -53,7 +59,13 @@
     <ClCompile Include="Database.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="BaseDialog.cpp">
+    <ClCompile Include="CustomView.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TrayIcon.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ConfigMng.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -75,6 +87,9 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="res\Main_2.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\Main_3.bmp">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>
