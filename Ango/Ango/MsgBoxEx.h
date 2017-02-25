@@ -1,9 +1,14 @@
 #pragma once
 #include "afxwin.h"
-
+#include "resource.h"
 
 // CMsgBoxEx 对话框
 // 替换MessageBox
+
+//对话框位置
+#define MB_POST_BESIDE             0x00000000L		//原对话框旁边
+#define MB_POST_CENTER             0x00000010L		//屏幕中间
+
 
 class CMsgBoxEx : public CDialogEx
 {
@@ -72,6 +77,7 @@ public:
 	afx_msg void				OnBnClickedBtnCancle();
 	void						InitMsgBox(CString strMsg, CString strTitle=L"", UINT nType=MB_OK);
 	void						SetRayout();
+	void						SetDlgPos();
 	
 
 	
@@ -84,5 +90,5 @@ public:
 	AngoMsgBox();
 	~AngoMsgBox();
 
-	static int				MessageBox(CString strMsg, CString strTitle=L"", UINT nType=MB_OK);
+	static int				MessageBox(CString strMsg, CString strTitle=L"", UINT nType= MB_POST_BESIDE | MB_OK);
 };

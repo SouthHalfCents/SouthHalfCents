@@ -34,6 +34,7 @@ void CConfigMng::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CConfigMng, CDialogEx)
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
+	ON_WM_CREATE()
 END_MESSAGE_MAP()
 
 
@@ -62,4 +63,41 @@ BOOL CConfigMng::OnEraseBkgnd(CDC* pDC)
 	pDC->SelectObject(pOldBrush);
 	return TRUE;
 
+}
+
+void CConfigMng::SetDlgPos()
+{
+	CRect rcWindow;
+	GetWindowRect(&rcWindow);
+	int xSize = ::GetSystemMetrics(SM_CXSCREEN);
+	int ySize = ::GetSystemMetrics(SM_CYSCREEN);
+	int Width = rcWindow.Width();
+	int Height = rcWindow.Height();
+
+	rcWindow.left = (xSize - Width) / 2;
+	rcWindow.right = rcWindow.left + Width;
+	rcWindow.top = (ySize - Height) / 2;
+	rcWindow.bottom = rcWindow.top + Height;
+
+	MoveWindow(&rcWindow);
+}
+
+int CConfigMng::OnCreate(LPCREATESTRUCT lpCreateStruct)
+{
+	if (CDialogEx::OnCreate(lpCreateStruct) == -1)
+		return -1;
+
+	// TODO:  在此添加您专用的创建代码
+
+	return 0;
+}
+
+BOOL CConfigMng::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+
+	SetDlgPos();
+
+
+	return TRUE;
 }

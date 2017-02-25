@@ -138,6 +138,10 @@ void CMsgBoxEx::OnBnClickedBtnNo()
 	switch (m_nType)
 	{
 	case MB_OK:
+	{
+		//m_strNo = "确定";
+		dwEndcode = IDOK;
+	}
 	break;
 
 	case MB_OKCANCEL:
@@ -272,20 +276,12 @@ BOOL CMsgBoxEx::OnInitDialog()
 
 	SetRayout();
 
+	//居中
+	if (m_nType & MB_POST_CENTER)
+	{
+		SetDlgPos();
+	}
 
-	CRect rcWindow;
-	GetWindowRect(&rcWindow);
-	int xSize = ::GetSystemMetrics(SM_CXSCREEN);
-	int ySize = ::GetSystemMetrics(SM_CYSCREEN);
-	int Width = rcWindow.Width();
-	int Height = rcWindow.Height();
-
-	rcWindow.left = (xSize - Width) / 2;
-	rcWindow.right = rcWindow.left + Width;
-	rcWindow.top = (ySize - Height) / 2;
-	rcWindow.bottom = rcWindow.top + Height;
-
-	MoveWindow(&rcWindow);
 
 	return TRUE;
 }
@@ -363,6 +359,11 @@ void CMsgBoxEx::SetRayout()
 	break;
 
 	default:
+	{
+		m_btnYes.ShowWindow(SW_HIDE);
+		m_btnCancle.ShowWindow(SW_HIDE);
+		m_strNo = "确定";
+	}
 		break;
 	}
 
@@ -372,10 +373,26 @@ void CMsgBoxEx::SetRayout()
 }
 
 
+void CMsgBoxEx::SetDlgPos()
+{
+	CRect rcWindow;
+	GetWindowRect(&rcWindow);
+	int xSize = ::GetSystemMetrics(SM_CXSCREEN);
+	int ySize = ::GetSystemMetrics(SM_CYSCREEN);
+	int Width = rcWindow.Width();
+	int Height = rcWindow.Height();
+
+	rcWindow.left = (xSize - Width) / 2;
+	rcWindow.right = rcWindow.left + Width;
+	rcWindow.top = (ySize - Height) / 2;
+	rcWindow.bottom = rcWindow.top + Height;
+
+	MoveWindow(&rcWindow);
+}
 //---------------------------------------------------------------------------------------------------------------------
 
 
-int AngoMsgBox::MessageBox(CString strMsg, CString strTitle/* =L"" */, UINT nType/* =MB_OK */)
+int AngoMsgBox::MessageBox(CString strMsg, CString strTitle/* =L"" */, UINT nType/* =MB_POST_BESIDE | MB_OK */)
 {
 
 	CMsgBoxEx * pMsgBox = new CMsgBoxEx;

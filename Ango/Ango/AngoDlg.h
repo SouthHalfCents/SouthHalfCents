@@ -6,6 +6,7 @@
 #include "CustomView.h"
 #include "TrayIcon.h"
 #include "ConfigMng.h"
+#include "log.h"
 
 // CAngoDlg 对话框
 class CAngoDlg : public CDialogEx
@@ -47,7 +48,7 @@ protected:
 
 	//// 自定义消息
 	afx_msg LRESULT				OnNotifyIcon(WPARAM, LPARAM);
-
+	virtual void				WinHelpInternal(DWORD_PTR dwData, UINT nCmd = HELP_CONTEXT);
 	DECLARE_MESSAGE_MAP()
 
 
@@ -59,7 +60,6 @@ public:
 
 
 	CConfigMng*					m_pCfgMng;				//设置管理
-	void						test();
 	
-	
+	BOOL						RegAutoStart();
 };

@@ -11,6 +11,7 @@
 #include "string"
 #include "Database.h"
 
+#include "log.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -105,22 +106,7 @@ BOOL CAngoDlg::OnInitDialog()
 	GetWindowRect(rtClient);
 	::SetWindowPos(m_hWnd, HWND_TOPMOST, rtClient.left, rtClient.top, rtClient.Width(), rtClient.Height(), SWP_SHOWWINDOW);
 
-	/*
-	//居中
-	CRect rcWindow;
-	GetWindowRect(&rcWindow);
-	int xSize = ::GetSystemMetrics(SM_CXSCREEN);
-	int ySize = ::GetSystemMetrics(SM_CYSCREEN);
-	int Width = rcWindow.Width();
-	int Height = rcWindow.Height();
-
-	rcWindow.left = (xSize - Width) / 2;
-	rcWindow.right = rcWindow.left + Width;
-	rcWindow.top = (ySize - Height) / 2;
-	rcWindow.bottom = rcWindow.top + Height;
-
-	MoveWindow(&rcWindow);
-	*/
+	//RegAutoStart();
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -151,7 +137,6 @@ void CAngoDlg::OnPaint()
 	{	
 		//自定义对话框界面
 		m_cusView.OnPaint();
-
 		CDialogEx::OnPaint();
 	}
 }
@@ -162,10 +147,18 @@ HCURSOR CAngoDlg::OnQueryDragIcon()
 	return static_cast<HCURSOR>(m_hIcon);
 }
 
+//重载windows帮助，屏蔽F1帮助
+void CAngoDlg::WinHelpInternal(DWORD_PTR dwData, UINT nCmd)
+{
+	return;
+	//CDialog::WinHelp(dwData, nCmd);
+}
+
 int CAngoDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CDialogEx::OnCreate(lpCreateStruct) == -1)
 		return -1;
+
 
 	//通知区域图标，托盘图标
 	m_trayIcon.m_pCwnd		=	this;
@@ -223,58 +216,47 @@ void CAngoDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 	case 27:
 	{
-		strMsg = "ESC";
-		MessageBox(strMsg);
-		exit(0);
+		strMsg = "是否退出程序？";
+		if (AngoMsgBox::MessageBox(strMsg, L"退出", MB_OKCANCEL) == IDOK)
+		{
+			CDialog::OnCancel();
+		}
 	}
 	break;
 
 	case 112:
 	{
-
-		//AfxMessageBox("F1键");
+		strMsg = "F1键";
 	}
 	break;
 
 	case 113:
 	{
-
-		//AfxMessageBox("F2键");
+		strMsg = "F2键";
 	}
 	break;
 
 	case 114:
 	{
-		if (m_pCfgMng)
-			m_pCfgMng->ShowWindow(SW_HIDE);
-		//AfxMessageBox("F3键");
+		strMsg = "F3键";
 	}
 	break;
 
 	case 115:
 	{
-		//AfxMessageBox("F4键");
+		strMsg = "F4键";
 	}
 	break;
 
 	case 116:
 	{
-		//AfxMessageBox("F5键");
-		test();
+		strMsg = "F5键";
 	}
 	break;
 
 	case 117:
 	{
-		//创建非模式对话框，不过要创建的是类成员  在C龙行天下Dlg类里声明  CF1Dlg F1Dlg;
-		//if(!IsWindow(m_F6Dlg.m_hWnd))
-		//{
-		//是否关联了对话框，关闭非模式对话框时，只是隐藏，没有销毁对话框资源
-		//m_F6Dlg.Create(IDD_F6_DIALOG,this);
-		//}
-		//m_F6Dlg.ShowWindow(SW_SHOW);
-
-		//AfxMessageBox("F6键");
+		strMsg = "F6键";
 	}
 	break;
 	default:
@@ -283,7 +265,7 @@ void CAngoDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 	if (strMsg.GetLength())
 	{
-		MessageBox(strMsg);
+		AngoMsgBox::MessageBox(strMsg,L"按键", MB_POST_CENTER);
 	}
 
 
@@ -295,7 +277,7 @@ void CAngoDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 void CAngoDlg::OnOK()
 {
 	CString strMsg = L"回车键";
-	MessageBox(strMsg);
+	AngoMsgBox::MessageBox(strMsg);
 
 }
 
@@ -303,7 +285,7 @@ void CAngoDlg::OnCancel()
 {
 	CString strMsg;
 	strMsg = "是否退出程序？";
-	if( MessageBox(strMsg, L"Ango", MB_OKCANCEL) == IDCANCEL)
+	if( AngoMsgBox::MessageBox(strMsg,L"退出",MB_OKCANCEL) == IDCANCEL)
 	{
 		return;
 	}
@@ -386,7 +368,7 @@ void CAngoDlg::OnAboutDlg()
 {
 	CString strMsg;
 	strMsg = "说明";
-	MessageBox(strMsg);
+	AngoMsgBox::MessageBox(strMsg);
 }
 
 void CAngoDlg::OnExitDlg()
@@ -404,18 +386,72 @@ void CAngoDlg::OnConfig()
 }
 //-------------------------------------------------------------------------------------------------------------------------
 
-void CAngoDlg::test()
+
+
+//设置自启动
+//输入 wszPath[]绝对路径， wszName[]新建项名
+BOOL CAngoDlg::RegAutoStart()
 {
-	AngoMsgBox::MessageBox(L"123");
-	AngoMsgBox::MessageBox(L"123",L"456",MB_OKCANCEL);
+	// 32位程序在64位系统运行,操作注册表被重定向的问题.
 
-	//MessageBox(L"这是一个最简单的消息框！");
-	//MessageBox(L"这是一个有标题的消息框！", L"标题");
-	//MessageBox(L"这是一个确定 取消的消息框！", L"标题", MB_OKCANCEL);
-	//MessageBox(L"这是一个警告的消息框！", L"标题", MB_ICONEXCLAMATION);
-	//MessageBox(L"这是一个两种属性的消息框！", L"标题", MB_ICONEXCLAMATION | MB_OKCANCEL);
 
-	//if(MessageBox(L"一种常用的应用", L"标题", MB_ICONEXCLAMATION | MB_CANCELTRYCONTINUE) == IDCANCEL)return;
+	HMODULE hModule = GetModuleHandle(NULL);
+
+	//得到自身完整的路径
+	//GetModuleFileName(hModule, wszPath, sizeof(wszPath));
+
+
+
+	
+#if _WIN64
+	//AngoMsgBox::MessageBox(L"WIN_64", L"", MB_POST_CENTER);
+	HKEY hRoot = HKEY_LOCAL_MACHINE;
+	HKEY hKey;
+	LONG lRet;
+	DWORD dwDisposition;
+
+	char szPath[MAX_PATH] = {0};
+	GetModuleFileNameA(hModule, szPath, sizeof(szPath));
+
+	const char *subkey = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce";	//RunOnce
+
+	lRet = RegCreateKeyExA(hRoot,
+		subkey,
+		0,   //保留参数，必须为0
+		NULL,//键的种类，同通常为NULL
+		REG_OPTION_NON_VOLATILE,
+		KEY_ALL_ACCESS,
+		NULL,
+		&hKey,
+		&dwDisposition  //返回参数
+		);
+	
+
+	char data_Name[MAX_PATH] = "Ango";
+
+	lRet = ::RegSetValueExA(
+		hKey,
+		data_Name,
+		0,						//保留
+		REG_SZ,					//字符串
+		(CONST BYTE *)szPath,	//具体内容
+		(DWORD)strlen(szPath)
+		);
+
+	if (lRet != ERROR_SUCCESS)
+	{
+		RegCloseKey(hKey);
+		OutputDebugStringA("打开注册表失败");
+		return FALSE;
+	}
+
+	RegCloseKey(hKey);
+
+#endif
+
+
+
+	return TRUE;
 }
 //-------------------------------------------------------------------------------------------------------------------------
 

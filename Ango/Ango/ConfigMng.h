@@ -19,6 +19,8 @@ public:
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
+	virtual BOOL			OnInitDialog();
+	afx_msg int				OnCreate(LPCREATESTRUCT lpCreateStruct);
 	DECLARE_MESSAGE_MAP()
 
 	CBrush					m_MyBrush;
@@ -26,5 +28,9 @@ protected:
 	afx_msg HBRUSH			OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL			OnEraseBkgnd(CDC* pDC);
 
+	void					SetDlgPos();
 
+
+public:
+	
 };
