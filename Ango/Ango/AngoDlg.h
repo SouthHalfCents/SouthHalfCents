@@ -33,10 +33,17 @@ protected:
 	afx_msg HCURSOR				OnQueryDragIcon();
 
 	///// 响应菜单
-	afx_msg void				OnShowDlg();
-	afx_msg void				OnAboutDlg();
-	afx_msg void				OnExitDlg();
-	afx_msg void				OnConfig();
+	afx_msg void				OnToolCustom();
+	afx_msg void				OnConfigCustom();
+	afx_msg void				OnMenuAbout();
+	afx_msg void				OnMenuExit();
+
+	afx_msg void				OnMenuUp();
+	afx_msg void				OnMenuDown();
+	afx_msg void				OnMenuShow();
+	afx_msg void				OnMenuHide();
+	
+	
 	
 	//// 响应按键
 	virtual void				OnOK();							//重载
@@ -44,7 +51,7 @@ protected:
 	afx_msg void				OnLButtonDown(UINT nFlags, CPoint point);
 	afx_msg void				OnRButtonDown(UINT nFlags, CPoint point);
 	afx_msg void				OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
-	afx_msg void				OnUpLayer();
+	
 
 	//// 自定义消息
 	afx_msg LRESULT				OnNotifyIcon(WPARAM, LPARAM);
@@ -54,12 +61,11 @@ protected:
 
 
 public:
-	BOOL						m_bUplayer;				//最顶端显示
 	CCustomView					m_cusView;				//个性化界面
 	CTrayIcon					m_trayIcon;				//通知区域图标
-
-
 	CConfigMng*					m_pCfgMng;				//设置管理
 	
 	BOOL						RegAutoStart();
+	CMenu						m_popMenu;
+
 };

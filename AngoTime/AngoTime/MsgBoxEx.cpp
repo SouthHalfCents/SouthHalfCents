@@ -3,7 +3,7 @@
 //
 
 #include "stdafx.h"
-#include "Ango.h"
+#include "AngoTime.h"
 #include "MsgBoxEx.h"
 #include "afxdialogex.h"
 

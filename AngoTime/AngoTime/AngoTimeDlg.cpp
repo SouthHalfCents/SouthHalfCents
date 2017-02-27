@@ -1,0 +1,501 @@
+
+// AngoTimeDlg.cpp : 实现文件
+//
+
+#include "stdafx.h"
+#include "AngoTime.h"
+#include "AngoTimeDlg.h"
+#include "afxdialogex.h"
+#include "MsgBoxEx.h"
+
+#define pi 3.1415926535897932384626433832795028841971693993751058209
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
+
+
+// CAngoTimeDlg 对话框
+
+
+
+CAngoTimeDlg::CAngoTimeDlg(CWnd* pParent /*=NULL*/)
+	: CDialogEx(CAngoTimeDlg::IDD, pParent)
+	, m_uTimer(0)
+	, point1(0)
+	, point2(0)
+	, ss(0)
+	, m(0)
+	, h(0)
+{
+	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_popMenu.LoadMenu(IDR_MENU_RBTN);	
+}
+
+void CAngoTimeDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialogEx::DoDataExchange(pDX);
+}
+
+BEGIN_MESSAGE_MAP(CAngoTimeDlg, CDialogEx)
+	ON_WM_PAINT()
+	ON_WM_CREATE()
+	ON_WM_CTLCOLOR()
+	ON_WM_TIMER()			//定时器
+	ON_WM_QUERYDRAGICON()
+	ON_WM_LBUTTONDOWN()
+	ON_WM_RBUTTONDOWN()
+
+	
+	ON_MESSAGE(MAIN_WM_NOTIFYICON, &CAngoTimeDlg::OnNotifyIcon)
+	ON_COMMAND(ID_MENU_EXIT, &CAngoTimeDlg::OnMenuExit)
+END_MESSAGE_MAP()
+
+
+// CAngoTimeDlg 消息处理程序
+
+BOOL CAngoTimeDlg::OnInitDialog()
+{
+	CDialogEx::OnInitDialog();
+
+	// 设置此对话框的图标。  当应用程序主窗口不是对话框时，框架将自动
+	//  执行此操作
+	SetIcon(m_hIcon, TRUE);			// 设置大图标
+	SetIcon(m_hIcon, FALSE);		// 设置小图标
+
+	//隐藏任务栏
+	ModifyStyleEx(WS_EX_APPWINDOW, WS_EX_TOOLWINDOW);
+
+	// 唯一实例
+	HANDLE m_hMutex = CreateMutex(NULL, FALSE, L"//AngoTime.exe");
+	if (GetLastError() == ERROR_ALREADY_EXISTS)
+	{
+		// 如果程序已经存在并且正在运行 
+		// 如果已有互斥量存在则释放句柄并复位互斥量，退出程序
+		CloseHandle(m_hMutex);
+		m_hMutex = NULL;
+		AngoMessageBox(_T("程序已经在运行"));
+		CDialog::OnCancel();
+	}
+
+	InitClock();
+
+
+	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
+}
+
+// 如果向对话框添加最小化按钮，则需要下面的代码
+//  来绘制该图标。  对于使用文档/视图模型的 MFC 应用程序，
+//  这将由框架自动完成。
+
+void CAngoTimeDlg::OnPaint()
+{
+	if (IsIconic())
+	{
+		CPaintDC dc(this); // 用于绘制的设备上下文
+
+		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
+
+		// 使图标在工作区矩形中居中
+		int cxIcon = GetSystemMetrics(SM_CXICON);
+		int cyIcon = GetSystemMetrics(SM_CYICON);
+		CRect rect;
+		GetClientRect(&rect);
+		int x = (rect.Width() - cxIcon + 1) / 2;
+		int y = (rect.Height() - cyIcon + 1) / 2;
+
+		// 绘制图标
+		dc.DrawIcon(x, y, m_hIcon);
+	}
+	else
+	{
+		OnTimer(m_uTimer);
+		CDialogEx::OnPaint();
+	}
+}
+
+//当用户拖动最小化窗口时系统调用此函数取得光标
+//显示。
+HCURSOR CAngoTimeDlg::OnQueryDragIcon()
+{
+	return static_cast<HCURSOR>(m_hIcon);
+}
+
+//重载windows帮助，屏蔽F1帮助
+void CAngoTimeDlg::WinHelpInternal(DWORD_PTR dwData, UINT nCmd)
+{
+	return;
+	//CDialog::WinHelp(dwData, nCmd);
+}
+
+int CAngoTimeDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
+{
+	if (CDialogEx::OnCreate(lpCreateStruct) == -1)
+		return -1;
+
+
+	//通知区域图标，托盘图标
+	m_trayIcon.m_pCwnd = this;
+	m_trayIcon.m_dwIconId = IDR_MAINFRAME;
+	m_trayIcon.m_strTips = "╮(￣▽￣)╭ ";
+	m_trayIcon.InitTrayIcon();
+
+
+	return 0;
+}
+
+//-------------------------------------------------------------------------------------------------------------------------
+//拖动无标题对话框窗口
+void CAngoTimeDlg::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	SendMessage(WM_NCLBUTTONDOWN, HTCAPTION, 0);
+	CDialogEx::OnLButtonDown(nFlags, point);
+}
+
+//拖动无标题对话框窗口
+void CAngoTimeDlg::OnRButtonDown(UINT nFlags, CPoint point)
+{
+	CMenu* pmenu = m_popMenu.GetSubMenu(0);		//弹出的菜单实际上是IDR_MENU_POPUP菜单的某项的子菜单，这里是第一项
+	CPoint pos;
+	GetCursorPos(&pos);							//弹出菜单的位置，这里就是鼠标的当前位置
+	//显示该菜单，第一个参数的两个值分别表示在鼠标的右边显示、响应鼠标右击
+	pmenu->TrackPopupMenu(TPM_RIGHTBUTTON, pos.x, pos.y, AfxGetMainWnd(), 0);
+	CDialogEx::OnRButtonDown(nFlags, point);
+}
+
+void CAngoTimeDlg::OnOK()
+{
+	CString strMsg = L"回车键";
+	AngoMessageBox(strMsg);
+
+}
+
+void CAngoTimeDlg::OnCancel()
+{
+	CString strMsg;
+	strMsg = "是否退出程序？";
+	if (AngoMessageBox(strMsg, L"退出", MB_OKCANCEL) == IDCANCEL)
+	{
+		return;
+	}
+	CDialog::OnCancel();
+}
+
+//-------------------------------------------------------------------------------------------------------------------------
+LRESULT CAngoTimeDlg::OnNotifyIcon(WPARAM wparam, LPARAM lparam)
+{
+	if (lparam == WM_LBUTTONDOWN)
+	{
+		//恢复窗口或者最小化
+		AfxGetMainWnd()->ShowWindow(SW_SHOW);
+		AfxGetMainWnd()->ShowWindow(SW_RESTORE);
+		//这里貌似只有写这样两句才能保证恢复窗口后，该窗口处于活动状态（在最前面）
+	}
+	else if (lparam == WM_RBUTTONDOWN)
+	{
+		//弹出右键菜单
+		CMenu* pmenu = m_popMenu.GetSubMenu(0);		//弹出的菜单实际上是IDR_MENU_POPUP菜单的某项的子菜单，这里是第一项
+		CPoint pos;
+		GetCursorPos(&pos);							//弹出菜单的位置，这里就是鼠标的当前位置
+		//显示该菜单，第一个参数的两个值分别表示在鼠标的右边显示、响应鼠标右击
+		pmenu->TrackPopupMenu(TPM_RIGHTBUTTON, pos.x, pos.y, AfxGetMainWnd(), 0);
+	}
+	return 0;
+}
+
+
+//-------------------------------------------------------------------------------------------------------------------------
+
+void CAngoTimeDlg::OnMenuExit()
+{
+	OnCancel();
+}
+
+//-------------------------------------------------------------------------------------------------------------------------
+void CAngoTimeDlg::InitClock()
+{
+	//设置控制时针走动的触发器为每秒一次，即引发WM_TIMER消息的频率是每秒一次。
+	m_uTimer = this->SetTimer(1, 1000, NULL);
+
+	/////////////////////////////////////////////////////////////
+	//画圆形对话框
+	CRgn  rgn;
+	CRect  rc;
+	GetClientRect(&rc);
+	rgn.CreateEllipticRgn(rc.left, rc.top, rc.right, rc.bottom);
+	SetWindowRgn(rgn, TRUE);
+	rgn.DeleteObject();
+	//////////////////////////////////////////////////////////////
+	//用时钟背景图片作圆形对话框背景
+	CBitmap   bm;
+	bm.LoadBitmap(IDB_BMP_CLOCK);   //   IDB_BITMAP1为BITMAP资源ID,可以指定bitmap图片的路径   
+	m_cBrush.CreatePatternBrush(&bm);
+}
+
+HBRUSH CAngoTimeDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
+{
+	//HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
+
+	// TODO:  在此更改 DC 的任何属性
+
+	// TODO:  如果默认的不是所需画笔，则返回另一个画笔
+	return m_cBrush;
+}
+
+void CAngoTimeDlg::OnTimer(UINT_PTR nIDEvent)//控制时钟走动
+{
+	// TODO: 在此添加消息处理程序代码和/或调用默认值
+	//判断传递过来的时钟触发器是否是自己定义的时钟触发器
+	if(nIDEvent == m_uTimer) 
+	{
+		//获得当前系统时间。
+		CTime time = CTime::GetCurrentTime();
+		int C;							//用于计算颜色
+		CPen *PenOld,PenNew;
+		CBrush *BrushOld,BrushNew;
+		CClientDC dc(this);
+		int S=time.GetSecond();
+		float M=float(time.GetMinute()+S/60.0);
+		float H=float(time.GetHour()+M/60.0);
+		if(H>12)
+			H=H-12;
+		H=H*5;
+		point1.x=103;
+		point1.y=102;
+
+//		OnPaint();
+		//以下为画时针分针和秒针
+		//方法为画每根针前用背景色擦去上一次画的针（由于背景色渐变，所以加入了计算）
+//////////////////////////////////////////////	
+		if(h<5)
+			C=232;
+		else if(h<10)
+			C=235;
+		else if(h<15)
+			C=242;
+		else if(h<20)
+			C=247;
+		else if(h<30)
+			C=248;
+		else if(h<35)
+			C=244;
+		else if(h<40)
+			C=242;
+		else if(h<47)
+			C=235;
+		else
+			C=230;
+
+		PenNew.CreatePen(PS_SOLID,4,RGB(C,C,C));
+		BrushNew.CreateSolidBrush(RGB(C,C,C));
+		BrushOld=dc.SelectObject(&BrushNew);
+		PenOld=dc.SelectObject(&PenNew);
+		point2.x=103+35*sin(h*pi/30);
+		point2.y=102-35*cos(h*pi/30);
+		dc.MoveTo(point1);
+		dc.LineTo(point2);
+
+
+		PenNew.DeleteObject();
+		PenNew.CreatePen(PS_SOLID,4,RGB(0,0,0));
+		PenOld=dc.SelectObject(&PenNew);
+		BrushNew.DeleteObject();
+		BrushNew.CreateSolidBrush(RGB(0,0,0));
+		BrushOld=dc.SelectObject(&BrushNew);
+		point2.x=103+35*sin(H*pi/30);
+		point2.y=102-35*cos(H*pi/30);
+		dc.MoveTo(point1);
+		dc.LineTo(point2);
+///////////////////////////////////////////////
+		if(m<5)
+			C=232;
+		else if(m<10)
+			C=235;
+		else if(m<15)
+			C=242;
+		else if(m<20)
+			C=247;
+		else if(m<30)
+			C=248;
+		else if(m<35)
+			C=244;
+		else if(m<40)
+			C=242;
+		else if(m<47)
+			C=235;
+		else
+			C=230;
+
+		BrushNew.DeleteObject();
+		BrushNew.CreateSolidBrush(RGB(C,C,C));
+		BrushOld=dc.SelectObject(&BrushNew);
+		PenNew.DeleteObject();
+		PenNew.CreatePen(PS_SOLID,4,RGB(C,C,C));
+		PenOld=dc.SelectObject(&PenNew);
+		point2.x=103+55*sin(m*pi/30);
+		point2.y=102-55*cos(m*pi/30);
+		dc.MoveTo(point1);
+		dc.LineTo(point2);
+
+
+
+		BrushNew.DeleteObject();
+		BrushNew.CreateSolidBrush(RGB(0,0,0));
+		BrushOld=dc.SelectObject(&BrushNew);
+		PenNew.DeleteObject();
+		PenNew.CreatePen(PS_SOLID,4,RGB(0,0,0));
+		PenOld=dc.SelectObject(&PenNew);
+		point2.x=103+55*sin(M*pi/30);
+		point2.y=102-55*cos(M*pi/30);
+		dc.MoveTo(point1);
+		dc.LineTo(point2);
+		
+////////////////////////////////////////////	画秒针的短轴	
+		ss=(ss+30)%60;
+		S=(S+30)%60;
+		if(ss<5)
+			C=232;
+		else if(ss<10)
+			C=235;
+		else if(ss<15)
+			C=242;
+		else if(ss<20)
+			C=247;
+		else if(ss<30)
+			C=248;
+		else if(ss<35)
+			C=244;
+		else if(ss<40)
+			C=242;
+		else if(ss<47)
+			C=235;
+		else
+			C=230;
+		PenNew.DeleteObject();
+		PenNew.CreatePen(PS_DASHDOTDOT,2,RGB(C,C,C));
+		PenOld=dc.SelectObject(&PenNew);
+		point2.x=103+10*sin(ss*pi/30);
+		point2.y=102-10*cos(ss*pi/30);
+		dc.MoveTo(point1);
+		dc.LineTo(point2);
+
+
+		PenNew.DeleteObject();
+		PenNew.CreatePen(PS_DASHDOTDOT,2,RGB(255,0,0));
+		PenOld=dc.SelectObject(&PenNew);
+		point2.x=103+10*sin(S*pi/30);
+		point2.y=102-10*cos(S*pi/30);
+		dc.MoveTo(point1);
+		dc.LineTo(point2);
+
+
+///////////////////////画秒针的长轴
+		ss=(ss+30)%60;
+		S=(S+30)%60;
+		if(ss<5)
+			C=232;
+		else if(ss<10)
+			C=235;
+		else if(ss<15)
+			C=242;
+		else if(ss<20)
+			C=247;
+		else if(ss<30)
+			C=248;
+		else if(ss<35)
+			C=244;
+		else if(ss<40)
+			C=242;
+		else if(ss<47)
+			C=235;
+		else
+			C=230;
+//		BrushNew.DeleteObject();
+//		BrushNew.CreateSolidBrush(RGB(C,C,C));
+//		BrushOld=dc.SelectObject(&BrushNew);
+		PenNew.DeleteObject();
+		PenNew.CreatePen(PS_DASHDOTDOT,2,RGB(C,C,C));
+		PenOld=dc.SelectObject(&PenNew);
+		point2.x=103+63*sin(ss*pi/30);
+		point2.y=102-63*cos(ss*pi/30);
+		dc.MoveTo(point1);
+		dc.LineTo(point2);
+
+
+//		BrushNew.DeleteObject();
+//		BrushNew.CreateSolidBrush(RGB(255,0,0));
+//		BrushOld=dc.SelectObject(&BrushNew);
+		PenNew.DeleteObject();
+		PenNew.CreatePen(PS_DASHDOTDOT,2,RGB(255,0,0));
+		PenOld=dc.SelectObject(&PenNew);
+		point2.x=103+63*sin(S*pi/30);
+		point2.y=102-63*cos(S*pi/30);
+		dc.MoveTo(point1);
+		dc.LineTo(point2);
+
+
+
+/*//////////////////////////////////////////////////////////////////
+		CBrush m_brush_trad_s;
+		CBitmap   bm_trad_s;   
+		bm_trad_s.LoadBitmap(IDB_Trad_s);   //   IDB_Trad_s为BITMAP资源ID,可以指定bitmap图片的路径   
+		m_brush_trad_s.CreatePatternBrush(&bm_trad_s); 
+		BrushOld=dc.SelectObject(&m_brush_trad_s);
+		PenNew.DeleteObject();
+		PenNew.CreatePen(PS_NULL,1,RGB(255,255,255));//(PS_DASHDOTDOT,2,RGB(255,0,0));
+		PenOld=dc.SelectObject(&PenNew);
+		point2.x=103+63*sin(S*pi/30);
+		point2.y=102-63*cos(S*pi/30);
+		dc.Rectangle(94,40,107,169);
+*///////////////////////////////////////////////////////////////////
+		h=H;m=M;ss=S;
+//////////////////////////////////////////////////////////////////
+		dc.SetPixel(point1,RGB(0,0,0));
+		dc.SetPixel(point1.x+1,point1.y,RGB(0,0,0));
+		dc.SetPixel(point1.x,point1.y+1,RGB(0,0,0));
+		dc.SetPixel(point1.x+1,point1.y+1,RGB(0,0,0));
+		dc.SetPixel(point1.x-1,point1.y,RGB(0,0,0));
+		dc.SetPixel(point1.x,point1.y-1,RGB(0,0,0));
+		dc.SetPixel(point1.x-1,point1.y-1,RGB(0,0,0));
+
+
+
+
+
+// 		for(int i=0;i<ringnum;i++)//判断是否有闹钟应被执行
+// 		{
+// 			if(time.GetHour()==mytimearray[i].hour&&time.GetMinute()==mytimearray[i].minute&&time.GetSecond()==mytimearray[i].second)
+// 			{
+// 				pThread2->ResumeThread();
+// 				break;
+// 			}
+// 		}
+
+
+
+// 		for(int i=0;i<tasknum;i++)//判断是否有定时任务应被执行
+// 		{
+// 			if(time.GetYear()==mytaskarray[i].year&&time.GetMonth()==mytaskarray[i].month&&time.GetDay()==mytaskarray[i].day)
+// 			{
+// 				if(time.GetHour()==mytaskarray[i].hour&&time.GetMinute()==mytaskarray[i].minute&&time.GetSecond()==mytaskarray[i].second)
+// 				{
+// 					tasktyple=mytaskarray[i].typle;
+// 					pThread3->ResumeThread();
+// 					break;
+// 				}
+// 			}
+// 		}
+
+
+// 		if(hoursound&&S==0&&M==0)//判断是否整点报时
+// 			SoundTime();
+// 		//判断是否半点报时
+// 		if(halfhoursound&&S==0&&(M==0||M==30))
+// 			SoundTime();
+		this->UpdateData(false);
+	}
+	CDialog::OnTimer(nIDEvent);
+}
+
+
+//-------------------------------------------------------------------------------------------------------------------------

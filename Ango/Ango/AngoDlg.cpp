@@ -28,7 +28,7 @@ CAngoDlg::CAngoDlg(CWnd* pParent /*=NULL*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_pCfgMng	=	NULL;
-	m_bUplayer	=	TRUE;
+	m_popMenu.LoadMenu(IDR_MENU1);	
 }
 
 void CAngoDlg::DoDataExchange(CDataExchange* pDX)
@@ -45,11 +45,14 @@ BEGIN_MESSAGE_MAP(CAngoDlg, CDialogEx)
 	ON_WM_CREATE()
 
 	ON_MESSAGE(MAIN_WM_NOTIFYICON, &CAngoDlg::OnNotifyIcon)   
-	ON_COMMAND(ID_SHOW_DLG, &CAngoDlg::OnShowDlg)
-	ON_COMMAND(ID_ABOUT_DLG, &CAngoDlg::OnAboutDlg)
-	ON_COMMAND(ID_EXIT_DLG, &CAngoDlg::OnExitDlg)
-	ON_COMMAND(ID_CONFIG, &CAngoDlg::OnConfig)
-	ON_COMMAND(ID_UP_LAYER, &CAngoDlg::OnUpLayer)
+	ON_COMMAND(ID_MENU_ABOUT, &CAngoDlg::OnMenuAbout)
+	ON_COMMAND(ID_MENU_EXIT, &CAngoDlg::OnMenuExit)
+	ON_COMMAND(ID_CONFIG_CUSTOM, &CAngoDlg::OnConfigCustom)
+	ON_COMMAND(ID_TOOL_CUSTOM, &CAngoDlg::OnToolCustom)
+	ON_COMMAND(ID_MENU_SHOW, &CAngoDlg::OnMenuShow)
+	ON_COMMAND(ID_MENU_HIDE, &CAngoDlg::OnMenuHide)
+	ON_COMMAND(ID_MENU_UP, &CAngoDlg::OnMenuUp)
+	ON_COMMAND(ID_MENU_DOWN, &CAngoDlg::OnMenuDown)
 END_MESSAGE_MAP()
 
 
@@ -69,14 +72,14 @@ BOOL CAngoDlg::OnInitDialog()
 	ModifyStyleEx(WS_EX_APPWINDOW, WS_EX_TOOLWINDOW);
 
 	// 唯一实例
-	HANDLE m_hMutex = CreateMutex(NULL, FALSE, L"Ango");
+	HANDLE m_hMutex = CreateMutex(NULL, FALSE, L"//Ango.exe");
 	if (GetLastError() == ERROR_ALREADY_EXISTS)
 	{
 		// 如果程序已经存在并且正在运行 
 		// 如果已有互斥量存在则释放句柄并复位互斥量，退出程序
 		CloseHandle(m_hMutex);
 		m_hMutex = NULL;
-		MessageBox(L"程序已经在运行");
+		AngoMessageBox(_T("程序已经在运行"));
 		CDialog::OnCancel();
 	}
 
@@ -101,11 +104,8 @@ BOOL CAngoDlg::OnInitDialog()
 	
 	MoveWindow(x-cr.Width()+150 ,y-cr.Height()+150,cr.Width(),cr.Height());
 
-
-	CRect rtClient;
-	GetWindowRect(rtClient);
-	::SetWindowPos(m_hWnd, HWND_TOPMOST, rtClient.left, rtClient.top, rtClient.Width(), rtClient.Height(), SWP_SHOWWINDOW);
-
+	OnMenuShow();
+	OnMenuUp();
 	//RegAutoStart();
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -183,9 +183,7 @@ void CAngoDlg::OnLButtonDown(UINT nFlags, CPoint point)
 //拖动无标题对话框窗口
 void CAngoDlg::OnRButtonDown(UINT nFlags, CPoint point)
 {
-	CMenu popMenu;
-	popMenu.LoadMenu(IDR_MENU1);				//IDR_MENU_POPUP是在ResourceView中创建并编辑的一个菜单
-	CMenu* pmenu = popMenu.GetSubMenu(0);		//弹出的菜单实际上是IDR_MENU_POPUP菜单的某项的子菜单，这里是第一项
+	CMenu* pmenu = m_popMenu.GetSubMenu(0);		//弹出的菜单实际上是IDR_MENU_POPUP菜单的某项的子菜单，这里是第一项
 	CPoint pos;
 	GetCursorPos(&pos);							//弹出菜单的位置，这里就是鼠标的当前位置
 	//显示该菜单，第一个参数的两个值分别表示在鼠标的右边显示、响应鼠标右击
@@ -217,7 +215,7 @@ void CAngoDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	case 27:
 	{
 		strMsg = "是否退出程序？";
-		if (AngoMsgBox::MessageBox(strMsg, L"退出", MB_OKCANCEL) == IDOK)
+		if (AngoMessageBox(strMsg, L"退出", MB_OKCANCEL) == IDOK)
 		{
 			CDialog::OnCancel();
 		}
@@ -265,7 +263,7 @@ void CAngoDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 	if (strMsg.GetLength())
 	{
-		AngoMsgBox::MessageBox(strMsg,L"按键", MB_POST_CENTER);
+		AngoMessageBox(strMsg,L"按键", MB_POST_CENTER);
 	}
 
 
@@ -277,7 +275,7 @@ void CAngoDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 void CAngoDlg::OnOK()
 {
 	CString strMsg = L"回车键";
-	AngoMsgBox::MessageBox(strMsg);
+	AngoMessageBox(strMsg);
 
 }
 
@@ -285,7 +283,7 @@ void CAngoDlg::OnCancel()
 {
 	CString strMsg;
 	strMsg = "是否退出程序？";
-	if( AngoMsgBox::MessageBox(strMsg,L"退出",MB_OKCANCEL) == IDCANCEL)
+	if( AngoMessageBox(strMsg,L"退出",MB_OKCANCEL) == IDCANCEL)
 	{
 		return;
 	}
@@ -298,86 +296,42 @@ LRESULT CAngoDlg::OnNotifyIcon(WPARAM wparam, LPARAM lparam)
 	if (lparam == WM_LBUTTONDOWN)
 	{
 		//恢复窗口或者最小化
-		if (m_trayIcon.m_bMin == TRUE)
-		{
-			AfxGetMainWnd()->ShowWindow(SW_SHOW);
-			AfxGetMainWnd()->ShowWindow(SW_RESTORE);
-			//这里貌似只有写这样两句才能保证恢复窗口后，该窗口处于活动状态（在最前面）
-			m_trayIcon.m_bMin = FALSE;
-		}
-		else
-		{
-			AfxGetMainWnd()->ShowWindow(SW_MINIMIZE);
-			m_trayIcon.m_bMin = TRUE;
-		}
+		AfxGetMainWnd()->ShowWindow(SW_SHOW);
+		AfxGetMainWnd()->ShowWindow(SW_RESTORE);
+		//这里貌似只有写这样两句才能保证恢复窗口后，该窗口处于活动状态（在最前面）
 	}
 	else if (lparam == WM_RBUTTONDOWN)
 	{
 		//弹出右键菜单
-		CMenu popMenu;
-		popMenu.LoadMenu(IDR_MENU1);				//IDR_MENU_POPUP是在ResourceView中创建并编辑的一个菜单
-		CMenu* pmenu = popMenu.GetSubMenu(0);		//弹出的菜单实际上是IDR_MENU_POPUP菜单的某项的子菜单，这里是第一项
+		CMenu* pmenu = m_popMenu.GetSubMenu(0);		//弹出的菜单实际上是IDR_MENU_POPUP菜单的某项的子菜单，这里是第一项
 		CPoint pos;
 		GetCursorPos(&pos);							//弹出菜单的位置，这里就是鼠标的当前位置
 		//显示该菜单，第一个参数的两个值分别表示在鼠标的右边显示、响应鼠标右击
 		pmenu->TrackPopupMenu( TPM_RIGHTBUTTON, pos.x, pos.y, AfxGetMainWnd(), 0);
-		
 	}
 	return 0;
 }
 
 
 //-------------------------------------------------------------------------------------------------------------------------
-void CAngoDlg::OnUpLayer()
-{
-	//设置在最上层，取消
-	if (m_bUplayer)
-	{
-		CRect rtClient;
-		GetWindowRect(rtClient);
-		::SetWindowPos(m_hWnd, HWND_NOTOPMOST, rtClient.left, rtClient.top, rtClient.Width(), rtClient.Height(), SWP_SHOWWINDOW);
-		m_bUplayer = FALSE;
-	}
-	else
-	{
-		CRect rtClient;
-		GetWindowRect(rtClient);
-		::SetWindowPos(m_hWnd, HWND_TOPMOST, rtClient.left, rtClient.top, rtClient.Width(), rtClient.Height(), SWP_SHOWWINDOW);
-		m_bUplayer = TRUE;
-	}
-}
 
-void CAngoDlg::OnShowDlg()
-{
-	//恢复窗口或者最小化
-	if (m_trayIcon.m_bMin == TRUE)
-	{
-		AfxGetMainWnd()->ShowWindow(SW_SHOW);
-		AfxGetMainWnd()->ShowWindow(SW_RESTORE);
-		//这里貌似只有写这样两句才能保证恢复窗口后，该窗口处于活动状态（在最前面）
-		m_trayIcon.m_bMin = FALSE;
-	}
-	else
-	{
-		AfxGetMainWnd()->ShowWindow(SW_MINIMIZE);
-		m_trayIcon.m_bMin = TRUE;
-	}
-}
 
-void CAngoDlg::OnAboutDlg()
+
+
+void CAngoDlg::OnMenuAbout()
 {
 	CString strMsg;
 	strMsg = "说明";
-	AngoMsgBox::MessageBox(strMsg);
+	AngoMessageBox(strMsg);
 }
 
-void CAngoDlg::OnExitDlg()
+void CAngoDlg::OnMenuExit()
 {
 	OnCancel();
 }
 
 
-void CAngoDlg::OnConfig()
+void CAngoDlg::OnConfigCustom()
 {
 	m_pCfgMng = new CConfigMng;
 	m_pCfgMng->DoModal();
@@ -456,3 +410,81 @@ BOOL CAngoDlg::RegAutoStart()
 //-------------------------------------------------------------------------------------------------------------------------
 
 
+
+
+void CAngoDlg::OnToolCustom()
+{
+	AngoMessageBox(L"工具箱");
+}
+
+void CAngoDlg::OnMenuShow()
+{
+	//这里貌似只有写这样两句才能保证恢复窗口后，该窗口处于活动状态（在最前面）
+	AfxGetMainWnd()->ShowWindow(SW_SHOW);
+	AfxGetMainWnd()->ShowWindow(SW_RESTORE);
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);	
+	//设置第一层：工具箱勾选
+	//pmenu->CheckMenuItem(ID_MENU_TOOL, MF_BYCOMMAND | MF_CHECKED);	//通过命令ID，选中ID_MENU_TOOL
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(0);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_MENU_SHOW, MF_BYCOMMAND | MF_CHECKED);
+			pMenu->CheckMenuItem(ID_MENU_HIDE, MF_BYCOMMAND | MF_UNCHECKED);
+		}
+	}
+}
+
+void CAngoDlg::OnMenuHide()
+{
+	AfxGetMainWnd()->ShowWindow(SW_MINIMIZE);
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(0);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_MENU_SHOW, MF_BYCOMMAND | MF_UNCHECKED);
+			pMenu->CheckMenuItem(ID_MENU_HIDE, MF_BYCOMMAND | MF_CHECKED);
+		}
+	}
+}
+
+void CAngoDlg::OnMenuUp()
+{
+	CRect rtClient;
+	GetWindowRect(rtClient);
+	::SetWindowPos(m_hWnd, HWND_TOPMOST, rtClient.left, rtClient.top, rtClient.Width(), rtClient.Height(), SWP_SHOWWINDOW);
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(0);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_MENU_UP, MF_BYCOMMAND | MF_CHECKED);
+			pMenu->CheckMenuItem(ID_MENU_DOWN, MF_BYCOMMAND | MF_UNCHECKED);
+		}
+	}
+}
+
+void CAngoDlg::OnMenuDown()
+{
+	CRect rtClient;
+	GetWindowRect(rtClient);
+	::SetWindowPos(m_hWnd, HWND_NOTOPMOST, rtClient.left, rtClient.top, rtClient.Width(), rtClient.Height(), SWP_SHOWWINDOW);
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(0);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_MENU_UP, MF_BYCOMMAND | MF_UNCHECKED);
+			pMenu->CheckMenuItem(ID_MENU_DOWN, MF_BYCOMMAND | MF_CHECKED);
+		}
+	}
+}
