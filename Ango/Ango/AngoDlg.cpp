@@ -53,6 +53,7 @@ BEGIN_MESSAGE_MAP(CAngoDlg, CDialogEx)
 	ON_COMMAND(ID_MENU_HIDE, &CAngoDlg::OnMenuHide)
 	ON_COMMAND(ID_MENU_UP, &CAngoDlg::OnMenuUp)
 	ON_COMMAND(ID_MENU_DOWN, &CAngoDlg::OnMenuDown)
+	ON_COMMAND(ID_ANGO_TIME, &CAngoDlg::OnAngoTime)
 END_MESSAGE_MAP()
 
 
@@ -101,8 +102,8 @@ BOOL CAngoDlg::OnInitDialog()
 	int x = GetSystemMetrics(SM_CXSCREEN);//获取荧幕坐标的宽度，单位为像素
 	int y = GetSystemMetrics(SM_CYSCREEN);//获取荧幕坐标的高度，单位为像素
 	//MoveWindow((x-cr.Width() *2)/2 ,cr.top,cr.Width() *2,cr.Height() *2);//左上角
-	
 	MoveWindow(x-cr.Width()+150 ,y-cr.Height()+150,cr.Width(),cr.Height());
+	//MoveWindow(x-cr.Width() ,y-cr.Height(),cr.Width(),cr.Height());
 
 	OnMenuShow();
 	OnMenuUp();
@@ -487,4 +488,20 @@ void CAngoDlg::OnMenuDown()
 			pMenu->CheckMenuItem(ID_MENU_DOWN, MF_BYCOMMAND | MF_CHECKED);
 		}
 	}
+}
+
+
+void CAngoDlg::OnAngoTime()
+{
+	//WinExec("AngoTime.exe", SW_SHOW);  
+	//WinExec("D:\\Program Files\\Test\\Test.exe", SW_SHOWMAXIMIZED);
+	ShellExecute(NULL, L"open", L"AngoTime.exe", NULL, NULL, SW_SHOWNORMAL);
+
+// 	PROCESS_INFORMATION pi;
+// 	STARTUPINFO si;
+// 	memset(&si, 0, sizeof(si));
+// 	si.cb = sizeof(si);
+// 	si.wShowWindow = SW_SHOW;
+// 	si.dwFlags = STARTF_USESHOWWINDOW;
+// 	BOOL fRet = CreateProcess(L"AngoTime.exe", NULL, NULL, FALSE, NULL, NULL, NULL, NULL, &si, &pi);
 }

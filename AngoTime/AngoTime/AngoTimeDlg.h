@@ -46,7 +46,7 @@ public:
 	CMenu						m_popMenu;
 
 
-	UINT_PTR					m_uTimer;				// 时钟触发器
+	UINT_PTR					m_uClock_Timer;				// 时钟触发器
 	CBrush						m_cBrush;
 	CPoint point1;
 	CPoint point2;
@@ -60,5 +60,10 @@ public:
 
 
 
-	afx_msg void OnMenuExit();
+	afx_msg void				OnMenuExit();				//退出
+	afx_msg void				OnViewUp();					//最前
+	afx_msg void				OnViewDown();				//取消最前
+	afx_msg void				OnViewShow();				//显示
+	afx_msg void				OnViewHide();				//隐藏
+	afx_msg void				OnMenuAngo();				//运行Ango主程序
 };

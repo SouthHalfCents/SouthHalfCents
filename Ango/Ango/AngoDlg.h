@@ -68,4 +68,5 @@ public:
 	BOOL						RegAutoStart();
 	CMenu						m_popMenu;
 
+	afx_msg void				OnAngoTime();			//‘À––AngoTime
 };

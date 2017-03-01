@@ -8,7 +8,7 @@
 #include "afxdialogex.h"
 #include "MsgBoxEx.h"
 
-#define pi 3.1415926535897932384626433832795028841971693993751058209
+#define PI 3.1415926535897932384626433832795028841971693993751058209
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -21,7 +21,7 @@
 
 CAngoTimeDlg::CAngoTimeDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CAngoTimeDlg::IDD, pParent)
-	, m_uTimer(0)
+	, m_uClock_Timer(0)
 	, point1(0)
 	, point2(0)
 	, ss(0)
@@ -46,9 +46,13 @@ BEGIN_MESSAGE_MAP(CAngoTimeDlg, CDialogEx)
 	ON_WM_LBUTTONDOWN()
 	ON_WM_RBUTTONDOWN()
 
-	
 	ON_MESSAGE(MAIN_WM_NOTIFYICON, &CAngoTimeDlg::OnNotifyIcon)
 	ON_COMMAND(ID_MENU_EXIT, &CAngoTimeDlg::OnMenuExit)
+	ON_COMMAND(ID_VIEW_UP, &CAngoTimeDlg::OnViewUp)
+	ON_COMMAND(ID_VIEW_DOWN, &CAngoTimeDlg::OnViewDown)
+	ON_COMMAND(ID_VIEW_SHOW, &CAngoTimeDlg::OnViewShow)
+	ON_COMMAND(ID_VIEW_HIDE, &CAngoTimeDlg::OnViewHide)
+	ON_COMMAND(ID_MENU_ANGO, &CAngoTimeDlg::OnMenuAngo)
 END_MESSAGE_MAP()
 
 
@@ -58,8 +62,7 @@ BOOL CAngoTimeDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
 
-	// 设置此对话框的图标。  当应用程序主窗口不是对话框时，框架将自动
-	//  执行此操作
+	// 设置此对话框的图标。  当应用程序主窗口不是对话框时，框架将自动执行此操作
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
@@ -74,12 +77,26 @@ BOOL CAngoTimeDlg::OnInitDialog()
 		// 如果已有互斥量存在则释放句柄并复位互斥量，退出程序
 		CloseHandle(m_hMutex);
 		m_hMutex = NULL;
-		AngoMessageBox(_T("程序已经在运行"));
+		//AngoMessageBox(_T("程序已经在运行"));
 		CDialog::OnCancel();
 	}
 
 	InitClock();
 
+
+	//调整位置
+	CRect cr;
+	GetClientRect(&cr);//获取对话框客户区域大小
+	ClientToScreen(&cr);//转换为荧幕坐标
+	int x = GetSystemMetrics(SM_CXSCREEN);//获取荧幕坐标的宽度，单位为像素
+	int y = GetSystemMetrics(SM_CYSCREEN);//获取荧幕坐标的高度，单位为像素
+	//MoveWindow((x-cr.Width() *2)/2 ,cr.top,cr.Width() *2,cr.Height() *2);//左上角
+
+	MoveWindow(x - cr.Width(), cr.Height(), cr.Width(), cr.Height());
+
+	OnViewShow();
+	OnViewUp();
+	
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -214,10 +231,9 @@ void CAngoTimeDlg::OnMenuExit()
 //-------------------------------------------------------------------------------------------------------------------------
 void CAngoTimeDlg::InitClock()
 {
-	//设置控制时针走动的触发器为每秒一次，即引发WM_TIMER消息的频率是每秒一次。
-	m_uTimer = this->SetTimer(1, 1000, NULL);
+	//设置控制时针走动的触发器为每秒一次
+	m_uClock_Timer = this->SetTimer(1, 1000, NULL);
 
-	/////////////////////////////////////////////////////////////
 	//画圆形对话框
 	CRgn  rgn;
 	CRect  rc;
@@ -225,34 +241,38 @@ void CAngoTimeDlg::InitClock()
 	rgn.CreateEllipticRgn(rc.left, rc.top, rc.right, rc.bottom);
 	SetWindowRgn(rgn, TRUE);
 	rgn.DeleteObject();
-	//////////////////////////////////////////////////////////////
+	
 	//用时钟背景图片作圆形对话框背景
 	CBitmap   bm;
-	bm.LoadBitmap(IDB_BMP_CLOCK);   //   IDB_BITMAP1为BITMAP资源ID,可以指定bitmap图片的路径   
+	bm.LoadBitmap(IDB_BMP_CLOCK);		//   可以指定bitmap图片的路径   
 	m_cBrush.CreatePatternBrush(&bm);
 }
 
 HBRUSH CAngoTimeDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 {
 	//HBRUSH hbr = CDialog::OnCtlColor(pDC, pWnd, nCtlColor);
-
 	// TODO:  在此更改 DC 的任何属性
-
 	// TODO:  如果默认的不是所需画笔，则返回另一个画笔
 	return m_cBrush;
 }
 
 void CAngoTimeDlg::OnTimer(UINT_PTR nIDEvent)//控制时钟走动
 {
-	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	//判断传递过来的时钟触发器是否是自己定义的时钟触发器
+	switch ()
+	{
+	default:
+		break;
+	}
 	if(nIDEvent == m_uTimer) 
 	{
 		//获得当前系统时间。
 		CTime time = CTime::GetCurrentTime();
 		int C;							//用于计算颜色
-		CPen *PenOld,PenNew;
-		CBrush *BrushOld,BrushNew;
+		CPen *PenOld;
+		CPen PenNew;
+		CBrush *BrushOld;
+		CBrush BrushNew;
 		CClientDC dc(this);
 		int S=time.GetSecond();
 		float M=float(time.GetMinute()+S/60.0);
@@ -260,38 +280,41 @@ void CAngoTimeDlg::OnTimer(UINT_PTR nIDEvent)//控制时钟走动
 		if(H>12)
 			H=H-12;
 		H=H*5;
-		point1.x=103;
-		point1.y=102;
+		point1.x=65;
+		point1.y=64;
 
-//		OnPaint();
+
 		//以下为画时针分针和秒针
 		//方法为画每根针前用背景色擦去上一次画的针（由于背景色渐变，所以加入了计算）
+		//从图片获取背景色rgb
 //////////////////////////////////////////////	
-		if(h<5)
-			C=232;
-		else if(h<10)
-			C=235;
-		else if(h<15)
-			C=242;
-		else if(h<20)
+		if(ss<5)
+			C=250;
+		else if(ss<10)
 			C=247;
-		else if(h<30)
-			C=248;
-		else if(h<35)
+		else if(ss<15)
 			C=244;
-		else if(h<40)
-			C=242;
-		else if(h<47)
+		else if(ss<20)
+			C=240;
+		else if(ss<30)
 			C=235;
+		else if(ss<35)
+			C=235;
+		else if(ss<40)
+			C=240;
+		else if(ss<45)
+			C=243;
+		else if(ss<50)
+			C=245;
 		else
-			C=230;
+			C=250;
 
 		PenNew.CreatePen(PS_SOLID,4,RGB(C,C,C));
 		BrushNew.CreateSolidBrush(RGB(C,C,C));
 		BrushOld=dc.SelectObject(&BrushNew);
 		PenOld=dc.SelectObject(&PenNew);
-		point2.x=103+35*sin(h*pi/30);
-		point2.y=102-35*cos(h*pi/30);
+		point2.x=65+LONG(22*sin(h*PI/30));
+		point2.y=64-LONG(22*cos(h*PI/30));
 		dc.MoveTo(point1);
 		dc.LineTo(point2);
 
@@ -302,38 +325,40 @@ void CAngoTimeDlg::OnTimer(UINT_PTR nIDEvent)//控制时钟走动
 		BrushNew.DeleteObject();
 		BrushNew.CreateSolidBrush(RGB(0,0,0));
 		BrushOld=dc.SelectObject(&BrushNew);
-		point2.x=103+35*sin(H*pi/30);
-		point2.y=102-35*cos(H*pi/30);
+		point2.x=65+LONG(22*sin(H*PI/30));
+		point2.y=64-LONG(22*cos(H*PI/30));
 		dc.MoveTo(point1);
 		dc.LineTo(point2);
 ///////////////////////////////////////////////
-		if(m<5)
-			C=232;
-		else if(m<10)
-			C=235;
-		else if(m<15)
-			C=242;
-		else if(m<20)
+		if(ss<5)
+			C=250;
+		else if(ss<10)
 			C=247;
-		else if(m<30)
-			C=248;
-		else if(m<35)
+		else if(ss<15)
 			C=244;
-		else if(m<40)
-			C=242;
-		else if(m<47)
+		else if(ss<20)
+			C=240;
+		else if(ss<30)
 			C=235;
+		else if(ss<35)
+			C=235;
+		else if(ss<40)
+			C=240;
+		else if(ss<45)
+			C=243;
+		else if(ss<50)
+			C=245;
 		else
-			C=230;
+			C=250;
 
 		BrushNew.DeleteObject();
 		BrushNew.CreateSolidBrush(RGB(C,C,C));
 		BrushOld=dc.SelectObject(&BrushNew);
 		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_SOLID,4,RGB(C,C,C));
+		PenNew.CreatePen(PS_SOLID,3,RGB(C,C,C));
 		PenOld=dc.SelectObject(&PenNew);
-		point2.x=103+55*sin(m*pi/30);
-		point2.y=102-55*cos(m*pi/30);
+		point2.x=65+LONG(30*sin(m*PI/30));
+		point2.y=64-LONG(30*cos(m*PI/30));
 		dc.MoveTo(point1);
 		dc.LineTo(point2);
 
@@ -343,10 +368,10 @@ void CAngoTimeDlg::OnTimer(UINT_PTR nIDEvent)//控制时钟走动
 		BrushNew.CreateSolidBrush(RGB(0,0,0));
 		BrushOld=dc.SelectObject(&BrushNew);
 		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_SOLID,4,RGB(0,0,0));
+		PenNew.CreatePen(PS_SOLID,3,RGB(0,0,0));
 		PenOld=dc.SelectObject(&PenNew);
-		point2.x=103+55*sin(M*pi/30);
-		point2.y=102-55*cos(M*pi/30);
+		point2.x=65+LONG(30*sin(M*PI/30));
+		point2.y=64-LONG(30*cos(M*PI/30));
 		dc.MoveTo(point1);
 		dc.LineTo(point2);
 		
@@ -354,28 +379,30 @@ void CAngoTimeDlg::OnTimer(UINT_PTR nIDEvent)//控制时钟走动
 		ss=(ss+30)%60;
 		S=(S+30)%60;
 		if(ss<5)
-			C=232;
+			C=250;
 		else if(ss<10)
-			C=235;
-		else if(ss<15)
-			C=242;
-		else if(ss<20)
 			C=247;
-		else if(ss<30)
-			C=248;
-		else if(ss<35)
+		else if(ss<15)
 			C=244;
-		else if(ss<40)
-			C=242;
-		else if(ss<47)
+		else if(ss<20)
+			C=240;
+		else if(ss<30)
 			C=235;
+		else if(ss<35)
+			C=235;
+		else if(ss<40)
+			C=240;
+		else if(ss<45)
+			C=243;
+		else if(ss<50)
+			C=245;
 		else
-			C=230;
+			C=250;
 		PenNew.DeleteObject();
 		PenNew.CreatePen(PS_DASHDOTDOT,2,RGB(C,C,C));
 		PenOld=dc.SelectObject(&PenNew);
-		point2.x=103+10*sin(ss*pi/30);
-		point2.y=102-10*cos(ss*pi/30);
+		point2.x=65+LONG(6*sin(ss*PI/30));
+		point2.y=64-LONG(6*cos(ss*PI/30));
 		dc.MoveTo(point1);
 		dc.LineTo(point2);
 
@@ -383,8 +410,8 @@ void CAngoTimeDlg::OnTimer(UINT_PTR nIDEvent)//控制时钟走动
 		PenNew.DeleteObject();
 		PenNew.CreatePen(PS_DASHDOTDOT,2,RGB(255,0,0));
 		PenOld=dc.SelectObject(&PenNew);
-		point2.x=103+10*sin(S*pi/30);
-		point2.y=102-10*cos(S*pi/30);
+		point2.x=65+LONG(6*sin(S*PI/30));
+		point2.y=64-LONG(6*cos(S*PI/30));
 		dc.MoveTo(point1);
 		dc.LineTo(point2);
 
@@ -393,31 +420,33 @@ void CAngoTimeDlg::OnTimer(UINT_PTR nIDEvent)//控制时钟走动
 		ss=(ss+30)%60;
 		S=(S+30)%60;
 		if(ss<5)
-			C=232;
+			C=250;
 		else if(ss<10)
-			C=235;
-		else if(ss<15)
-			C=242;
-		else if(ss<20)
 			C=247;
-		else if(ss<30)
-			C=248;
-		else if(ss<35)
+		else if(ss<15)
 			C=244;
-		else if(ss<40)
-			C=242;
-		else if(ss<47)
+		else if(ss<20)
+			C=240;
+		else if(ss<30)
 			C=235;
+		else if(ss<35)
+			C=235;
+		else if(ss<40)
+			C=240;
+		else if(ss<45)
+			C=243;
+		else if(ss<50)
+			C=245;
 		else
-			C=230;
+			C=250;
 //		BrushNew.DeleteObject();
 //		BrushNew.CreateSolidBrush(RGB(C,C,C));
 //		BrushOld=dc.SelectObject(&BrushNew);
 		PenNew.DeleteObject();
 		PenNew.CreatePen(PS_DASHDOTDOT,2,RGB(C,C,C));
 		PenOld=dc.SelectObject(&PenNew);
-		point2.x=103+63*sin(ss*pi/30);
-		point2.y=102-63*cos(ss*pi/30);
+		point2.x=65+LONG(30*sin(ss*PI/30));
+		point2.y=64-LONG(30*cos(ss*PI/30));
 		dc.MoveTo(point1);
 		dc.LineTo(point2);
 
@@ -428,26 +457,14 @@ void CAngoTimeDlg::OnTimer(UINT_PTR nIDEvent)//控制时钟走动
 		PenNew.DeleteObject();
 		PenNew.CreatePen(PS_DASHDOTDOT,2,RGB(255,0,0));
 		PenOld=dc.SelectObject(&PenNew);
-		point2.x=103+63*sin(S*pi/30);
-		point2.y=102-63*cos(S*pi/30);
+		point2.x=65+LONG(30*sin(S*PI/30));
+		point2.y=64-LONG(30*cos(S*PI/30));
 		dc.MoveTo(point1);
 		dc.LineTo(point2);
 
 
 
-/*//////////////////////////////////////////////////////////////////
-		CBrush m_brush_trad_s;
-		CBitmap   bm_trad_s;   
-		bm_trad_s.LoadBitmap(IDB_Trad_s);   //   IDB_Trad_s为BITMAP资源ID,可以指定bitmap图片的路径   
-		m_brush_trad_s.CreatePatternBrush(&bm_trad_s); 
-		BrushOld=dc.SelectObject(&m_brush_trad_s);
-		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_NULL,1,RGB(255,255,255));//(PS_DASHDOTDOT,2,RGB(255,0,0));
-		PenOld=dc.SelectObject(&PenNew);
-		point2.x=103+63*sin(S*pi/30);
-		point2.y=102-63*cos(S*pi/30);
-		dc.Rectangle(94,40,107,169);
-*///////////////////////////////////////////////////////////////////
+
 		h=H;m=M;ss=S;
 //////////////////////////////////////////////////////////////////
 		dc.SetPixel(point1,RGB(0,0,0));
@@ -492,10 +509,100 @@ void CAngoTimeDlg::OnTimer(UINT_PTR nIDEvent)//控制时钟走动
 // 		//判断是否半点报时
 // 		if(halfhoursound&&S==0&&(M==0||M==30))
 // 			SoundTime();
-		this->UpdateData(false);
+		//this->UpdateData(false);
 	}
 	CDialog::OnTimer(nIDEvent);
 }
 
 
 //-------------------------------------------------------------------------------------------------------------------------
+
+void CAngoTimeDlg::OnViewUp()
+{
+	CRect rtClient;
+	GetWindowRect(rtClient);
+	::SetWindowPos(m_hWnd, HWND_TOPMOST, rtClient.left, rtClient.top, rtClient.Width(), rtClient.Height(), SWP_SHOWWINDOW);
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(0);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_VIEW_UP, MF_BYCOMMAND | MF_CHECKED);
+			pMenu->CheckMenuItem(ID_VIEW_DOWN, MF_BYCOMMAND | MF_UNCHECKED);
+		}
+	}
+}
+
+
+void CAngoTimeDlg::OnViewDown()
+{
+	CRect rtClient;
+	GetWindowRect(rtClient);
+	::SetWindowPos(m_hWnd, HWND_NOTOPMOST, rtClient.left, rtClient.top, rtClient.Width(), rtClient.Height(), SWP_SHOWWINDOW);
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(0);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_VIEW_UP, MF_BYCOMMAND | MF_UNCHECKED);
+			pMenu->CheckMenuItem(ID_VIEW_DOWN, MF_BYCOMMAND | MF_CHECKED);
+		}
+	}
+}
+
+
+void CAngoTimeDlg::OnViewShow()
+{
+	//这里貌似只有写这样两句才能保证恢复窗口后，该窗口处于活动状态（在最前面）
+	AfxGetMainWnd()->ShowWindow(SW_SHOW);
+	AfxGetMainWnd()->ShowWindow(SW_RESTORE);
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	//设置第一层：工具箱勾选
+	//pmenu->CheckMenuItem(ID_MENU_TOOL, MF_BYCOMMAND | MF_CHECKED);	//通过命令ID，选中ID_MENU_TOOL
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(0);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_VIEW_SHOW, MF_BYCOMMAND | MF_CHECKED);
+			pMenu->CheckMenuItem(ID_VIEW_HIDE, MF_BYCOMMAND | MF_UNCHECKED);
+		}
+	}
+}
+
+
+void CAngoTimeDlg::OnViewHide()
+{
+	AfxGetMainWnd()->ShowWindow(SW_MINIMIZE);
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(0);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_VIEW_SHOW, MF_BYCOMMAND | MF_UNCHECKED);
+			pMenu->CheckMenuItem(ID_VIEW_HIDE, MF_BYCOMMAND | MF_CHECKED);
+		}
+	}
+}
+
+
+void CAngoTimeDlg::OnMenuAngo()
+{
+	//这个API会提示是否以管理员身份启动
+	ShellExecute(NULL, L"open", L"Ango.exe", NULL, NULL, SW_SHOWNORMAL);
+
+// 	PROCESS_INFORMATION pi;
+// 	STARTUPINFO si;
+// 	memset(&si, 0, sizeof(si));
+// 	si.cb = sizeof(si);
+// 	si.wShowWindow = SW_SHOW;
+// 	si.dwFlags = STARTF_USESHOWWINDOW;
+// 	BOOL fRet = CreateProcess(L"Ango.exe", NULL, NULL, FALSE, NULL, NULL, NULL, NULL, &si, &pi);
+}
