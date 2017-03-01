@@ -40,6 +40,13 @@ protected:
 	afx_msg LRESULT				OnNotifyIcon(WPARAM, LPARAM);
 	virtual void				WinHelpInternal(DWORD_PTR dwData, UINT nCmd = HELP_CONTEXT);
 
+	struct tagRGB
+	{
+		int x;
+		int y;
+		int z;
+	};
+
 public:
 	
 	CTrayIcon					m_trayIcon;				//通知区域图标
@@ -48,22 +55,24 @@ public:
 
 	UINT_PTR					m_uClock_Timer;				// 时钟触发器
 	CBrush						m_cBrush;
-	CPoint point1;
-	CPoint point2;
-	int ss;
-	float m;
-	float h;
+	CPoint						m_Point_Start;
+	CPoint						m_Point_End;
+	int							m_s;
+	float						m_m;
+	float						m_h;
 	afx_msg HBRUSH				OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
-	afx_msg void OnTimer(UINT_PTR nIDEvent);
-	void						InitClock();			// 初始化
-	
+	afx_msg void				OnTimer(UINT_PTR nIDEvent);
+	void						InitClock();					// 初始化
+	void						ClockTime();					// 执行时钟操作
+	void						GetRgb(CPoint &cPoint, tagRGB &tRgb);			// 根据位置获取RGB值
+	void						GetRgb(int &nPos, tagRGB &tRgb);				// 根据时间位置(x/60)获取RGB值
 
 
 
-	afx_msg void				OnMenuExit();				//退出
-	afx_msg void				OnViewUp();					//最前
-	afx_msg void				OnViewDown();				//取消最前
-	afx_msg void				OnViewShow();				//显示
-	afx_msg void				OnViewHide();				//隐藏
-	afx_msg void				OnMenuAngo();				//运行Ango主程序
+	afx_msg void				OnMenuExit();					//退出
+	afx_msg void				OnViewUp();						//最前
+	afx_msg void				OnViewDown();					//取消最前
+	afx_msg void				OnViewShow();					//显示
+	afx_msg void				OnViewHide();					//隐藏
+	afx_msg void				OnMenuAngo();					//运行Ango主程序
 };

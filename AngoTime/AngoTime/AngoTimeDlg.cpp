@@ -22,11 +22,11 @@
 CAngoTimeDlg::CAngoTimeDlg(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CAngoTimeDlg::IDD, pParent)
 	, m_uClock_Timer(0)
-	, point1(0)
-	, point2(0)
-	, ss(0)
-	, m(0)
-	, h(0)
+	, m_Point_Start(0)
+	, m_Point_End(0)
+	, m_s(0)
+	, m_m(0)
+	, m_h(0)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_popMenu.LoadMenu(IDR_MENU_RBTN);	
@@ -126,7 +126,7 @@ void CAngoTimeDlg::OnPaint()
 	}
 	else
 	{
-		OnTimer(m_uTimer);
+		OnTimer(m_uClock_Timer);
 		CDialogEx::OnPaint();
 	}
 }
@@ -256,228 +256,191 @@ HBRUSH CAngoTimeDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return m_cBrush;
 }
 
+void  CAngoTimeDlg::GetRgb(int &nPos, tagRGB &tRgb)
+{
+	int C = 0;
+
+	if (nPos < 5)
+		C = 250;
+	else if (nPos < 10)
+		C = 247;
+	else if (nPos < 15)
+		C = 244;
+	else if (nPos < 20)
+		C = 240;
+	else if (nPos < 30)
+		C = 235;
+	else if (nPos < 35)
+		C = 235;
+	else if (nPos < 40)
+		C = 240;
+	else if (nPos < 45)
+		C = 243;
+	else if (nPos < 50)
+		C = 245;
+	else
+		C = 250;
+
+	tRgb.x = C;
+	tRgb.y = C;
+	tRgb.z = C;
+
+}
+
+void  CAngoTimeDlg::GetRgb(CPoint &cPoint, tagRGB &tRgb)
+{
+
+}
+
+
+void  CAngoTimeDlg::ClockTime()
+{
+	//获得当前系统时间。
+	CTime time = CTime::GetCurrentTime();
+	tagRGB tRgb = { 0 };
+	CPen *pPenOld = NULL;
+	CPen PenNew;
+	CBrush *pBrushOld = NULL;
+	CBrush BrushNew;
+	CClientDC dc(this);
+	int   S = time.GetSecond();
+	float M = float(time.GetMinute() + S / 60.0);
+	float H = float(time.GetHour() + M / 60.0);
+	if (H > 12)
+		H = H - 12;
+	H = H * 5;
+	m_Point_Start.x = 65;
+	m_Point_Start.y = 64;
+
+
+	//以下为画时针分针和秒针
+	//方法为画每根针前用背景色擦去上一次画的针（由于背景色渐变，所以加入了计算）
+	//从图片获取背景色rgb
+	//////////////////////////////////////////////	
+	GetRgb(m_s, tRgb);
+
+	PenNew.CreatePen(PS_SOLID, 4, RGB(tRgb.x, tRgb.y, tRgb.z));
+	BrushNew.CreateSolidBrush(RGB(tRgb.x, tRgb.y, tRgb.z));
+	pBrushOld = dc.SelectObject(&BrushNew);
+	pPenOld = dc.SelectObject(&PenNew);
+	m_Point_End.x = 65 + LONG(22 * sin(m_h*PI / 30));
+	m_Point_End.y = 64 - LONG(22 * cos(m_h*PI / 30));
+	dc.MoveTo(m_Point_Start);
+	dc.LineTo(m_Point_End);
+
+
+	PenNew.DeleteObject();
+	PenNew.CreatePen(PS_SOLID, 4, RGB(0, 0, 0));
+	pPenOld = dc.SelectObject(&PenNew);
+	BrushNew.DeleteObject();
+	BrushNew.CreateSolidBrush(RGB(0, 0, 0));
+	pBrushOld = dc.SelectObject(&BrushNew);
+	m_Point_End.x = 65 + LONG(22 * sin(H*PI / 30));
+	m_Point_End.y = 64 - LONG(22 * cos(H*PI / 30));
+	dc.MoveTo(m_Point_Start);
+	dc.LineTo(m_Point_End);
+	///////////////////////////////////////////////
+	GetRgb(m_s, tRgb);
+
+	BrushNew.DeleteObject();
+	BrushNew.CreateSolidBrush(RGB(tRgb.x, tRgb.y, tRgb.z));
+	pBrushOld = dc.SelectObject(&BrushNew);
+	PenNew.DeleteObject();
+	PenNew.CreatePen(PS_SOLID, 3, RGB(tRgb.x, tRgb.y, tRgb.z));
+	pPenOld = dc.SelectObject(&PenNew);
+	m_Point_End.x = 65 + LONG(30 * sin(m_m*PI / 30));
+	m_Point_End.y = 64 - LONG(30 * cos(m_m*PI / 30));
+	dc.MoveTo(m_Point_Start);
+	dc.LineTo(m_Point_End);
+
+
+
+	BrushNew.DeleteObject();
+	BrushNew.CreateSolidBrush(RGB(0, 0, 0));
+	pBrushOld = dc.SelectObject(&BrushNew);
+	PenNew.DeleteObject();
+	PenNew.CreatePen(PS_SOLID, 3, RGB(0, 0, 0));
+	pPenOld = dc.SelectObject(&PenNew);
+	m_Point_End.x = 65 + LONG(30 * sin(M*PI / 30));
+	m_Point_End.y = 64 - LONG(30 * cos(M*PI / 30));
+	dc.MoveTo(m_Point_Start);
+	dc.LineTo(m_Point_End);
+
+	////////////////////////////////////////////	画秒针的短轴	
+	m_s = (m_s + 30) % 60;
+	S   = (S + 30) % 60;
+	GetRgb(m_s, tRgb);
+
+	PenNew.DeleteObject();
+	PenNew.CreatePen(PS_DASHDOTDOT, 2, RGB(tRgb.x, tRgb.y, tRgb.z));
+	pPenOld = dc.SelectObject(&PenNew);
+	m_Point_End.x = 65 + LONG(6 * sin(m_s*PI / 30));
+	m_Point_End.y = 64 - LONG(6 * cos(m_s*PI / 30));
+	dc.MoveTo(m_Point_Start);
+	dc.LineTo(m_Point_End);
+
+
+	PenNew.DeleteObject();
+	PenNew.CreatePen(PS_DASHDOTDOT, 2, RGB(255, 0, 0));
+	pPenOld = dc.SelectObject(&PenNew);
+	m_Point_End.x = 65 + LONG(6 * sin(S*PI / 30));
+	m_Point_End.y = 64 - LONG(6 * cos(S*PI / 30));
+	dc.MoveTo(m_Point_Start);
+	dc.LineTo(m_Point_End);
+
+
+	///////////////////////画秒针的长轴
+	m_s = (m_s + 30) % 60;
+	S   = (S + 30) % 60;
+	GetRgb(m_s, tRgb);
+
+	//		BrushNew.DeleteObject();
+	//		BrushNew.CreateSolidBrush(RGB(C,C,C));
+	//		BrushOld=dc.SelectObject(&BrushNew);
+	PenNew.DeleteObject();
+	PenNew.CreatePen(PS_DASHDOTDOT, 2, RGB(tRgb.x, tRgb.y, tRgb.z));
+	pPenOld = dc.SelectObject(&PenNew);
+	m_Point_End.x = 65 + LONG(30 * sin(m_s*PI / 30));
+	m_Point_End.y = 64 - LONG(30 * cos(m_s*PI / 30));
+	dc.MoveTo(m_Point_Start);
+	dc.LineTo(m_Point_End);
+
+
+	//		BrushNew.DeleteObject();
+	//		BrushNew.CreateSolidBrush(RGB(255,0,0));
+	//		BrushOld=dc.SelectObject(&BrushNew);
+	PenNew.DeleteObject();
+	PenNew.CreatePen(PS_DASHDOTDOT, 2, RGB(255, 0, 0));
+	pPenOld = dc.SelectObject(&PenNew);
+	m_Point_End.x = 65 + LONG(30 * sin(S*PI / 30));
+	m_Point_End.y = 64 - LONG(30 * cos(S*PI / 30));
+	dc.MoveTo(m_Point_Start);
+	dc.LineTo(m_Point_End);
+
+
+
+	//////////////////////////////////////////////////////////////////
+	m_h = H; m_m = M; m_s = S;
+	//////////////////////////////////////////////////////////////////
+	dc.SetPixel(m_Point_Start, RGB(0, 0, 0));
+	dc.SetPixel(m_Point_Start.x + 1, m_Point_Start.y,	  RGB(0, 0, 0));
+	dc.SetPixel(m_Point_Start.x,	 m_Point_Start.y + 1, RGB(0, 0, 0));
+	dc.SetPixel(m_Point_Start.x + 1, m_Point_Start.y + 1, RGB(0, 0, 0));
+	dc.SetPixel(m_Point_Start.x - 1, m_Point_Start.y,	  RGB(0, 0, 0));
+	dc.SetPixel(m_Point_Start.x,	 m_Point_Start.y - 1, RGB(0, 0, 0));
+	dc.SetPixel(m_Point_Start.x - 1, m_Point_Start.y - 1, RGB(0, 0, 0));
+}
+
 void CAngoTimeDlg::OnTimer(UINT_PTR nIDEvent)//控制时钟走动
 {
 	//判断传递过来的时钟触发器是否是自己定义的时钟触发器
-	switch ()
+
+	if (nIDEvent = m_uClock_Timer)
 	{
-	default:
-		break;
+		ClockTime();
 	}
-	if(nIDEvent == m_uTimer) 
+	else
 	{
-		//获得当前系统时间。
-		CTime time = CTime::GetCurrentTime();
-		int C;							//用于计算颜色
-		CPen *PenOld;
-		CPen PenNew;
-		CBrush *BrushOld;
-		CBrush BrushNew;
-		CClientDC dc(this);
-		int S=time.GetSecond();
-		float M=float(time.GetMinute()+S/60.0);
-		float H=float(time.GetHour()+M/60.0);
-		if(H>12)
-			H=H-12;
-		H=H*5;
-		point1.x=65;
-		point1.y=64;
-
-
-		//以下为画时针分针和秒针
-		//方法为画每根针前用背景色擦去上一次画的针（由于背景色渐变，所以加入了计算）
-		//从图片获取背景色rgb
-//////////////////////////////////////////////	
-		if(ss<5)
-			C=250;
-		else if(ss<10)
-			C=247;
-		else if(ss<15)
-			C=244;
-		else if(ss<20)
-			C=240;
-		else if(ss<30)
-			C=235;
-		else if(ss<35)
-			C=235;
-		else if(ss<40)
-			C=240;
-		else if(ss<45)
-			C=243;
-		else if(ss<50)
-			C=245;
-		else
-			C=250;
-
-		PenNew.CreatePen(PS_SOLID,4,RGB(C,C,C));
-		BrushNew.CreateSolidBrush(RGB(C,C,C));
-		BrushOld=dc.SelectObject(&BrushNew);
-		PenOld=dc.SelectObject(&PenNew);
-		point2.x=65+LONG(22*sin(h*PI/30));
-		point2.y=64-LONG(22*cos(h*PI/30));
-		dc.MoveTo(point1);
-		dc.LineTo(point2);
-
-
-		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_SOLID,4,RGB(0,0,0));
-		PenOld=dc.SelectObject(&PenNew);
-		BrushNew.DeleteObject();
-		BrushNew.CreateSolidBrush(RGB(0,0,0));
-		BrushOld=dc.SelectObject(&BrushNew);
-		point2.x=65+LONG(22*sin(H*PI/30));
-		point2.y=64-LONG(22*cos(H*PI/30));
-		dc.MoveTo(point1);
-		dc.LineTo(point2);
-///////////////////////////////////////////////
-		if(ss<5)
-			C=250;
-		else if(ss<10)
-			C=247;
-		else if(ss<15)
-			C=244;
-		else if(ss<20)
-			C=240;
-		else if(ss<30)
-			C=235;
-		else if(ss<35)
-			C=235;
-		else if(ss<40)
-			C=240;
-		else if(ss<45)
-			C=243;
-		else if(ss<50)
-			C=245;
-		else
-			C=250;
-
-		BrushNew.DeleteObject();
-		BrushNew.CreateSolidBrush(RGB(C,C,C));
-		BrushOld=dc.SelectObject(&BrushNew);
-		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_SOLID,3,RGB(C,C,C));
-		PenOld=dc.SelectObject(&PenNew);
-		point2.x=65+LONG(30*sin(m*PI/30));
-		point2.y=64-LONG(30*cos(m*PI/30));
-		dc.MoveTo(point1);
-		dc.LineTo(point2);
-
-
-
-		BrushNew.DeleteObject();
-		BrushNew.CreateSolidBrush(RGB(0,0,0));
-		BrushOld=dc.SelectObject(&BrushNew);
-		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_SOLID,3,RGB(0,0,0));
-		PenOld=dc.SelectObject(&PenNew);
-		point2.x=65+LONG(30*sin(M*PI/30));
-		point2.y=64-LONG(30*cos(M*PI/30));
-		dc.MoveTo(point1);
-		dc.LineTo(point2);
-		
-////////////////////////////////////////////	画秒针的短轴	
-		ss=(ss+30)%60;
-		S=(S+30)%60;
-		if(ss<5)
-			C=250;
-		else if(ss<10)
-			C=247;
-		else if(ss<15)
-			C=244;
-		else if(ss<20)
-			C=240;
-		else if(ss<30)
-			C=235;
-		else if(ss<35)
-			C=235;
-		else if(ss<40)
-			C=240;
-		else if(ss<45)
-			C=243;
-		else if(ss<50)
-			C=245;
-		else
-			C=250;
-		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_DASHDOTDOT,2,RGB(C,C,C));
-		PenOld=dc.SelectObject(&PenNew);
-		point2.x=65+LONG(6*sin(ss*PI/30));
-		point2.y=64-LONG(6*cos(ss*PI/30));
-		dc.MoveTo(point1);
-		dc.LineTo(point2);
-
-
-		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_DASHDOTDOT,2,RGB(255,0,0));
-		PenOld=dc.SelectObject(&PenNew);
-		point2.x=65+LONG(6*sin(S*PI/30));
-		point2.y=64-LONG(6*cos(S*PI/30));
-		dc.MoveTo(point1);
-		dc.LineTo(point2);
-
-
-///////////////////////画秒针的长轴
-		ss=(ss+30)%60;
-		S=(S+30)%60;
-		if(ss<5)
-			C=250;
-		else if(ss<10)
-			C=247;
-		else if(ss<15)
-			C=244;
-		else if(ss<20)
-			C=240;
-		else if(ss<30)
-			C=235;
-		else if(ss<35)
-			C=235;
-		else if(ss<40)
-			C=240;
-		else if(ss<45)
-			C=243;
-		else if(ss<50)
-			C=245;
-		else
-			C=250;
-//		BrushNew.DeleteObject();
-//		BrushNew.CreateSolidBrush(RGB(C,C,C));
-//		BrushOld=dc.SelectObject(&BrushNew);
-		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_DASHDOTDOT,2,RGB(C,C,C));
-		PenOld=dc.SelectObject(&PenNew);
-		point2.x=65+LONG(30*sin(ss*PI/30));
-		point2.y=64-LONG(30*cos(ss*PI/30));
-		dc.MoveTo(point1);
-		dc.LineTo(point2);
-
-
-//		BrushNew.DeleteObject();
-//		BrushNew.CreateSolidBrush(RGB(255,0,0));
-//		BrushOld=dc.SelectObject(&BrushNew);
-		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_DASHDOTDOT,2,RGB(255,0,0));
-		PenOld=dc.SelectObject(&PenNew);
-		point2.x=65+LONG(30*sin(S*PI/30));
-		point2.y=64-LONG(30*cos(S*PI/30));
-		dc.MoveTo(point1);
-		dc.LineTo(point2);
-
-
-
-
-		h=H;m=M;ss=S;
-//////////////////////////////////////////////////////////////////
-		dc.SetPixel(point1,RGB(0,0,0));
-		dc.SetPixel(point1.x+1,point1.y,RGB(0,0,0));
-		dc.SetPixel(point1.x,point1.y+1,RGB(0,0,0));
-		dc.SetPixel(point1.x+1,point1.y+1,RGB(0,0,0));
-		dc.SetPixel(point1.x-1,point1.y,RGB(0,0,0));
-		dc.SetPixel(point1.x,point1.y-1,RGB(0,0,0));
-		dc.SetPixel(point1.x-1,point1.y-1,RGB(0,0,0));
-
-
-
-
 
 // 		for(int i=0;i<ringnum;i++)//判断是否有闹钟应被执行
 // 		{
