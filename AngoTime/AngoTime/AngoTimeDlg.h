@@ -42,9 +42,9 @@ protected:
 
 	struct tagRGB
 	{
-		int x;
-		int y;
-		int z;
+		DWORD r;
+		DWORD g;
+		DWORD b;
 	};
 
 public:
@@ -57,15 +57,22 @@ public:
 	CBrush						m_cBrush;
 	CPoint						m_Point_Start;
 	CPoint						m_Point_End;
-	int							m_s;
-	float						m_m;
-	float						m_h;
+
+	CPoint						m_point_lastHour;			//上次时针轴坐标
+	CPoint						m_point_lastMin;			//上次分针轴坐标
+	CPoint						m_point_lastSecL;			//上次秒针长轴坐标
+	CPoint						m_point_lastSecS;			//上次秒针短轴坐标
+	BOOL						m_bFirstClock;				//第一次进入定时器
+
+	COLORREF					m_cLastHour;
+	COLORREF					m_cLastMin;
+	COLORREF					m_cLastSecL;
+	COLORREF					m_cLastSecS;
+
 	afx_msg HBRUSH				OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void				OnTimer(UINT_PTR nIDEvent);
 	void						InitClock();					// 初始化
 	void						ClockTime();					// 执行时钟操作
-	void						GetRgb(CPoint &cPoint, tagRGB &tRgb);			// 根据位置获取RGB值
-	void						GetRgb(int &nPos, tagRGB &tRgb);				// 根据时间位置(x/60)获取RGB值
 
 
 
@@ -75,4 +82,22 @@ public:
 	afx_msg void				OnViewShow();					//显示
 	afx_msg void				OnViewHide();					//隐藏
 	afx_msg void				OnMenuAngo();					//运行Ango主程序
+
+
+	void						InitThread();
+
+
+	afx_msg void OnClose();
+	afx_msg void OnSaytimeNow();
 };
+
+extern CWinThread*			g_pthAlarm;
+extern CWinThread*			g_pthSayTime;
+extern CWinThread*			g_pthWork;
+extern BOOL					g_bWork;
+
+
+extern DWORD				g_dwTasktype;
+static UINT					ThProcAlarm(LPVOID pParam);
+static UINT					ThProcSayTime(LPVOID pParam);
+static UINT					ThProcWork(LPVOID pParam);

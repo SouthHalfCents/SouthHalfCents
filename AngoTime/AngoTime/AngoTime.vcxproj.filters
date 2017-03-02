@@ -87,4 +87,87 @@
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>
+  <ItemGroup>
+    <Media Include="res\wav\TIMENOW.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\AM.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\EM.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\MIN.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\MORNING.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\PM.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\POINT.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\Sound.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T00.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T01.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T02.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T03.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T04.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T05.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T06.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T07.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T08.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T09.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T1.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T10.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T11.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T12.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T2.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T20.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T30.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T40.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+    <Media Include="res\wav\T50.wav">
+      <Filter>资源文件</Filter>
+    </Media>
+  </ItemGroup>
 </Project>

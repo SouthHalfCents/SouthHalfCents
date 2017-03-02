@@ -218,6 +218,35 @@
     <Image Include="res\AngoTime.ico" />
     <Image Include="res\clock.bmp" />
   </ItemGroup>
+  <ItemGroup>
+    <Media Include="res\wav\AM.wav" />
+    <Media Include="res\wav\EM.wav" />
+    <Media Include="res\wav\MIN.wav" />
+    <Media Include="res\wav\MORNING.wav" />
+    <Media Include="res\wav\PM.wav" />
+    <Media Include="res\wav\POINT.wav" />
+    <Media Include="res\wav\Sound.wav" />
+    <Media Include="res\wav\T00.wav" />
+    <Media Include="res\wav\T01.wav" />
+    <Media Include="res\wav\T02.wav" />
+    <Media Include="res\wav\T03.wav" />
+    <Media Include="res\wav\T04.wav" />
+    <Media Include="res\wav\T05.wav" />
+    <Media Include="res\wav\T06.wav" />
+    <Media Include="res\wav\T07.wav" />
+    <Media Include="res\wav\T08.wav" />
+    <Media Include="res\wav\T09.wav" />
+    <Media Include="res\wav\T1.wav" />
+    <Media Include="res\wav\T10.wav" />
+    <Media Include="res\wav\T11.wav" />
+    <Media Include="res\wav\T12.wav" />
+    <Media Include="res\wav\T2.wav" />
+    <Media Include="res\wav\T20.wav" />
+    <Media Include="res\wav\T30.wav" />
+    <Media Include="res\wav\T40.wav" />
+    <Media Include="res\wav\T50.wav" />
+    <Media Include="res\wav\TIMENOW.wav" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
