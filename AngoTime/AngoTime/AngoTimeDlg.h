@@ -4,6 +4,7 @@
 
 #pragma once
 #include "TrayIcon.h"
+#include <mutex>          // std::mutex
 
 // CAngoTimeDlg ¶Ô»°¿ò
 class CAngoTimeDlg : public CDialogEx
@@ -91,6 +92,7 @@ public:
 	afx_msg void OnSaytimeNow();
 };
 
+extern std::mutex			g_Mutex;
 extern CWinThread*			g_pthAlarm;
 extern CWinThread*			g_pthSayTime;
 extern CWinThread*			g_pthWork;

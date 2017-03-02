@@ -25,6 +25,7 @@ CWinThread*			g_pthSayTime	=	NULL;
 CWinThread*			g_pthWork		=	NULL;
 BOOL				g_bWork			=	TRUE;
 DWORD				g_dwTasktype	=	0;
+std::mutex			g_Mutex;
 
 // CAngoTimeDlg 对话框
 
@@ -83,13 +84,19 @@ void CAngoTimeDlg::OnClose()
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
 
 	g_bWork = FALSE;
+	
+
+	g_Mutex.lock();
 	g_pthAlarm->ResumeThread();
 	g_pthSayTime->ResumeThread();
 	g_pthWork->ResumeThread();
+	g_Mutex.unlock();
 
+
+	WaitForSingleObject(g_pthWork->m_hThread, INFINITE);
 	WaitForSingleObject(g_pthAlarm->m_hThread, INFINITE);
 	WaitForSingleObject(g_pthSayTime->m_hThread, INFINITE);
-	WaitForSingleObject(g_pthWork->m_hThread, INFINITE);
+	
 
 
 	CDialogEx::OnClose();
@@ -643,18 +650,18 @@ UINT ThProcAlarm(LPVOID pParam)
 	CString strPath;
 	while (g_bWork)
 	{
-		g_pthSayTime->SuspendThread();//挂起其它两个线程
-		g_pthWork->SuspendThread();
+		g_Mutex.lock();
+
 		strPath = "c:\\win95\\media\\The Microsoft Sound.wav";
 		PlaySound(strPath, NULL, SND_FILENAME | SND_ASYNC);
 // 		PlaySound(MAKEINTRESOURCE(IDR_WAVESOUND), AfxGetApp()->m_hInstance, SND_RESOURCE | SND_ASYNC | SND_NODEFAULT);
 // 		Sleep(7000);
 // 		PlaySound(MAKEINTRESOURCE(IDR_WAVESOUND), AfxGetApp()->m_hInstance, SND_RESOURCE | SND_ASYNC | SND_NODEFAULT);
 // 		Sleep(8000);
-		g_pthSayTime->ResumeThread();//恢复其它线程
-		g_pthWork->ResumeThread();
-		g_pthAlarm->SuspendThread();
+		
+		g_Mutex.unlock();
 	}
+	
 	TRACE("exit ThProcAlarm\n");
 	return 0;
 }
@@ -662,9 +669,7 @@ UINT ThProcSayTime(LPVOID pParam)
 {
 	while (g_bWork)
 	{
-		//挂起其它线程
-		g_pthWork->SuspendThread();
-		g_pthAlarm->SuspendThread();
+		g_Mutex.lock();
 
 		CTime m_NowTime;
 		m_NowTime = CTime::GetCurrentTime();
@@ -851,10 +856,7 @@ UINT ThProcSayTime(LPVOID pParam)
 			PlaySound(MAKEINTRESOURCE(IDR_WAVE_MIN), AfxGetApp()->m_hInstance, SND_RESOURCE | SND_ASYNC | SND_NODEFAULT);
 		}
 
-
-		//恢复其它线程，挂起本线程
-		g_pthWork->ResumeThread();
-		g_pthAlarm->ResumeThread();
+		g_Mutex.unlock();
 		g_pthSayTime->SuspendThread();
 
 	}
@@ -866,6 +868,8 @@ UINT ThProcWork(LPVOID pParam)
 {
 	while (g_bWork)
 	{
+		TRACE("g_pthWork->SuspendThread()\n");
+		Sleep(1000);
 		g_pthWork->SuspendThread();
 	}
 
