@@ -27,6 +27,7 @@ protected:
 	// 生成的消息映射函数
 	virtual BOOL				OnInitDialog();
 	afx_msg int					OnCreate(LPCREATESTRUCT lpCreateStruct);
+	afx_msg void				OnClose();
 	afx_msg void				OnPaint();
 	afx_msg HCURSOR				OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
@@ -85,21 +86,64 @@ public:
 	afx_msg void				OnMenuAngo();					//运行Ango主程序
 
 
-	void						InitThread();
+	int							m_nSayTime;						//报时设置
+	BOOL						m_bClockState;					//闹钟启动状态
+	BOOL						m_bAutoRun;						//开机启动
+	void						InitSettings();					//读取配置，设置对应界面显示
 
+	afx_msg void				OnSaytimeNow();
+	afx_msg void				OnSaytimeAll();
+	afx_msg void				OnSaytimeHalf();
+	afx_msg void				OnSaytimeClose();
+	afx_msg void				OnCfgAutorun();					//开机启动
 
-	afx_msg void OnClose();
-	afx_msg void OnSaytimeNow();
+	afx_msg void				OnClockOn();
+	afx_msg void				OnClockOff();
+	afx_msg void				OnClockConfig();				//闹钟设置
+	afx_msg void				OnMenuTask();					//定时任务
 };
 
-extern std::mutex			g_Mutex;
-extern CWinThread*			g_pthAlarm;
-extern CWinThread*			g_pthSayTime;
-extern CWinThread*			g_pthWork;
+
+extern HANDLE				g_hThread_Alarm;
+extern HANDLE				g_hThread_SayTime;
+extern HANDLE				g_hThread_CusJob;
+
+extern HANDLE				g_hSemaph_Alarm;		//闹钟
+extern HANDLE				g_hSemaph_SayTime;		//报时
+extern HANDLE				g_hSemaph_CusJob;		//定时任务
+
+extern std::mutex			g_MutexSound;			//声音锁
 extern BOOL					g_bWork;
-
-
 extern DWORD				g_dwTasktype;
-static UINT					ThProcAlarm(LPVOID pParam);
-static UINT					ThProcSayTime(LPVOID pParam);
-static UINT					ThProcWork(LPVOID pParam);
+unsigned int __stdcall		Thread_Alarm(LPVOID pParam);
+unsigned int __stdcall		Thread_SayTime(LPVOID pParam);
+unsigned int __stdcall		Thread_CusJob(LPVOID pParam);
+
+void						InitThread();
+void						CleanThread();
+
+
+
+/*
+CWinApp类中提供了一组用于读写应用程序配置的方法：
+GetProfileInt
+WriteProfileInt
+GetProfileString
+WriteProfileString
+可方便的用于读写应用程序配置。
+
+
+SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
+该函数将为以上提到的几个方法建立工作环境,此时如果用WriteProfileInt写入数据，将会
+被写入到如下注册表位置：
+HKEY_CURRENT_USER\Software\应用程序向导生成的本地应用程序\应用程序名称\
+如果在InitInstance中不执行SetRegistryKey，则用WriteProfileInt写入数据时，将写入到
+%windir%\应用程序名称.ini中。
+*/
+
+
+/*
+读取配置文件
+GetPrivateProfileString
+
+*/

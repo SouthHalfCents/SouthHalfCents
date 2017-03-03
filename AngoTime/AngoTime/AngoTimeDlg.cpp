@@ -20,12 +20,17 @@
 
 
 
-CWinThread*			g_pthAlarm		=	NULL;
-CWinThread*			g_pthSayTime	=	NULL;
-CWinThread*			g_pthWork		=	NULL;
-BOOL				g_bWork			=	TRUE;
-DWORD				g_dwTasktype	=	0;
-std::mutex			g_Mutex;
+HANDLE			g_hThread_Alarm		=	NULL;
+HANDLE			g_hThread_SayTime	=	NULL;
+HANDLE			g_hThread_CusJob	=	NULL;
+
+HANDLE			g_hSemaph_Alarm		=	NULL;	//闹钟
+HANDLE			g_hSemaph_SayTime	=	NULL;	//报时
+HANDLE			g_hSemaph_CusJob	=	NULL;	//定时任务
+
+std::mutex		g_MutexSound;					
+BOOL			g_bWork				=	FALSE;
+DWORD			g_dwTasktype		=	0;
 
 // CAngoTimeDlg 对话框
 
@@ -47,6 +52,10 @@ CAngoTimeDlg::CAngoTimeDlg(CWnd* pParent /*=NULL*/)
 	m_cLastMin		=	0;
 	m_cLastSecL		=	0;
 	m_cLastSecS		=	0;
+
+	m_nSayTime		=	SAYTIME_CLOSE;
+	m_bClockState	=	FALSE;
+	m_bAutoRun		=	FALSE;
 
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_popMenu.LoadMenu(IDR_MENU_RBTN);	
@@ -75,6 +84,14 @@ BEGIN_MESSAGE_MAP(CAngoTimeDlg, CDialogEx)
 	ON_COMMAND(ID_MENU_ANGO, &CAngoTimeDlg::OnMenuAngo)
 	ON_WM_CLOSE()
 	ON_COMMAND(ID_SAYTIME_NOW, &CAngoTimeDlg::OnSaytimeNow)
+	ON_COMMAND(ID_SAYTIME_ALL, &CAngoTimeDlg::OnSaytimeAll)
+	ON_COMMAND(ID_SAYTIME_HALF, &CAngoTimeDlg::OnSaytimeHalf)
+	ON_COMMAND(ID_SAYTIME_CLOSE, &CAngoTimeDlg::OnSaytimeClose)
+	ON_COMMAND(ID_CFG_AUTORUN, &CAngoTimeDlg::OnCfgAutorun)
+	ON_COMMAND(ID_CLOCK_ON, &CAngoTimeDlg::OnClockOn)
+	ON_COMMAND(ID_CLOCK_OFF, &CAngoTimeDlg::OnClockOff)
+	ON_COMMAND(ID_CLOCK_CONFIG, &CAngoTimeDlg::OnClockConfig)
+	ON_COMMAND(ID_MENU_TASK, &CAngoTimeDlg::OnMenuTask)
 END_MESSAGE_MAP()
 
 
@@ -83,20 +100,8 @@ void CAngoTimeDlg::OnClose()
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
 
-	g_bWork = FALSE;
-	
 
-	g_Mutex.lock();
-	g_pthAlarm->ResumeThread();
-	g_pthSayTime->ResumeThread();
-	g_pthWork->ResumeThread();
-	g_Mutex.unlock();
-
-
-	WaitForSingleObject(g_pthWork->m_hThread, INFINITE);
-	WaitForSingleObject(g_pthAlarm->m_hThread, INFINITE);
-	WaitForSingleObject(g_pthSayTime->m_hThread, INFINITE);
-	
+	CleanThread();
 
 
 	CDialogEx::OnClose();
@@ -141,7 +146,7 @@ BOOL CAngoTimeDlg::OnInitDialog()
 
 	OnViewShow();
 	OnViewUp();
-	
+	InitSettings();
 	InitThread();
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
@@ -465,6 +470,15 @@ void  CAngoTimeDlg::ClockTime()
 	dc.SetPixel(m_Point_Start.x - 1, m_Point_Start.y,	  RGB(0, 0, 0));
 	dc.SetPixel(m_Point_Start.x,	 m_Point_Start.y - 1, RGB(0, 0, 0));
 	dc.SetPixel(m_Point_Start.x - 1, m_Point_Start.y - 1, RGB(0, 0, 0));
+
+	//读取系统配置
+	//AfxGetApp()->WriteProfileInt("Sound","hoursound",temp);
+	if (m_nSayTime==SAYTIME_ALL &&S == 0 && M == 0)//判断是否整点报时
+		OnSaytimeNow();
+	//判断是否半点报时
+	if (m_nSayTime==SAYTIME_HALF &&S == 0 && (M == 0 || M == 30))
+		OnSaytimeNow();
+
 }
 
 
@@ -617,41 +631,67 @@ void CAngoTimeDlg::OnMenuExit()
 }
 
 //-------------------------------------------------------------------------------------------------------------------------
-void CAngoTimeDlg::InitThread()
+void InitThread()
 {
-	if ( g_pthAlarm || g_pthSayTime || g_pthWork )
+	if ( g_hThread_Alarm || g_hThread_SayTime || g_hThread_CusJob )
 		return;
 
-	//创建报时线程
-	DWORD dwParam;
-	g_pthAlarm = AfxBeginThread(ThProcAlarm, &dwParam, THREAD_PRIORITY_HIGHEST, 0, CREATE_SUSPENDED, 0);
-	if (g_pthAlarm == NULL)
-		AngoMessageBox(L"创建线程错误!");
+	g_bWork = TRUE;
 
+	//创建信号量
+	g_hSemaph_Alarm		= CreateSemaphore(NULL, 0, 2, _T("AngoTime_Alarm"));
+	g_hSemaph_SayTime	= CreateSemaphore(NULL, 0, 2, _T("AngoTime_SayTime"));
+	g_hSemaph_CusJob	= CreateSemaphore(NULL, 0, 2, _T("AngoTime_CusJob"));
+	/*
+	第一个参数：安全属性，如果为NULL则是默认安全属性 
+	第二个参数：信号量的初始值，要>=0且<=第三个参数
+	第三个参数：信号量的最大值
+	第四个参数：信号量的名称
+	*/
+	
 
-	//创建闹钟线程
-	DWORD dwParam2;
-	g_pthSayTime = AfxBeginThread(ThProcSayTime, &dwParam2, THREAD_PRIORITY_HIGHEST, 0, CREATE_SUSPENDED, 0);
-	if (g_pthSayTime == NULL)
-		AngoMessageBox(L"创建线程错误!");
+	//创建线程
+	g_hThread_Alarm		= (HANDLE)_beginthreadex(NULL, 0, Thread_Alarm, NULL, 0, NULL);
+	g_hThread_SayTime	= (HANDLE)_beginthreadex(NULL, 0, Thread_SayTime, NULL, 0, NULL);
+	g_hThread_CusJob	= (HANDLE)_beginthreadex(NULL, 0, Thread_CusJob, NULL, 0, NULL);
 
-
-	//创建处理定时任务线程
-	DWORD dwParam3;
-	g_pthWork = AfxBeginThread(ThProcWork, &dwParam3, THREAD_PRIORITY_HIGHEST, 0, CREATE_SUSPENDED, 0);
-	if (g_pthWork == NULL)
-		AngoMessageBox(L"创建线程错误!");
-
+	
 	
 }
 
-UINT ThProcAlarm(LPVOID pParam)
+void CleanThread()
+{
+	g_bWork = FALSE;
+
+	ReleaseSemaphore(g_hSemaph_Alarm, 1, NULL);		//释放1个信号量
+	ReleaseSemaphore(g_hSemaph_SayTime, 1, NULL);	//释放1个信号量
+	ReleaseSemaphore(g_hSemaph_CusJob, 1, NULL);	//释放1个信号量
+
+
+	WaitForSingleObject(g_hThread_Alarm, INFINITE);
+	WaitForSingleObject(g_hThread_SayTime, INFINITE);
+	WaitForSingleObject(g_hThread_CusJob, INFINITE);
+
+	CloseHandle(g_hThread_Alarm);
+	CloseHandle(g_hThread_SayTime);
+	CloseHandle(g_hThread_CusJob);
+	CloseHandle(g_hSemaph_Alarm);
+	CloseHandle(g_hSemaph_SayTime);
+	CloseHandle(g_hSemaph_CusJob);
+}
+
+unsigned int __stdcall Thread_Alarm(LPVOID pParam)
 {
 	CString strPath;
 	while (g_bWork)
 	{
-		g_Mutex.lock();
+		WaitForSingleObject(g_hSemaph_Alarm,INFINITE);
+		if (!g_bWork)
+		{
+			break;
+		}
 
+		g_MutexSound.lock();
 		strPath = "c:\\win95\\media\\The Microsoft Sound.wav";
 		PlaySound(strPath, NULL, SND_FILENAME | SND_ASYNC);
 // 		PlaySound(MAKEINTRESOURCE(IDR_WAVESOUND), AfxGetApp()->m_hInstance, SND_RESOURCE | SND_ASYNC | SND_NODEFAULT);
@@ -659,17 +699,23 @@ UINT ThProcAlarm(LPVOID pParam)
 // 		PlaySound(MAKEINTRESOURCE(IDR_WAVESOUND), AfxGetApp()->m_hInstance, SND_RESOURCE | SND_ASYNC | SND_NODEFAULT);
 // 		Sleep(8000);
 		
-		g_Mutex.unlock();
+		g_MutexSound.unlock();
 	}
 	
 	TRACE("exit ThProcAlarm\n");
 	return 0;
 }
-UINT ThProcSayTime(LPVOID pParam)
+unsigned int __stdcall Thread_SayTime(LPVOID pParam)
 {
 	while (g_bWork)
 	{
-		g_Mutex.lock();
+		WaitForSingleObject(g_hSemaph_SayTime, INFINITE);
+		if (!g_bWork)
+		{
+			break;
+		}
+
+		g_MutexSound.lock();
 
 		CTime m_NowTime;
 		m_NowTime = CTime::GetCurrentTime();
@@ -855,22 +901,25 @@ UINT ThProcSayTime(LPVOID pParam)
 			Sleep(560);
 			PlaySound(MAKEINTRESOURCE(IDR_WAVE_MIN), AfxGetApp()->m_hInstance, SND_RESOURCE | SND_ASYNC | SND_NODEFAULT);
 		}
-
-		g_Mutex.unlock();
-		g_pthSayTime->SuspendThread();
+		
+		g_MutexSound.unlock();
+		
 
 	}
 
 	TRACE("exit ThProcSayTime\n");
 	return 0;
 }
-UINT ThProcWork(LPVOID pParam)
+unsigned int __stdcall Thread_CusJob(LPVOID pParam)
 {
 	while (g_bWork)
 	{
-		TRACE("g_pthWork->SuspendThread()\n");
-		Sleep(1000);
-		g_pthWork->SuspendThread();
+		WaitForSingleObject(g_hSemaph_CusJob, INFINITE);
+		if (!g_bWork)
+		{
+			break;
+		}
+		
 	}
 
 	TRACE("exit ThProcWork\n");
@@ -882,9 +931,224 @@ UINT ThProcWork(LPVOID pParam)
 
 void CAngoTimeDlg::OnSaytimeNow()
 {
-	if (g_pthSayTime)
+	ReleaseSemaphore(g_hSemaph_SayTime, 1, NULL);	//释放1个信号量
+}
+
+
+
+void CAngoTimeDlg::OnSaytimeAll()
+{
+	m_nSayTime = SAYTIME_ALL;
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	if (pMenu)
 	{
-		g_pthSayTime->ResumeThread();
+		pMenu = pMenu->GetSubMenu(6);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_SAYTIME_ALL, MF_BYCOMMAND | MF_CHECKED);
+			pMenu->CheckMenuItem(ID_SAYTIME_HALF, MF_BYCOMMAND | MF_UNCHECKED);
+			pMenu->CheckMenuItem(ID_SAYTIME_CLOSE, MF_BYCOMMAND | MF_UNCHECKED);
+		}
+	}
+	AfxGetApp()->WriteProfileInt(ANGO_SECTION, SAYTIME_ENTRY, m_nSayTime);
+}
+
+
+void CAngoTimeDlg::OnSaytimeHalf()
+{
+	m_nSayTime = SAYTIME_HALF;
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(6);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_SAYTIME_ALL, MF_BYCOMMAND | MF_UNCHECKED);
+			pMenu->CheckMenuItem(ID_SAYTIME_HALF, MF_BYCOMMAND | MF_CHECKED);
+			pMenu->CheckMenuItem(ID_SAYTIME_CLOSE, MF_BYCOMMAND | MF_UNCHECKED);
+		}
+	}
+	AfxGetApp()->WriteProfileInt(ANGO_SECTION, SAYTIME_ENTRY, m_nSayTime);
+}
+
+
+void CAngoTimeDlg::OnSaytimeClose()
+{
+	m_nSayTime = SAYTIME_CLOSE;
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(6);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_SAYTIME_ALL, MF_BYCOMMAND | MF_UNCHECKED);
+			pMenu->CheckMenuItem(ID_SAYTIME_HALF, MF_BYCOMMAND | MF_UNCHECKED);
+			pMenu->CheckMenuItem(ID_SAYTIME_CLOSE, MF_BYCOMMAND | MF_CHECKED);
+		}
+	}
+	AfxGetApp()->WriteProfileInt(ANGO_SECTION, SAYTIME_ENTRY, m_nSayTime);
+}
+
+
+void CAngoTimeDlg::OnCfgAutorun()
+{
+	//开机启动...
+
+	m_bAutoRun = !m_bAutoRun;
+
+
+#if _WIN64
+	HMODULE hModule = GetModuleHandle(NULL);
+	HKEY hRoot = HKEY_LOCAL_MACHINE;
+	HKEY hKey;
+	LONG lRet;
+	DWORD dwDisposition;
+
+	char szPath[MAX_PATH] = { 0 };
+	GetModuleFileNameA(hModule, szPath, sizeof(szPath));
+
+	const char *subkey = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";	//RunOnce
+
+	lRet = RegCreateKeyExA(hRoot,
+		subkey,
+		0,   //保留参数，必须为0
+		NULL,//键的种类，同通常为NULL
+		REG_OPTION_NON_VOLATILE,
+		KEY_ALL_ACCESS,
+		NULL,
+		&hKey,
+		&dwDisposition  //返回参数
+		);
+
+
+	char data_Name[MAX_PATH] = "Ango";
+	if (m_bAutoRun)
+	{
+		lRet = ::RegSetValueExA(
+			hKey,
+			data_Name,
+			0,						//保留
+			REG_SZ,					//字符串
+			(CONST BYTE *)szPath,	//具体内容
+			(DWORD)strlen(szPath)
+			);
+	}
+	else
+	{
+		lRet = ::RegDeleteValueA(hKey,data_Name);   
 	}
 
+
+	if (lRet != ERROR_SUCCESS)
+	{	
+		OutputDebugStringA("打开注册表失败");
+	}
+
+	RegCloseKey(hKey);
+
+#endif
+
+
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(8);
+		if (pMenu)
+		{
+			if (m_bAutoRun)
+				pMenu->CheckMenuItem(ID_CFG_AUTORUN, MF_BYCOMMAND | MF_CHECKED);
+			else
+				pMenu->CheckMenuItem(ID_CFG_AUTORUN, MF_BYCOMMAND | MF_UNCHECKED);
+		}
+	}
+	AfxGetApp()->WriteProfileInt(ANGO_SECTION, AUTORUN_ENTRY, m_bAutoRun);
 }
+
+
+void CAngoTimeDlg::OnClockOn()
+{
+	m_bClockState = TRUE;
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(5);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_CLOCK_ON, MF_BYCOMMAND | MF_CHECKED);
+			pMenu->CheckMenuItem(ID_CLOCK_OFF, MF_BYCOMMAND | MF_UNCHECKED);
+		}
+	}
+	AfxGetApp()->WriteProfileInt(ANGO_SECTION, CLOCK_ENTRY, m_bClockState);
+}
+
+
+void CAngoTimeDlg::OnClockOff()
+{
+	m_bClockState = FALSE;
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(5);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_CLOCK_ON, MF_BYCOMMAND | MF_UNCHECKED);
+			pMenu->CheckMenuItem(ID_CLOCK_OFF, MF_BYCOMMAND | MF_CHECKED);
+		}
+	}
+	AfxGetApp()->WriteProfileInt(ANGO_SECTION, CLOCK_ENTRY, m_bClockState);
+}
+
+
+void CAngoTimeDlg::OnClockConfig()
+{
+	// TODO:  在此添加命令处理程序代码
+}
+
+
+void CAngoTimeDlg::OnMenuTask()
+{
+	// TODO:  在此添加命令处理程序代码
+}
+//---------------------------------------------------------------------------------------------------------------------
+void CAngoTimeDlg::InitSettings()
+{
+	//闹钟设置
+	m_bClockState = AfxGetApp()->GetProfileInt(ANGO_SECTION, CLOCK_ENTRY, 0);
+	if (m_bClockState)
+	{
+		OnClockOn();
+	}
+	else
+	{
+		OnClockOff();
+	}
+
+
+	//报时设置
+	m_nSayTime = AfxGetApp()->GetProfileInt(ANGO_SECTION, SAYTIME_ENTRY, 0);
+	if (SAYTIME_CLOSE == m_nSayTime)
+	{
+		OnSaytimeClose();
+	}
+	else if (SAYTIME_ALL == m_nSayTime)
+	{
+		OnSaytimeAll();
+	}
+	else if (SAYTIME_HALF == m_nSayTime)
+	{
+		OnSaytimeHalf();
+	}
+
+	//开机启动设置
+	m_bAutoRun = AfxGetApp()->GetProfileInt(ANGO_SECTION, AUTORUN_ENTRY, 0);
+	m_bAutoRun = !m_bAutoRun;
+	OnCfgAutorun();
+
+}
+//---------------------------------------------------------------------------------------------------------------------
