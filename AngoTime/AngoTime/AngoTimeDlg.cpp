@@ -43,6 +43,9 @@ CAngoTimeDlg::CAngoTimeDlg(CWnd* pParent /*=NULL*/)
 	m_bClockState	=	FALSE;
 	m_bAutoRun		=	FALSE;
 
+	m_hThread_Clock	=	NULL;
+	m_hSemaph_Clock	=	NULL;
+
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_popMenu.LoadMenu(IDR_MENU_RBTN);	
 }
@@ -86,7 +89,11 @@ END_MESSAGE_MAP()
 void CAngoTimeDlg::OnClose()
 {
 	// TODO:  在此添加消息处理程序代码和/或调用默认值
-
+	g_bWork = FALSE;
+	ReleaseSemaphore(m_hSemaph_Clock, 1, NULL);		//释放1个信号量
+	WaitForSingleObject(m_hThread_Clock, INFINITE);
+	CloseHandle(m_hSemaph_Clock);
+	CloseHandle(m_hThread_Clock);
 
 	CleanThread();
 
@@ -118,8 +125,8 @@ BOOL CAngoTimeDlg::OnInitDialog()
 		CDialog::OnCancel();
 	}
 
+	InitThread();
 	InitClock();
-
 
 	//调整位置
 	CRect cr;
@@ -134,8 +141,9 @@ BOOL CAngoTimeDlg::OnInitDialog()
 	OnViewShow();
 	OnViewUp();
 	InitSettings();
-	InitThread();
+	
 
+	
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -267,7 +275,13 @@ void CAngoTimeDlg::InitClock()
 	//用时钟背景图片作圆形对话框背景
 	CBitmap   bm;
 	bm.LoadBitmap(IDB_BMP_CLOCK);		//   可以指定bitmap图片的路径   
-	m_cBrush.CreatePatternBrush(&bm);
+	BOOL bRet = m_cBrush.CreatePatternBrush(&bm);
+
+	InitRgbMap();
+
+	//闹钟线程
+	m_hSemaph_Clock	= CreateSemaphore(NULL, 0, 2, _T("AngoTime_Clock"));
+	m_hThread_Clock	= (HANDLE)_beginthreadex(NULL, 0, Thread_Clock, this, 0, NULL);
 }
 
 HBRUSH CAngoTimeDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
@@ -278,193 +292,235 @@ HBRUSH CAngoTimeDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 	return m_cBrush;
 }
 
-
-
-void  CAngoTimeDlg::ClockTime()
+void CAngoTimeDlg::InitRgbMap()
 {
-	//获得当前系统时间。
-	CTime time = CTime::GetCurrentTime();
-	CPen *pPenOld = NULL;
-	CPen PenNew;
-	CBrush *pBrushOld = NULL;
-	CBrush BrushNew;
+	
+
 	CClientDC dc(this);
+	CPoint cPos(65,64);
 
-	int   S = time.GetSecond();
-	float M = float(time.GetMinute() + S / 60.0);
-	float H = float(time.GetHour() + M / 60.0);
-	if (H > 12)
-		H = H - 12;
-	H = H * 5;
+	CBitmap bitmap;
+	BOOL bLoad = bitmap.LoadBitmap(IDB_BMP_CLOCK);
+	CSize csize = bitmap.GetBitmapDimension();
 
-	m_Point_Start.x = 65;
-	m_Point_Start.y = 64;
+	COLORREF C = dc.GetPixel(cPos);
+	int R = GetRValue(C);
+	int G = GetGValue(C);
+	int B = GetBValue(C);
+
+	m_mapPointRgb[cPos] = C;
+}
+
+unsigned int __stdcall  Thread_Clock(LPVOID pParam)
+{
+	CAngoTimeDlg* pBase = (CAngoTimeDlg*)pParam;
+
+	//获得当前系统时间。
+	CTime tTime = CTime::GetCurrentTime();
+	int   S = 0;
+	float M = 0;
+	float H = 0;
+
+	pBase->m_Point_Start.x = 65;
+	pBase->m_Point_Start.y = 64;
 	COLORREF cRgb	= 0;
 
-	
-	//方法为画每根针前用背景色擦去上一次画的针（由于背景色渐变，所以加入了计算）
-	//从图片获取背景色rgb
-	//COLORREF cRgb = dc.GetPixel(m_Point_End);
-	//BYTE byRed   = GetRValue(cRgb);
-	//BYTE byGreen = GetGValue(cRgb);
-	//BYTE byBlue	 = GetBValue(cRgb);
+	CPen *pPenOld = NULL;
+	CBrush *pBrushOld = NULL;
+	CPen PenNew;
+	CBrush BrushNew;
+	CClientDC dc(pBase);
 
-	//////////////////////////////////////////////	
-	if ( !m_bFirstClock )
-	{
-		//用背景色擦去上一次画的针
-		cRgb = m_cLastHour;
-		m_Point_End = m_point_lastHour;
+	while (g_bWork)
+	{ 
+		WaitForSingleObject(pBase->m_hSemaph_Clock,INFINITE);
 
-		PenNew.CreatePen(PS_SOLID, 4, cRgb);
-		BrushNew.CreateSolidBrush(cRgb);
-		pBrushOld = dc.SelectObject(&BrushNew);
+		tTime = CTime::GetCurrentTime();
+		S = tTime.GetSecond();
+		M = float(tTime.GetMinute() + S / 60.0);
+		H = float(tTime.GetHour() + M / 60.0);
+		if (H > 12)
+			H = H - 12;
+		H = H * 5;
+
+
+		//方法为画每根针前用背景色擦去上一次画的针（由于背景色渐变，所以加入了计算）
+		//从图片获取背景色rgb
+		//COLORREF cRgb = dc.GetPixel(m_Point_End);
+		//BYTE byRed   = GetRValue(cRgb);
+		//BYTE byGreen = GetGValue(cRgb);
+		//BYTE byBlue	 = GetBValue(cRgb);
+
+		//////////////////////////////////////////////	
+		if ( !pBase->m_bFirstClock )
+		{
+			//用背景色擦去上一次画的针
+			cRgb = pBase->m_cLastHour;
+			pBase->m_Point_End = pBase->m_point_lastHour;
+
+			PenNew.CreatePen(PS_SOLID, 4, cRgb);
+			BrushNew.CreateSolidBrush(cRgb);
+			pBrushOld = dc.SelectObject(&BrushNew);
+			pPenOld = dc.SelectObject(&PenNew);
+			dc.MoveTo(pBase->m_Point_Start);
+			dc.LineTo(pBase->m_Point_End);
+		}
+
+		//画时针
+		PenNew.DeleteObject();
+		PenNew.CreatePen(PS_SOLID, 4, RGB(0, 0, 0));
 		pPenOld = dc.SelectObject(&PenNew);
-		dc.MoveTo(m_Point_Start);
-		dc.LineTo(m_Point_End);
-	}
-
-	//画时针
-	PenNew.DeleteObject();
-	PenNew.CreatePen(PS_SOLID, 4, RGB(0, 0, 0));
-	pPenOld = dc.SelectObject(&PenNew);
-	BrushNew.DeleteObject();
-	BrushNew.CreateSolidBrush(RGB(0, 0, 0));
-	pBrushOld = dc.SelectObject(&BrushNew);
-	m_Point_End.x = 65 + LONG(22 * sin(H*PI / 30));
-	m_Point_End.y = 64 - LONG(22 * cos(H*PI / 30));
-
-	//保存原有的rgb
-	m_cLastHour = dc.GetPixel(m_Point_End);
-	m_point_lastHour = m_Point_End;
-
-	dc.MoveTo(m_Point_Start);
-	dc.LineTo(m_Point_End);
-	
-
-
-	///////////////////////////////////////////////
-	if ( !m_bFirstClock )
-	{
-		//擦除上次的指针
-		cRgb = m_cLastMin;
-		m_Point_End = m_point_lastMin;
-
 		BrushNew.DeleteObject();
-		BrushNew.CreateSolidBrush(cRgb);
+		BrushNew.CreateSolidBrush(RGB(0, 0, 0));
+		pBrushOld = dc.SelectObject(&BrushNew);
+		pBase->m_Point_End.x = 65 + LONG(22 * sin(H*PI / 30));
+		pBase->m_Point_End.y = 64 - LONG(22 * cos(H*PI / 30));
+
+		//保存原有的rgb
+		pBase->m_cLastHour = dc.GetPixel(pBase->m_Point_End);
+		pBase->m_point_lastHour = pBase->m_Point_End;
+
+		dc.MoveTo(pBase->m_Point_Start);
+		dc.LineTo(pBase->m_Point_End);
+	
+
+
+		///////////////////////////////////////////////
+		if ( !pBase->m_bFirstClock )
+		{
+			//擦除上次的指针
+			cRgb = pBase->m_cLastMin;
+			pBase->m_Point_End = pBase->m_point_lastMin;
+
+			BrushNew.DeleteObject();
+			BrushNew.CreateSolidBrush(cRgb);
+			pBrushOld = dc.SelectObject(&BrushNew);
+			PenNew.DeleteObject();
+			PenNew.CreatePen(PS_SOLID, 3, cRgb);
+			pPenOld = dc.SelectObject(&PenNew);
+			dc.MoveTo(pBase->m_Point_Start);
+			dc.LineTo(pBase->m_Point_End);
+		}
+
+		//画分针
+		BrushNew.DeleteObject();
+		BrushNew.CreateSolidBrush(RGB(0, 0, 0));
 		pBrushOld = dc.SelectObject(&BrushNew);
 		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_SOLID, 3, cRgb);
+		PenNew.CreatePen(PS_SOLID, 3, RGB(0, 0, 0));
 		pPenOld = dc.SelectObject(&PenNew);
-		dc.MoveTo(m_Point_Start);
-		dc.LineTo(m_Point_End);
-	}
+		pBase->m_Point_End.x = 65 + LONG(30 * sin(M*PI / 30));
+		pBase->m_Point_End.y = 64 - LONG(30 * cos(M*PI / 30));
 
-	//画分针
-	BrushNew.DeleteObject();
-	BrushNew.CreateSolidBrush(RGB(0, 0, 0));
-	pBrushOld = dc.SelectObject(&BrushNew);
-	PenNew.DeleteObject();
-	PenNew.CreatePen(PS_SOLID, 3, RGB(0, 0, 0));
-	pPenOld = dc.SelectObject(&PenNew);
-	m_Point_End.x = 65 + LONG(30 * sin(M*PI / 30));
-	m_Point_End.y = 64 - LONG(30 * cos(M*PI / 30));
+		pBase->m_cLastMin = dc.GetPixel(pBase->m_Point_End);
+		pBase->m_point_lastMin = pBase->m_Point_End;
 
-	m_cLastMin = dc.GetPixel(m_Point_End);
-	m_point_lastMin = m_Point_End;
-
-	dc.MoveTo(m_Point_Start);
-	dc.LineTo(m_Point_End);
+		dc.MoveTo(pBase->m_Point_Start);
+		dc.LineTo(pBase->m_Point_End);
 	
 
-	////////////////////////////////////////////	画秒针的短轴	
-	S   = (S + 30) % 60;
+		////////////////////////////////////////////	画秒针的短轴	
+		S   = (S + 30) % 60;
 	
-	if ( !m_bFirstClock )
-	{
-		//擦除上次的指针
-		cRgb = m_cLastSecS;
-		m_Point_End = m_point_lastSecS;
+		if ( !pBase->m_bFirstClock )
+		{
+			//擦除上次的指针
+			cRgb = pBase->m_cLastSecS;
+			pBase->m_Point_End = pBase->m_point_lastSecS;
 
+			PenNew.DeleteObject();
+			PenNew.CreatePen(PS_DASHDOTDOT, 2, cRgb);
+			pPenOld = dc.SelectObject(&PenNew);
+			dc.MoveTo(pBase->m_Point_Start);
+			dc.LineTo(pBase->m_Point_End);
+		}
+
+
+		//画秒针短轴
 		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_DASHDOTDOT, 2, cRgb);
+		PenNew.CreatePen(PS_DASHDOTDOT, 2, RGB(255, 0, 0));
 		pPenOld = dc.SelectObject(&PenNew);
-		dc.MoveTo(m_Point_Start);
-		dc.LineTo(m_Point_End);
-	}
+		pBase->m_Point_End.x = 65 + LONG(6 * sin(S*PI / 30));
+		pBase->m_Point_End.y = 64 - LONG(6 * cos(S*PI / 30));
 
+		pBase->m_cLastSecS = dc.GetPixel(pBase->m_Point_End);
+		pBase->m_point_lastSecS = pBase->m_Point_End;
 
-	//画秒针短轴
-	PenNew.DeleteObject();
-	PenNew.CreatePen(PS_DASHDOTDOT, 2, RGB(255, 0, 0));
-	pPenOld = dc.SelectObject(&PenNew);
-	m_Point_End.x = 65 + LONG(6 * sin(S*PI / 30));
-	m_Point_End.y = 64 - LONG(6 * cos(S*PI / 30));
-
-	m_cLastSecS = dc.GetPixel(m_Point_End);
-	m_point_lastSecS = m_Point_End;
-
-	dc.MoveTo(m_Point_Start);
-	dc.LineTo(m_Point_End);
+		dc.MoveTo(pBase->m_Point_Start);
+		dc.LineTo(pBase->m_Point_End);
 	
 
 
-	///////////////////////画秒针的长轴
-	S   = (S + 30) % 60;
+		///////////////////////画秒针的长轴
+		S   = (S + 30) % 60;
 	
-	if ( !m_bFirstClock )
-	{
-		//擦除上次的指针
-		cRgb = m_cLastSecL;
-		m_Point_End = m_point_lastSecL;
+		if ( !pBase->m_bFirstClock )
+		{
+			//擦除上次的指针
+			cRgb = pBase->m_cLastSecL;
+			pBase->m_Point_End = pBase->m_point_lastSecL;
 
+			//		BrushNew.DeleteObject();
+			//		BrushNew.CreateSolidBrush(RGB(C,C,C));
+			//		BrushOld=dc.SelectObject(&BrushNew);
+			PenNew.DeleteObject();
+			PenNew.CreatePen(PS_DASHDOTDOT, 2, cRgb);
+			pPenOld = dc.SelectObject(&PenNew);
+			dc.MoveTo(pBase->m_Point_Start);
+			dc.LineTo(pBase->m_Point_End);
+		}
+
+
+		//画秒针长轴
 		//		BrushNew.DeleteObject();
-		//		BrushNew.CreateSolidBrush(RGB(C,C,C));
+		//		BrushNew.CreateSolidBrush(RGB(255,0,0));
 		//		BrushOld=dc.SelectObject(&BrushNew);
 		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_DASHDOTDOT, 2, cRgb);
+		PenNew.CreatePen(PS_DASHDOTDOT, 2, RGB(255, 0, 0));
 		pPenOld = dc.SelectObject(&PenNew);
-		dc.MoveTo(m_Point_Start);
-		dc.LineTo(m_Point_End);
-	}
+		pBase->m_Point_End.x = 65 + LONG(30 * sin(S*PI / 30));
+		pBase->m_Point_End.y = 64 - LONG(30 * cos(S*PI / 30));
+
+		pBase->m_cLastSecL = dc.GetPixel(pBase->m_Point_End);
+		pBase->m_point_lastSecL = pBase->m_Point_End;
+
+		dc.MoveTo(pBase->m_Point_Start);
+		dc.LineTo(pBase->m_Point_End);
 
 
-	//画秒针长轴
-	//		BrushNew.DeleteObject();
-	//		BrushNew.CreateSolidBrush(RGB(255,0,0));
-	//		BrushOld=dc.SelectObject(&BrushNew);
-	PenNew.DeleteObject();
-	PenNew.CreatePen(PS_DASHDOTDOT, 2, RGB(255, 0, 0));
-	pPenOld = dc.SelectObject(&PenNew);
-	m_Point_End.x = 65 + LONG(30 * sin(S*PI / 30));
-	m_Point_End.y = 64 - LONG(30 * cos(S*PI / 30));
-
-	m_cLastSecL = dc.GetPixel(m_Point_End);
-	m_point_lastSecL = m_Point_End;
-
-	dc.MoveTo(m_Point_Start);
-	dc.LineTo(m_Point_End);
-
-
-
-	//////////////////////////////////////////////////////////////////
-	m_bFirstClock = FALSE;
+		PenNew.DeleteObject();
+		BrushNew.DeleteObject();
+		//////////////////////////////////////////////////////////////////
+		pBase->m_bFirstClock = FALSE;
 	
-	dc.SetPixel(m_Point_Start, RGB(0, 0, 0));
-	dc.SetPixel(m_Point_Start.x + 1, m_Point_Start.y,	  RGB(0, 0, 0));
-	dc.SetPixel(m_Point_Start.x,	 m_Point_Start.y + 1, RGB(0, 0, 0));
-	dc.SetPixel(m_Point_Start.x + 1, m_Point_Start.y + 1, RGB(0, 0, 0));
-	dc.SetPixel(m_Point_Start.x - 1, m_Point_Start.y,	  RGB(0, 0, 0));
-	dc.SetPixel(m_Point_Start.x,	 m_Point_Start.y - 1, RGB(0, 0, 0));
-	dc.SetPixel(m_Point_Start.x - 1, m_Point_Start.y - 1, RGB(0, 0, 0));
+		dc.SetPixel(pBase->m_Point_Start, RGB(0, 0, 0));
+		dc.SetPixel(pBase->m_Point_Start.x + 1, pBase->m_Point_Start.y,		RGB(0, 0, 0));
+		dc.SetPixel(pBase->m_Point_Start.x,		pBase->m_Point_Start.y + 1, RGB(0, 0, 0));
+		dc.SetPixel(pBase->m_Point_Start.x + 1, pBase->m_Point_Start.y + 1, RGB(0, 0, 0));
+		dc.SetPixel(pBase->m_Point_Start.x - 1, pBase->m_Point_Start.y,		RGB(0, 0, 0));
+		dc.SetPixel(pBase->m_Point_Start.x,		pBase->m_Point_Start.y - 1, RGB(0, 0, 0));
+		dc.SetPixel(pBase->m_Point_Start.x - 1, pBase->m_Point_Start.y - 1, RGB(0, 0, 0));
 
-	//读取系统配置
-	//AfxGetApp()->WriteProfileInt("Sound","hoursound",temp);
-	if (m_nSayTime==SAYTIME_ALL &&S == 0 && M == 0)//判断是否整点报时
-		OnSaytimeNow();
-	//判断是否半点报时
-	if (m_nSayTime==SAYTIME_HALF &&S == 0 && (M == 0 || M == 30))
-		OnSaytimeNow();
+		//报时
+		if (!g_bWork)	
+		{
+			break;
+		}
+		if (pBase->m_nSayTime==SAYTIME_ALL &&S == 0 && M == 0)//判断是否整点报时
+			pBase->OnSaytimeNow();
+
+		if (pBase->m_nSayTime==SAYTIME_HALF &&S == 0 && (M == 0 || M == 30))
+			pBase->OnSaytimeNow();
+
+		//定时任务
+		if (!g_bWork)	
+		{
+			break;
+		}
+		CTask::CheckTask(tTime);
+
+	}
+	return 0;
 
 }
 
@@ -479,7 +535,7 @@ void CAngoTimeDlg::OnTimer(UINT_PTR nIDEvent)//控制时钟走动
 
 	if (nIDEvent = m_uClock_Timer)
 	{
-		ClockTime();
+		ReleaseSemaphore(m_hSemaph_Clock, 1, NULL);
 	}
 	else
 	{

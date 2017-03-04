@@ -8,6 +8,9 @@
 #include "Config.h"
 #include "Task.h"
 
+#include <hash_map>
+using namespace std;
+
 
 // CAngoTimeDlg 对话框
 class CAngoTimeDlg : public CDialogEx
@@ -74,11 +77,34 @@ public:
 	COLORREF					m_cLastSecL;
 	COLORREF					m_cLastSecS;
 
+	struct hash_PosRgb
+	{
+		enum
+		{   //   parameters   for   hash   table     
+			bucket_size = 4,   //   0   <   bucket_size     
+			min_buckets = 8  //   min_buckets   =   2   ^^   N,   0   <   N     
+		};
+
+		size_t operator() (const CPoint & cPos) const
+		{
+			return size_t(cPos.x *10000 + cPos.y);
+		}
+
+		bool operator()(const CPoint& cPos1, const CPoint& cPos2) const
+		{
+			return cPos1.x == cPos2.x && cPos1.y == cPos2.y;
+		}
+	};
+
+
+
+	hash_map<CPoint,COLORREF, hash_PosRgb>	m_mapPointRgb;
+	void						InitRgbMap();
 	afx_msg HBRUSH				OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void				OnTimer(UINT_PTR nIDEvent);
-	void						InitClock();					// 初始化
-	void						ClockTime();					// 执行时钟操作
-
+	void						InitClock();							// 初始化
+	HANDLE						m_hThread_Clock;
+	HANDLE						m_hSemaph_Clock;
 
 
 	afx_msg void				OnMenuExit();					//退出
@@ -105,6 +131,9 @@ public:
 	afx_msg void				OnClockConfig();				//闹钟设置
 	afx_msg void				OnMenuTask();					//定时任务
 	afx_msg void				OnCfgOther();					//设置
+
+
 };
 
 
+static unsigned int __stdcall	Thread_Clock(LPVOID pParam);					// 执行时钟操作
