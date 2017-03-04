@@ -309,6 +309,47 @@ void CAngoTimeDlg::InitRgbMap()
 	int B = GetBValue(C);
 
 	m_mapPointRgb[cPos] = C;
+
+
+	BITMAP bm;
+	bitmap.GetBitmap(&bm);
+
+	int nbyte = bm.bmBitsPixel / 8;
+
+	BITMAPINFO bi;
+	bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
+	bi.bmiHeader.biWidth = bm.bmWidth;
+	bi.bmiHeader.biHeight = -bm.bmHeight;
+	bi.bmiHeader.biPlanes = 1;
+	bi.bmiHeader.biBitCount = bm.bmBitsPixel;
+	bi.bmiHeader.biCompression = BI_RGB;
+	bi.bmiHeader.biSizeImage = bm.bmWidth * bm.bmHeight * nbyte;
+	bi.bmiHeader.biClrUsed = 0;
+	bi.bmiHeader.biClrImportant = 0;
+
+	// 获取位图数据  
+	HDC hdc = ::GetDC(NULL);
+	BYTE* pBits = (BYTE*)new BYTE[bm.bmWidth * bm.bmHeight * nbyte];
+	::ZeroMemory(pBits, bm.bmWidth * bm.bmHeight * nbyte);
+	if (!::GetDIBits(hdc, bitmap, 0, bm.bmHeight, pBits, &bi, DIB_RGB_COLORS))
+	{
+		delete pBits;
+		pBits = NULL;
+	}
+	for (int i = 0; i < bm.bmWidth; ++i)
+	{
+		for (int j = 0; j < bm.bmHeight; ++j)
+		{
+			BYTE r = pBits[i * nbyte + j * bm.bmWidthBytes + 2];
+			BYTE g = pBits[i * nbyte + j * bm.bmWidthBytes + 1];
+			BYTE b = pBits[i * nbyte + j * bm.bmWidthBytes + 0];
+			//这里就可以做我们处理了
+		}
+	}
+
+	delete pBits;
+	pBits = NULL;
+
 }
 
 unsigned int __stdcall  Thread_Clock(LPVOID pParam)
