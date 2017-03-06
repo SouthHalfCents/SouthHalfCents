@@ -18,6 +18,7 @@ class CAngoTimeDlg : public CDialogEx
 // 构造
 public:
 	CAngoTimeDlg(CWnd* pParent = NULL);	// 标准构造函数
+	~CAngoTimeDlg();
 
 // 对话框数据
 	enum { IDD = IDD_ANGOTIME_DIALOG };
@@ -72,37 +73,14 @@ public:
 	CPoint						m_point_lastSecS;			//上次秒针短轴坐标
 	BOOL						m_bFirstClock;				//第一次进入定时器
 
-	COLORREF					m_cLastHour;
-	COLORREF					m_cLastMin;
-	COLORREF					m_cLastSecL;
-	COLORREF					m_cLastSecS;
-
-	struct hash_PosRgb
-	{
-		enum
-		{   //   parameters   for   hash   table     
-			bucket_size = 4,   //   0   <   bucket_size     
-			min_buckets = 8  //   min_buckets   =   2   ^^   N,   0   <   N     
-		};
-
-		size_t operator() (const CPoint & cPos) const
-		{
-			return size_t(cPos.x *10000 + cPos.y);
-		}
-
-		bool operator()(const CPoint& cPos1, const CPoint& cPos2) const
-		{
-			return cPos1.x == cPos2.x && cPos1.y == cPos2.y;
-		}
-	};
 
 
-
-	hash_map<CPoint,COLORREF, hash_PosRgb>	m_mapPointRgb;
+	COLORREF**					m_pBmpColor;					//根据坐标存放color
+	BITMAP						m_bmpClock;
 	void						InitRgbMap();
 	afx_msg HBRUSH				OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void				OnTimer(UINT_PTR nIDEvent);
-	void						InitClock();							// 初始化
+	void						InitClock();					// 初始化
 	HANDLE						m_hThread_Clock;
 	HANDLE						m_hSemaph_Clock;
 

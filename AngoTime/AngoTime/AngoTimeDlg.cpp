@@ -34,10 +34,6 @@ CAngoTimeDlg::CAngoTimeDlg(CWnd* pParent /*=NULL*/)
 	m_point_lastSecS	=	0;
 	m_bFirstClock		=	TRUE;
 
-	m_cLastHour		=	0;
-	m_cLastMin		=	0;
-	m_cLastSecL		=	0;
-	m_cLastSecS		=	0;
 
 	m_nSayTime		=	SAYTIME_CLOSE;
 	m_bClockState	=	FALSE;
@@ -48,6 +44,19 @@ CAngoTimeDlg::CAngoTimeDlg(CWnd* pParent /*=NULL*/)
 
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_popMenu.LoadMenu(IDR_MENU_RBTN);	
+}
+
+CAngoTimeDlg::~CAngoTimeDlg()
+{
+	if (m_pBmpColor)
+	{
+		for (int i = 0; i < m_bmpClock.bmWidth; i++)
+		{
+			delete[] m_pBmpColor[i];
+		}
+		delete[] m_pBmpColor;
+		m_pBmpColor = NULL;
+	}
 }
 
 void CAngoTimeDlg::DoDataExchange(CDataExchange* pDX)
@@ -268,7 +277,7 @@ void CAngoTimeDlg::InitClock()
 	CRgn  rgn;
 	CRect  rc;
 	GetClientRect(&rc);
-	rgn.CreateEllipticRgn(rc.left, rc.top, rc.right-1, rc.bottom-1);
+	rgn.CreateEllipticRgn(rc.left+2, rc.top+2, rc.right-3, rc.bottom-3);
 	SetWindowRgn(rgn, TRUE);
 	rgn.DeleteObject();
 	
@@ -294,58 +303,61 @@ HBRUSH CAngoTimeDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
 
 void CAngoTimeDlg::InitRgbMap()
 {
-	
-
-	CClientDC dc(this);
-	CPoint cPos(65,64);
-
 	CBitmap bitmap;
 	BOOL bLoad = bitmap.LoadBitmap(IDB_BMP_CLOCK);
 	CSize csize = bitmap.GetBitmapDimension();
 
-	COLORREF C = dc.GetPixel(cPos);
+	COLORREF C = 0;
 	int R = GetRValue(C);
 	int G = GetGValue(C);
 	int B = GetBValue(C);
 
-	m_mapPointRgb[cPos] = C;
 
-
-	BITMAP bm;
-	bitmap.GetBitmap(&bm);
-
-	int nbyte = bm.bmBitsPixel / 8;
+	bitmap.GetBitmap(&m_bmpClock);
+	int nbyte = m_bmpClock.bmBitsPixel / 8;
 
 	BITMAPINFO bi;
 	bi.bmiHeader.biSize = sizeof(bi.bmiHeader);
-	bi.bmiHeader.biWidth = bm.bmWidth;
-	bi.bmiHeader.biHeight = -bm.bmHeight;
+	bi.bmiHeader.biWidth = m_bmpClock.bmWidth;
+	bi.bmiHeader.biHeight = -m_bmpClock.bmHeight;
 	bi.bmiHeader.biPlanes = 1;
-	bi.bmiHeader.biBitCount = bm.bmBitsPixel;
+	bi.bmiHeader.biBitCount = m_bmpClock.bmBitsPixel;
 	bi.bmiHeader.biCompression = BI_RGB;
-	bi.bmiHeader.biSizeImage = bm.bmWidth * bm.bmHeight * nbyte;
+	bi.bmiHeader.biSizeImage = m_bmpClock.bmWidth * m_bmpClock.bmHeight * nbyte;
 	bi.bmiHeader.biClrUsed = 0;
 	bi.bmiHeader.biClrImportant = 0;
 
 	// 获取位图数据  
 	HDC hdc = ::GetDC(NULL);
-	BYTE* pBits = (BYTE*)new BYTE[bm.bmWidth * bm.bmHeight * nbyte];
-	::ZeroMemory(pBits, bm.bmWidth * bm.bmHeight * nbyte);
-	if (!::GetDIBits(hdc, bitmap, 0, bm.bmHeight, pBits, &bi, DIB_RGB_COLORS))
+	BYTE* pBits = (BYTE*)new BYTE[m_bmpClock.bmWidth * m_bmpClock.bmHeight * nbyte];
+	::ZeroMemory(pBits, m_bmpClock.bmWidth * m_bmpClock.bmHeight * nbyte);
+	if (!::GetDIBits(hdc, bitmap, 0, m_bmpClock.bmHeight, pBits, &bi, DIB_RGB_COLORS))
 	{
 		delete pBits;
 		pBits = NULL;
 	}
-	for (int i = 0; i < bm.bmWidth; ++i)
+
+
+	m_pBmpColor = new COLORREF*[m_bmpClock.bmWidth];
+	for (int i = 0; i < m_bmpClock.bmWidth; i++)
 	{
-		for (int j = 0; j < bm.bmHeight; ++j)
+		m_pBmpColor[i] = new COLORREF[m_bmpClock.bmHeight];
+	}
+
+	
+	for (int i = 0; i < m_bmpClock.bmWidth; ++i)
+	{
+		for (int j = 0; j < m_bmpClock.bmHeight; ++j)
 		{
-			BYTE r = pBits[i * nbyte + j * bm.bmWidthBytes + 2];
-			BYTE g = pBits[i * nbyte + j * bm.bmWidthBytes + 1];
-			BYTE b = pBits[i * nbyte + j * bm.bmWidthBytes + 0];
+			R = pBits[i * nbyte + j * m_bmpClock.bmWidthBytes + 2];
+			G = pBits[i * nbyte + j * m_bmpClock.bmWidthBytes + 1];
+			B = pBits[i * nbyte + j * m_bmpClock.bmWidthBytes + 0];
 			//这里就可以做我们处理了
+			C = RGB(R,G,B);
+			m_pBmpColor[i][j] = C;
 		}
 	}
+
 
 	delete pBits;
 	pBits = NULL;
@@ -392,12 +404,13 @@ unsigned int __stdcall  Thread_Clock(LPVOID pParam)
 		//BYTE byGreen = GetGValue(cRgb);
 		//BYTE byBlue	 = GetBValue(cRgb);
 
+		
 		//////////////////////////////////////////////	
 		if ( !pBase->m_bFirstClock )
 		{
 			//用背景色擦去上一次画的针
-			cRgb = pBase->m_cLastHour;
 			pBase->m_Point_End = pBase->m_point_lastHour;
+			cRgb = pBase->m_pBmpColor[pBase->m_Point_End.x][pBase->m_Point_End.y];
 
 			PenNew.CreatePen(PS_SOLID, 4, cRgb);
 			BrushNew.CreateSolidBrush(cRgb);
@@ -417,8 +430,7 @@ unsigned int __stdcall  Thread_Clock(LPVOID pParam)
 		pBase->m_Point_End.x = 65 + LONG(22 * sin(H*PI / 30));
 		pBase->m_Point_End.y = 64 - LONG(22 * cos(H*PI / 30));
 
-		//保存原有的rgb
-		pBase->m_cLastHour = dc.GetPixel(pBase->m_Point_End);
+		//保存原有的位置
 		pBase->m_point_lastHour = pBase->m_Point_End;
 
 		dc.MoveTo(pBase->m_Point_Start);
@@ -430,8 +442,8 @@ unsigned int __stdcall  Thread_Clock(LPVOID pParam)
 		if ( !pBase->m_bFirstClock )
 		{
 			//擦除上次的指针
-			cRgb = pBase->m_cLastMin;
 			pBase->m_Point_End = pBase->m_point_lastMin;
+			cRgb = pBase->m_pBmpColor[pBase->m_Point_End.x][pBase->m_Point_End.y];
 
 			BrushNew.DeleteObject();
 			BrushNew.CreateSolidBrush(cRgb);
@@ -453,7 +465,6 @@ unsigned int __stdcall  Thread_Clock(LPVOID pParam)
 		pBase->m_Point_End.x = 65 + LONG(30 * sin(M*PI / 30));
 		pBase->m_Point_End.y = 64 - LONG(30 * cos(M*PI / 30));
 
-		pBase->m_cLastMin = dc.GetPixel(pBase->m_Point_End);
 		pBase->m_point_lastMin = pBase->m_Point_End;
 
 		dc.MoveTo(pBase->m_Point_Start);
@@ -466,8 +477,8 @@ unsigned int __stdcall  Thread_Clock(LPVOID pParam)
 		if ( !pBase->m_bFirstClock )
 		{
 			//擦除上次的指针
-			cRgb = pBase->m_cLastSecS;
 			pBase->m_Point_End = pBase->m_point_lastSecS;
+			cRgb = pBase->m_pBmpColor[pBase->m_Point_End.x][pBase->m_Point_End.y];
 
 			PenNew.DeleteObject();
 			PenNew.CreatePen(PS_DASHDOTDOT, 2, cRgb);
@@ -484,7 +495,6 @@ unsigned int __stdcall  Thread_Clock(LPVOID pParam)
 		pBase->m_Point_End.x = 65 + LONG(6 * sin(S*PI / 30));
 		pBase->m_Point_End.y = 64 - LONG(6 * cos(S*PI / 30));
 
-		pBase->m_cLastSecS = dc.GetPixel(pBase->m_Point_End);
 		pBase->m_point_lastSecS = pBase->m_Point_End;
 
 		dc.MoveTo(pBase->m_Point_Start);
@@ -498,8 +508,8 @@ unsigned int __stdcall  Thread_Clock(LPVOID pParam)
 		if ( !pBase->m_bFirstClock )
 		{
 			//擦除上次的指针
-			cRgb = pBase->m_cLastSecL;
 			pBase->m_Point_End = pBase->m_point_lastSecL;
+			cRgb = pBase->m_pBmpColor[pBase->m_Point_End.x][pBase->m_Point_End.y];
 
 			//		BrushNew.DeleteObject();
 			//		BrushNew.CreateSolidBrush(RGB(C,C,C));
@@ -522,7 +532,6 @@ unsigned int __stdcall  Thread_Clock(LPVOID pParam)
 		pBase->m_Point_End.x = 65 + LONG(30 * sin(S*PI / 30));
 		pBase->m_Point_End.y = 64 - LONG(30 * cos(S*PI / 30));
 
-		pBase->m_cLastSecL = dc.GetPixel(pBase->m_Point_End);
 		pBase->m_point_lastSecL = pBase->m_Point_End;
 
 		dc.MoveTo(pBase->m_Point_Start);
