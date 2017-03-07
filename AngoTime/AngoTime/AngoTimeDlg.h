@@ -102,7 +102,7 @@ public:
 	afx_msg void				OnSaytimeAll();
 	afx_msg void				OnSaytimeHalf();
 	afx_msg void				OnSaytimeClose();
-	afx_msg void				OnCfgAutorun();					//开机启动
+	afx_msg void				OnCfgAutoStart();					//开机启动
 
 	afx_msg void				OnClockOn();
 	afx_msg void				OnClockOff();

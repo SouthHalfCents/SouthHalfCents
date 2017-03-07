@@ -1,6 +1,9 @@
 #pragma once
 
 #include <list>
+#include "afxcmn.h"
+#include "afxwin.h"
+#include "ClockSet.h"
 using namespace std;
 // CClock 对话框
 
@@ -22,7 +25,7 @@ public:
 	virtual ~CClock();
 
 // 对话框数据
-	enum { IDD = IDD_DLG_CLOCK_CFG };
+	enum { IDD = IDD_DLG_CLOCK };
 
 protected:
 	virtual void			DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
@@ -39,4 +42,16 @@ protected:
 public:
 
 	static list<CLOCK_CONT>	m_ClcokList;
+	static void				CheckClock(CTime & tTime);		//判断是否有定时任务应被执行
+
+	CListCtrl				m_lstContent;
+	afx_msg void			OnBnClickedButtonAdd();
+	afx_msg void			OnBnClickedButtonModi();
+	afx_msg void			OnBnClickedButtonDel();
+	CEdit m_edtPath;
+	CComboBox m_cmbHour;
+	CComboBox m_cmbMin;
+	afx_msg void OnBnClickedButtonChooce();
+	afx_msg void OnBnClickedButtonOk();
+	afx_msg void OnBnClickedButtonCancle();
 };

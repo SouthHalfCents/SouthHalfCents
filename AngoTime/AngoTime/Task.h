@@ -4,6 +4,8 @@
 // CTask 对话框
 #include <list>
 #include "Database.h"
+#include "afxcmn.h"
+#include "TaskSet.h"
 
 using namespace std;
 
@@ -49,4 +51,10 @@ public:
 	static void				CheckTask(CTime & tTime);		//判断是否有定时任务应被执行
 
 	static void				ClosePC(void *pData);
+
+
+	CListCtrl				m_lstContent;
+	afx_msg void			OnBnClickedButtonAdd();
+	afx_msg void			OnBnClickedButtonModi();
+	afx_msg void			OnBnClickedButtonDel();
 };

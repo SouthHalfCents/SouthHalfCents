@@ -5,13 +5,13 @@
 #include "AngoTime.h"
 #include "Clock.h"
 #include "afxdialogex.h"
-
+#include "Database.h"
+#include "Utils.h"
 
 // CClock 对话框
 
 IMPLEMENT_DYNAMIC(CClock, CDialogEx)
 
-list<CLOCK_CONT> CClock::m_ClcokList;
 
 
 CClock::CClock(CWnd* pParent /*=NULL*/)
@@ -31,6 +31,10 @@ CClock::~CClock()
 void CClock::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_LIST_CLOCK, m_lstContent);
+	DDX_Control(pDX, IDC_EDIT_MUSIC_PATH, m_edtPath);
+	DDX_Control(pDX, IDC_COMBO_HOUR, m_cmbHour);
+	DDX_Control(pDX, IDC_COMBO_MIN, m_cmbMin);
 }
 
 
@@ -38,6 +42,12 @@ BEGIN_MESSAGE_MAP(CClock, CDialogEx)
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
 	ON_WM_CREATE()
+	ON_BN_CLICKED(IDC_BUTTON_ADD, &CClock::OnBnClickedButtonAdd)
+	ON_BN_CLICKED(IDC_BUTTON_MODI, &CClock::OnBnClickedButtonModi)
+	ON_BN_CLICKED(IDC_BUTTON_DEL, &CClock::OnBnClickedButtonDel)
+	ON_BN_CLICKED(IDC_BUTTON_CHOOCE, &CClock::OnBnClickedButtonChooce)
+	ON_BN_CLICKED(IDC_BUTTON_OK, &CClock::OnBnClickedButtonOk)
+	ON_BN_CLICKED(IDC_BUTTON_CANCLE, &CClock::OnBnClickedButtonCancle)
 END_MESSAGE_MAP()
 
 
@@ -100,4 +110,142 @@ BOOL CClock::OnInitDialog()
 
 
 	return TRUE;
+}
+
+//------------------------------------------------------------------------------------------------------------------------
+list<CLOCK_CONT>	CClock::m_ClcokList;
+void CClock::CheckClock(CTime & tTime)
+{
+	list<CLOCK_CONT>::iterator clock_itr;
+	BOOL bFind = FALSE;
+	CLOCK_CONT clock_alarm = { 0 };
+
+	for (clock_itr = m_ClcokList.begin(); clock_itr != m_ClcokList.end(); )
+	{
+		bFind = FALSE;
+		switch (clock_itr->nFreq)
+		{
+		case TIMES_ONCE:
+		case TIMES_DAY:
+		{
+			if (tTime.GetYear() == clock_itr->tTime.GetYear() && tTime.GetMonth() == clock_itr->tTime.GetMonth() && tTime.GetDay() == clock_itr->tTime.GetDay())
+			{
+				if (tTime.GetHour() == clock_itr->tTime.GetHour() && tTime.GetMinute() == clock_itr->tTime.GetMinute())
+				{
+					bFind = TRUE;
+				}
+			}
+		}
+		break;
+
+		case TIMES_WEEK:
+		{
+			int nDay = 0;
+			CUtils::TranDayweekToInt(tTime.GetDayOfWeek(), nDay);
+			if (nDay | clock_itr->nWeek)
+			{
+				if (tTime.GetYear() == clock_itr->tTime.GetYear() && tTime.GetMonth() == clock_itr->tTime.GetMonth() && tTime.GetDay() == clock_itr->tTime.GetDay())
+				{
+					if (tTime.GetHour() == clock_itr->tTime.GetHour() && tTime.GetMinute() == clock_itr->tTime.GetMinute())
+					{
+						bFind = TRUE;
+					}
+				}
+			}
+		}
+		break;
+
+
+		default:
+			break;
+		}
+
+		//下一个
+		if (!bFind)
+		{
+			++clock_itr;
+			continue;
+		}
+			
+		if (TIMES_ONCE == clock_itr->nFreq)
+		{
+			m_ClcokList.erase(clock_itr++);
+		}
+		else
+		{
+			++clock_itr;
+		}
+
+
+		//任务线程 信号+1
+		ReleaseSemaphore(g_hSemaph_Alarm, 1, NULL);
+	}
+
+
+}
+
+void CClock::OnBnClickedButtonAdd()
+{
+	CClockSet clockSetDlg;
+	if (IDOK == clockSetDlg.DoModal())
+	{
+
+	}
+}
+
+
+void CClock::OnBnClickedButtonModi()
+{
+	CClockSet clockSetDlg;
+	if (IDOK == clockSetDlg.DoModal())
+	{
+
+	}
+}
+
+
+void CClock::OnBnClickedButtonDel()
+{
+	if (IDOK == AngoMessageBox(_T("删除")) )
+	{
+
+	}
+}
+
+
+void CClock::OnBnClickedButtonChooce()
+{
+	CFileDialog dlg(TRUE, _T("csv"), NULL,
+		OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
+		_T("CSV Files (*.csv)|*.csv||"));
+
+	// Set the directory where the file open dialog will start from.
+	CString strInitDir;
+	char szWinDir[MAX_PATH] = { 0 };
+	//::GetSystemDirectoryA(szWinDir,MAX_PATH);
+	//strInitDir.Format("%c:\\",szWinDir[0]);
+	strInitDir.Format(_T("..\\"));
+	dlg.m_ofn.lpstrInitialDir = strInitDir;
+
+
+
+	// Set the title for the file open dialog.
+	dlg.m_ofn.lpstrTitle = _T("选择闹铃文件");
+	INT_PTR nRet = dlg.DoModal();
+	if (nRet == IDOK)
+	{
+
+	}
+}
+
+
+void CClock::OnBnClickedButtonOk()
+{
+	EndDialog(IDOK);
+}
+
+
+void CClock::OnBnClickedButtonCancle()
+{
+	EndDialog(IDCANCEL);
 }

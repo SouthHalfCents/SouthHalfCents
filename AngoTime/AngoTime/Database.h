@@ -25,9 +25,12 @@ using namespace std;
 //注册表信息section和entry
 #define ANGO_SECTION		_T("settings")
 
+#define CLOCK_MUSIC			_T("clock_music")
 #define SAYTIME_ENTRY		_T("saytime")
 #define CLOCK_ENTRY			_T("clock")
 #define AUTORUN_ENTRY		_T("autorun")
+
+
 
 
 //执行时间频率
@@ -76,6 +79,8 @@ typedef struct tagTaskExe
 }TASKEXE;
 extern list<TASKEXE>		g_TaskExeList;			//待执行任务
 extern mutex				g_MutexTaskList;		//任务锁
+
+//extern mutex				gMutexClockList;		//闹钟锁
 
 /*
 CWinApp类中提供了一组用于读写应用程序配置的方法：

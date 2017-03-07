@@ -100,3 +100,4 @@ BOOL CAngoTimeApp::InitInstance()
 	return FALSE;
 }
 
+

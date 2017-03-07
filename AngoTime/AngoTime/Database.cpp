@@ -21,6 +21,8 @@ BOOL			g_bWork = FALSE;
 mutex			g_MutexTaskList;
 list<TASKEXE>	g_TaskExeList;
 
+ mutex			gMutexClockList;		//闹钟锁
+
 //-------------------------------------------------------------------------------------------------------------------------
 void InitThread()
 {
@@ -82,13 +84,19 @@ unsigned int __stdcall Thread_Alarm(LPVOID pParam)
 			break;
 		}
 
+		CString strPath = AfxGetApp()->GetProfileStringW(ANGO_SECTION, CLOCK_MUSIC, 0);
+		CString strTemp = _T("open ") + strPath;
 		g_MutexSound.lock();
-		strPath = "c:\\win95\\media\\The Microsoft Sound.wav";
-		PlaySound(strPath, NULL, SND_FILENAME | SND_ASYNC);
-// 		PlaySound(MAKEINTRESOURCE(IDR_WAVESOUND), AfxGetApp()->m_hInstance, SND_RESOURCE | SND_ASYNC | SND_NODEFAULT);
-// 		Sleep(7000);
-// 		PlaySound(MAKEINTRESOURCE(IDR_WAVESOUND), AfxGetApp()->m_hInstance, SND_RESOURCE | SND_ASYNC | SND_NODEFAULT);
-// 		Sleep(8000);
+
+		if (strPath.GetLength() >= 4)
+		{
+			mciSendString(strTemp , NULL, 0, 0);
+		}
+		else
+		{
+			PlaySound(MAKEINTRESOURCE(IDR_WAVE_SOUND),AfxGetApp()->m_hInstance,SND_RESOURCE|SND_ASYNC|SND_NODEFAULT);
+			ReleaseSemaphore(g_hSemaph_SayTime, 1, NULL);	//释放1个信号量
+		}
 		
 		g_MutexSound.unlock();
 	}

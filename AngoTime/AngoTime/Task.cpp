@@ -32,6 +32,7 @@ CTask::~CTask()
 void CTask::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_LIST_TASK, m_lstContent);
 }
 
 
@@ -39,6 +40,9 @@ BEGIN_MESSAGE_MAP(CTask, CDialogEx)
 	ON_WM_CTLCOLOR()
 	ON_WM_ERASEBKGND()
 	ON_WM_CREATE()
+	ON_BN_CLICKED(IDC_BUTTON_ADD, &CTask::OnBnClickedButtonAdd)
+	ON_BN_CLICKED(IDC_BUTTON_MODI, &CTask::OnBnClickedButtonModi)
+	ON_BN_CLICKED(IDC_BUTTON_DEL, &CTask::OnBnClickedButtonDel)
 END_MESSAGE_MAP()
 
 
@@ -113,7 +117,7 @@ void CTask::CheckTask(CTime & tTime)
 	BOOL bFind = FALSE;
 	TASKEXE taskexe = {0};
 
-	for (task_itr = m_TaskList.begin(); task_itr != m_TaskList.end(); ++task_itr)
+	for (task_itr = m_TaskList.begin(); task_itr != m_TaskList.end();)
 	{
 		bFind = FALSE;
 		switch (task_itr->nFreq)
@@ -154,8 +158,19 @@ void CTask::CheckTask(CTime & tTime)
 		}
 
 		//下一个
-		if ( !bFind )
-			continue;
+		if (!bFind)
+		{
+			 ++task_itr;
+			 continue;
+		}
+		else if (TIMES_ONCE == task_itr->nFreq)
+		{
+			m_TaskList.erase(task_itr++);
+		}
+		else
+		{
+			++task_itr;
+		}
 
 		switch (task_itr->nTaskType)
 		{
@@ -184,8 +199,53 @@ void CTask::CheckTask(CTime & tTime)
 //关机
 void CTask::ClosePC(void *pData)
 {
+	system("shutdown -s -t 0");
 	AngoMessageBox(_T("close pc"));
 }
 
 //------------------------------------------------------------------------------------------------------------------------
 //------------------------------------------------------------------------------------------------------------------------
+
+void CTask::OnBnClickedButtonAdd()
+{
+	CTaskSet tasksetDlg;
+
+	if (IDOK == tasksetDlg.DoModal())
+	{
+		
+	}
+	else
+	{
+
+	}
+}
+
+
+void CTask::OnBnClickedButtonModi()
+{
+	CTaskSet tasksetDlg;
+
+	if (IDOK == tasksetDlg.DoModal())
+	{
+		
+	}
+	else
+	{
+
+	}
+}
+
+
+void CTask::OnBnClickedButtonDel()
+{
+	CTaskSet tasksetDlg;
+
+	if (IDOK == AngoMessageBox(_T("删除")))
+	{
+		
+	}
+	else
+	{
+
+	}
+}

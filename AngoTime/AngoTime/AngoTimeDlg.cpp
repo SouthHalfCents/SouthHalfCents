@@ -85,7 +85,7 @@ BEGIN_MESSAGE_MAP(CAngoTimeDlg, CDialogEx)
 	ON_COMMAND(ID_SAYTIME_ALL, &CAngoTimeDlg::OnSaytimeAll)
 	ON_COMMAND(ID_SAYTIME_HALF, &CAngoTimeDlg::OnSaytimeHalf)
 	ON_COMMAND(ID_SAYTIME_CLOSE, &CAngoTimeDlg::OnSaytimeClose)
-	ON_COMMAND(ID_CFG_AUTORUN, &CAngoTimeDlg::OnCfgAutorun)
+	ON_COMMAND(ID_CFG_AUTORUN, &CAngoTimeDlg::OnCfgAutoStart)
 	ON_COMMAND(ID_CLOCK_ON, &CAngoTimeDlg::OnClockOn)
 	ON_COMMAND(ID_CLOCK_OFF, &CAngoTimeDlg::OnClockOff)
 	ON_COMMAND(ID_CLOCK_CONFIG, &CAngoTimeDlg::OnClockConfig)
@@ -569,6 +569,13 @@ unsigned int __stdcall  Thread_Clock(LPVOID pParam)
 		}
 		CTask::CheckTask(tTime);
 
+		//闹钟
+		if (!g_bWork)
+		{
+			break;
+		}
+		CClock::CheckClock(tTime);
+
 	}
 	return 0;
 
@@ -792,7 +799,7 @@ void CAngoTimeDlg::OnSaytimeClose()
 }
 
 
-void CAngoTimeDlg::OnCfgAutorun()
+void CAngoTimeDlg::OnCfgAutoStart()
 {
 	//开机启动...
 
@@ -965,7 +972,7 @@ void CAngoTimeDlg::InitSettings()
 	//开机启动设置
 	m_bAutoRun = AfxGetApp()->GetProfileInt(ANGO_SECTION, AUTORUN_ENTRY, 0);
 	m_bAutoRun = !m_bAutoRun;
-	OnCfgAutorun();
+	OnCfgAutoStart();
 
 }
 //---------------------------------------------------------------------------------------------------------------------

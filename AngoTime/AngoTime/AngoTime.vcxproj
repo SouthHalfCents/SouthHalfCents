@@ -187,6 +187,7 @@
     <ClInclude Include="AngoTime.h" />
     <ClInclude Include="AngoTimeDlg.h" />
     <ClInclude Include="Clock.h" />
+    <ClInclude Include="ClockSet.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="Database.h" />
     <ClInclude Include="log.h" />
@@ -195,6 +196,7 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Task.h" />
+    <ClInclude Include="TaskSet.h" />
     <ClInclude Include="TrayIcon.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
@@ -202,6 +204,7 @@
     <ClCompile Include="AngoTime.cpp" />
     <ClCompile Include="AngoTimeDlg.cpp" />
     <ClCompile Include="Clock.cpp" />
+    <ClCompile Include="ClockSet.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="Database.cpp" />
     <ClCompile Include="log.cpp" />
@@ -213,6 +216,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Task.cpp" />
+    <ClCompile Include="TaskSet.cpp" />
     <ClCompile Include="TrayIcon.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
