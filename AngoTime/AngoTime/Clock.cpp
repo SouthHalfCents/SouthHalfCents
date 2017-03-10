@@ -108,7 +108,9 @@ BOOL CClock::OnInitDialog()
 
 	MoveWindow(&rcWindow);
 
-
+	m_lstContent.InsertColumn(0, L"响铃时间", LVCFMT_LEFT, 120, 0);
+	m_lstContent.InsertColumn(1, L"重复", LVCFMT_LEFT, 120, 1);
+	m_lstContent.InsertColumn(2, L"说明", LVCFMT_LEFT, 100, 2);
 	return TRUE;
 }
 
@@ -215,27 +217,32 @@ void CClock::OnBnClickedButtonDel()
 
 void CClock::OnBnClickedButtonChooce()
 {
-	CFileDialog dlg(TRUE, _T("csv"), NULL,
-		OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT,
-		_T("CSV Files (*.csv)|*.csv||"));
+	CFileDialog dlg(TRUE, _T("mp3"), NULL,OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_ALLOWMULTISELECT,_T("mp3文件(*.mp3)|*.mp3|wav文件(*.wav)|*.wav|所有文件(*.*) |*.*||"));
 
-	// Set the directory where the file open dialog will start from.
-	CString strInitDir;
-	char szWinDir[MAX_PATH] = { 0 };
-	//::GetSystemDirectoryA(szWinDir,MAX_PATH);
-	//strInitDir.Format("%c:\\",szWinDir[0]);
-	strInitDir.Format(_T("..\\"));
+	CString strInitDir = CUtils::GetAppDir();
+	strInitDir += _T("\\music");
+
+	WCHAR szWinDir[MAX_PATH] = { 0 };
+	GetCurrentDirectoryW(MAX_PATH, szWinDir);
+	
+	if (!PathIsDirectoryW(strInitDir))
+	{
+		if (!CreateDirectoryW(strInitDir, NULL))
+		{
+			GetSystemDirectoryW(szWinDir, MAX_PATH);
+			strInitDir.Format(L"%c:\\", szWinDir[0]);
+		}
+	}
+
+
 	dlg.m_ofn.lpstrInitialDir = strInitDir;
-
-
-
-	// Set the title for the file open dialog.
 	dlg.m_ofn.lpstrTitle = _T("选择闹铃文件");
 	INT_PTR nRet = dlg.DoModal();
-	if (nRet == IDOK)
-	{
+	if (nRet != IDOK)
+		return;
 
-	}
+	m_edtPath.SetWindowTextW(dlg.GetPathName());
+
 }
 
 

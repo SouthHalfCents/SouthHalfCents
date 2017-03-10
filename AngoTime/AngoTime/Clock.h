@@ -48,10 +48,10 @@ public:
 	afx_msg void			OnBnClickedButtonAdd();
 	afx_msg void			OnBnClickedButtonModi();
 	afx_msg void			OnBnClickedButtonDel();
-	CEdit m_edtPath;
-	CComboBox m_cmbHour;
-	CComboBox m_cmbMin;
-	afx_msg void OnBnClickedButtonChooce();
-	afx_msg void OnBnClickedButtonOk();
-	afx_msg void OnBnClickedButtonCancle();
+	CEdit					m_edtPath;
+	CComboBox				m_cmbHour;
+	CComboBox				m_cmbMin;
+	afx_msg void			OnBnClickedButtonChooce();
+	afx_msg void			OnBnClickedButtonOk();
+	afx_msg void			OnBnClickedButtonCancle();
 };

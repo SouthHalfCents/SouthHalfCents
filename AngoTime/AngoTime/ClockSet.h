@@ -1,4 +1,6 @@
 #pragma once
+#include "afxwin.h"
+#include "afxdtctl.h"
 
 
 // CClockSet ¶Ô»°¿ò
@@ -26,4 +28,19 @@ protected:
 
 public:
 
+	CEdit					m_edtClockName;
+	CComboBox				m_cmbHour;
+	CComboBox				m_cmbMin;
+	CComboBox				m_cmbFrequen;
+	CDateTimeCtrl			m_dateOnce;
+	CButton					m_chkMonday;
+	CButton					m_chkTuesday;
+	CButton					m_chkWednesday;
+	CButton					m_btnThursday;
+	CButton					m_Friday;
+	CButton					m_chkSaturday;
+	CButton					m_chkSunday;
+	CButton					m_btnOK;
+	afx_msg void			OnBnClickedOk();
+	afx_msg void			OnBnClickedCancel();
 };

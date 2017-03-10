@@ -103,6 +103,9 @@ BOOL CTask::OnInitDialog()
 
 	MoveWindow(&rcWindow);
 
+	m_lstContent.InsertColumn(0, L"定时任务", LVCFMT_LEFT, 120, 0);
+	m_lstContent.InsertColumn(1, L"响铃时间", LVCFMT_LEFT, 120, 1);
+	m_lstContent.InsertColumn(2, L"重复", LVCFMT_LEFT, 120, 2);
 
 	return TRUE;
 }
