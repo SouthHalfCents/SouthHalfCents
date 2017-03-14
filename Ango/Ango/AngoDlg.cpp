@@ -284,7 +284,7 @@ void CAngoDlg::OnCancel()
 {
 	CString strMsg;
 	strMsg = "是否退出程序？";
-	if( AngoMessageBox(strMsg,L"退出",MB_OKCANCEL) == IDCANCEL)
+	//if( AngoMessageBox(strMsg,L"退出",MB_OKCANCEL) == IDCANCEL)
 	{
 		return;
 	}
@@ -297,8 +297,8 @@ LRESULT CAngoDlg::OnNotifyIcon(WPARAM wparam, LPARAM lparam)
 	if (lparam == WM_LBUTTONDOWN)
 	{
 		//恢复窗口或者最小化
-		AfxGetMainWnd()->ShowWindow(SW_SHOW);
-		AfxGetMainWnd()->ShowWindow(SW_RESTORE);
+		//AfxGetMainWnd()->ShowWindow(SW_SHOW);
+		//AfxGetMainWnd()->ShowWindow(SW_RESTORE);
 		//这里貌似只有写这样两句才能保证恢复窗口后，该窗口处于活动状态（在最前面）
 	}
 	else if (lparam == WM_RBUTTONDOWN)
@@ -440,7 +440,10 @@ void CAngoDlg::OnMenuShow()
 
 void CAngoDlg::OnMenuHide()
 {
-	AfxGetMainWnd()->ShowWindow(SW_MINIMIZE);
+	//AfxGetMainWnd()->ShowWindow(SW_MINIMIZE);
+	/*这个对话框不显示在任务栏，在最小化之后它会变成一个很小的一条显示在桌面上。这时如果它被遮挡，就会出发WM_PAINT消息*/
+
+	AfxGetMainWnd()->ShowWindow(SW_HIDE);
 
 	CMenu* pMenu = m_popMenu.GetSubMenu(0);
 	if (pMenu)
