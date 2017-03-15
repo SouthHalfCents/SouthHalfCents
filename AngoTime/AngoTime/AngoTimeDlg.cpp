@@ -9,17 +9,12 @@
 #include "MsgBoxEx.h"
 
 
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
 
-
-
-
 // CAngoTimeDlg 对话框
-
 
 
 CAngoTimeDlg::CAngoTimeDlg(CWnd* pParent /*=NULL*/)
@@ -36,11 +31,9 @@ CAngoTimeDlg::CAngoTimeDlg(CWnd* pParent /*=NULL*/)
 
 
 	m_nSayTime		=	SAYTIME_CLOSE;
-	m_bClockState	=	FALSE;
+	m_bClockOn		=	FALSE;
 	m_bAutoRun		=	FALSE;
-
-	m_hThread_Clock	=	NULL;
-	m_hSemaph_Clock	=	NULL;
+	m_hOnlyMutex	=	NULL;
 
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_popMenu.LoadMenu(IDR_MENU_RBTN);	
@@ -48,15 +41,7 @@ CAngoTimeDlg::CAngoTimeDlg(CWnd* pParent /*=NULL*/)
 
 CAngoTimeDlg::~CAngoTimeDlg()
 {
-	if (m_pBmpColor)
-	{
-		for (int i = 0; i < m_bmpClock.bmWidth; i++)
-		{
-			delete[] m_pBmpColor[i];
-		}
-		delete[] m_pBmpColor;
-		m_pBmpColor = NULL;
-	}
+
 }
 
 void CAngoTimeDlg::DoDataExchange(CDataExchange* pDX)
@@ -97,18 +82,15 @@ END_MESSAGE_MAP()
 // CAngoTimeDlg 消息处理程序
 void CAngoTimeDlg::OnClose()
 {
-	// TODO:  在此添加消息处理程序代码和/或调用默认值
-	g_bWork = FALSE;
-	ReleaseSemaphore(m_hSemaph_Clock, 1, NULL);		//释放1个信号量
-	WaitForSingleObject(m_hThread_Clock, INFINITE);
-	CloseHandle(m_hSemaph_Clock);
-	CloseHandle(m_hThread_Clock);
+	StopWork();
 
-	CleanThread();
-
-
+	if (m_hOnlyMutex)
+	{
+		CloseHandle(m_hOnlyMutex);
+		m_hOnlyMutex = NULL;
+	}
 	CDialogEx::OnClose();
-	CDialogEx::OnCancel();
+
 }
 
 BOOL CAngoTimeDlg::OnInitDialog()
@@ -123,42 +105,27 @@ BOOL CAngoTimeDlg::OnInitDialog()
 	ModifyStyleEx(WS_EX_APPWINDOW, WS_EX_TOOLWINDOW);
 
 	// 唯一实例
-	HANDLE m_hMutex = CreateMutex(NULL, FALSE, L"//AngoTime.exe");
+	m_hOnlyMutex = CreateMutex(NULL, FALSE, L"//AngoTime.exe");
 	if (GetLastError() == ERROR_ALREADY_EXISTS)
 	{
-		// 如果程序已经存在并且正在运行 
-		// 如果已有互斥量存在则释放句柄并复位互斥量，退出程序
-		CloseHandle(m_hMutex);
-		m_hMutex = NULL;
-		//AngoMessageBox(_T("程序已经在运行"));
+		// 如果程序已经存在并且正在运行 如果已有互斥量存在则释放句柄并复位互斥量，退出程序
+		CloseHandle(m_hOnlyMutex);
+		m_hOnlyMutex = NULL;
 		CDialog::OnCancel();
 	}
 
-	InitThread();
 	InitClock();
+	InitPosition();
 
-	//调整位置
-	CRect cr;
-	GetClientRect(&cr);//获取对话框客户区域大小
-	ClientToScreen(&cr);//转换为荧幕坐标
-	int x = GetSystemMetrics(SM_CXSCREEN);//获取荧幕坐标的宽度，单位为像素
-	int y = GetSystemMetrics(SM_CYSCREEN);//获取荧幕坐标的高度，单位为像素
-	//MoveWindow((x-cr.Width() *2)/2 ,cr.top,cr.Width() *2,cr.Height() *2);//左上角
-
-	MoveWindow(x - cr.Width(), cr.Height(), cr.Width(), cr.Height());
-
+	InitRgbMap();
+	StartWork((void*)this);
 	OnViewShow();
 	OnViewUp();
 	InitSettings();
 	
-
-	
-	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
+	return TRUE;  
 }
 
-// 如果向对话框添加最小化按钮，则需要下面的代码
-//  来绘制该图标。  对于使用文档/视图模型的 MFC 应用程序，
-//  这将由框架自动完成。
 
 void CAngoTimeDlg::OnPaint()
 {
@@ -186,8 +153,7 @@ void CAngoTimeDlg::OnPaint()
 	}
 }
 
-//当用户拖动最小化窗口时系统调用此函数取得光标
-//显示。
+//当用户拖动最小化窗口时系统调用此函数取得光标显示。
 HCURSOR CAngoTimeDlg::OnQueryDragIcon()
 {
 	return static_cast<HCURSOR>(m_hIcon);
@@ -205,14 +171,11 @@ int CAngoTimeDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (CDialogEx::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
-
 	//通知区域图标，托盘图标
 	m_trayIcon.m_pCwnd = this;
 	m_trayIcon.m_dwIconId = IDR_MAINFRAME;
 	m_trayIcon.m_strTips = "╮(￣▽￣)╭ ";
 	m_trayIcon.InitTrayIcon();
-
-
 	return 0;
 }
 
@@ -241,7 +204,8 @@ void CAngoTimeDlg::OnOK()
 
 void CAngoTimeDlg::OnCancel()
 {
-	OnClose();
+	//OnClose();
+	//CDialogEx::OnCancel();
 }
 
 //-------------------------------------------------------------------------------------------------------------------------
@@ -268,6 +232,17 @@ LRESULT CAngoTimeDlg::OnNotifyIcon(WPARAM wparam, LPARAM lparam)
 
 
 //-------------------------------------------------------------------------------------------------------------------------
+void CAngoTimeDlg::InitPosition()
+{
+	//调整位置
+	CRect cr;
+	GetClientRect(&cr);//获取对话框客户区域大小
+	ClientToScreen(&cr);//转换为荧幕坐标
+	int x = GetSystemMetrics(SM_CXSCREEN);//获取荧幕坐标的宽度，单位为像素
+	int y = GetSystemMetrics(SM_CYSCREEN);//获取荧幕坐标的高度，单位为像素
+	//MoveWindow((x-cr.Width() *2)/2 ,cr.top,cr.Width() *2,cr.Height() *2);//左上角
+	MoveWindow(x - cr.Width(), cr.Height(), cr.Width(), cr.Height());
+}
 void CAngoTimeDlg::InitClock()
 {
 	//设置控制时针走动的触发器为每秒一次
@@ -285,12 +260,6 @@ void CAngoTimeDlg::InitClock()
 	CBitmap   bm;
 	bm.LoadBitmap(IDB_BMP_CLOCK);		//   可以指定bitmap图片的路径   
 	BOOL bRet = m_cBrush.CreatePatternBrush(&bm);
-
-	InitRgbMap();
-
-	//闹钟线程
-	m_hSemaph_Clock	= CreateSemaphore(NULL, 0, 2, _T("AngoTime_Clock"));
-	m_hThread_Clock	= (HANDLE)_beginthreadex(NULL, 0, Thread_Clock, this, 0, NULL);
 }
 
 HBRUSH CAngoTimeDlg::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
@@ -335,26 +304,22 @@ void CAngoTimeDlg::InitRgbMap()
 	{
 		delete pBits;
 		pBits = NULL;
+		AngoMessageBox(L"初始化时钟位图失败");
+		OnMenuExit();
 	}
 
-
-	m_pBmpColor = new COLORREF*[m_bmpClock.bmWidth];
-	for (int i = 0; i < m_bmpClock.bmWidth; i++)
-	{
-		m_pBmpColor[i] = new COLORREF[m_bmpClock.bmHeight];
-	}
-
-	
+	m_vBmpColor.resize(m_bmpClock.bmWidth);
 	for (int i = 0; i < m_bmpClock.bmWidth; ++i)
 	{
+		m_vBmpColor[i].resize(m_bmpClock.bmHeight);
 		for (int j = 0; j < m_bmpClock.bmHeight; ++j)
 		{
 			R = pBits[i * nbyte + j * m_bmpClock.bmWidthBytes + 2];
 			G = pBits[i * nbyte + j * m_bmpClock.bmWidthBytes + 1];
 			B = pBits[i * nbyte + j * m_bmpClock.bmWidthBytes + 0];
-			//这里就可以做我们处理了
+			
 			C = RGB(R,G,B);
-			m_pBmpColor[i][j] = C;
+			m_vBmpColor[i][j] = C;
 		}
 	}
 
@@ -364,270 +329,21 @@ void CAngoTimeDlg::InitRgbMap()
 
 }
 
-unsigned int __stdcall  Thread_Clock(LPVOID pParam)
-{
-	CAngoTimeDlg* pBase = (CAngoTimeDlg*)pParam;
 
-	//获得当前系统时间。
-	CTime tTime = CTime::GetCurrentTime();
-	int   S = 0;
-	float M = 0;
-	float H = 0;
-
-	pBase->m_Point_Start.x = 65;
-	pBase->m_Point_Start.y = 64;
-	COLORREF cRgb	= 0;
-
-	CPen *pPenOld = NULL;
-	CBrush *pBrushOld = NULL;
-	CPen PenNew;
-	CBrush BrushNew;
-	CClientDC dc(pBase);
-
-	while (g_bWork)
-	{ 
-		WaitForSingleObject(pBase->m_hSemaph_Clock,INFINITE);
-
-		tTime = CTime::GetCurrentTime();
-		S = tTime.GetSecond();
-		M = float(tTime.GetMinute() + S / 60.0);
-		H = float(tTime.GetHour() + M / 60.0);
-		if (H > 12)
-			H = H - 12;
-		H = H * 5;
-
-
-		//方法为画每根针前用背景色擦去上一次画的针（由于背景色渐变，所以加入了计算）
-		//从图片获取背景色rgb
-		//COLORREF cRgb = dc.GetPixel(m_Point_End);
-		//BYTE byRed   = GetRValue(cRgb);
-		//BYTE byGreen = GetGValue(cRgb);
-		//BYTE byBlue	 = GetBValue(cRgb);
-
-		
-		//////////////////////////////////////////////	
-		if ( !pBase->m_bFirstClock )
-		{
-			//用背景色擦去上一次画的针
-			pBase->m_Point_End = pBase->m_point_lastHour;
-			cRgb = pBase->m_pBmpColor[pBase->m_Point_End.x][pBase->m_Point_End.y];
-
-			PenNew.CreatePen(PS_SOLID, 4, cRgb);
-			BrushNew.CreateSolidBrush(cRgb);
-			pBrushOld = dc.SelectObject(&BrushNew);
-			pPenOld = dc.SelectObject(&PenNew);
-			dc.MoveTo(pBase->m_Point_Start);
-			dc.LineTo(pBase->m_Point_End);
-		}
-
-		//画时针
-		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_SOLID, 4, RGB(0, 0, 0));
-		pPenOld = dc.SelectObject(&PenNew);
-		BrushNew.DeleteObject();
-		BrushNew.CreateSolidBrush(RGB(0, 0, 0));
-		pBrushOld = dc.SelectObject(&BrushNew);
-		pBase->m_Point_End.x = 65 + LONG(22 * sin(H*PI / 30));
-		pBase->m_Point_End.y = 64 - LONG(22 * cos(H*PI / 30));
-
-		//保存原有的位置
-		pBase->m_point_lastHour = pBase->m_Point_End;
-
-		dc.MoveTo(pBase->m_Point_Start);
-		dc.LineTo(pBase->m_Point_End);
-	
-
-
-		///////////////////////////////////////////////
-		if ( !pBase->m_bFirstClock )
-		{
-			//擦除上次的指针
-			pBase->m_Point_End = pBase->m_point_lastMin;
-			cRgb = pBase->m_pBmpColor[pBase->m_Point_End.x][pBase->m_Point_End.y];
-
-			BrushNew.DeleteObject();
-			BrushNew.CreateSolidBrush(cRgb);
-			pBrushOld = dc.SelectObject(&BrushNew);
-			PenNew.DeleteObject();
-			PenNew.CreatePen(PS_SOLID, 3, cRgb);
-			pPenOld = dc.SelectObject(&PenNew);
-			dc.MoveTo(pBase->m_Point_Start);
-			dc.LineTo(pBase->m_Point_End);
-		}
-
-		//画分针
-		BrushNew.DeleteObject();
-		BrushNew.CreateSolidBrush(RGB(0, 0, 0));
-		pBrushOld = dc.SelectObject(&BrushNew);
-		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_SOLID, 3, RGB(0, 0, 0));
-		pPenOld = dc.SelectObject(&PenNew);
-		pBase->m_Point_End.x = 65 + LONG(30 * sin(M*PI / 30));
-		pBase->m_Point_End.y = 64 - LONG(30 * cos(M*PI / 30));
-
-		pBase->m_point_lastMin = pBase->m_Point_End;
-
-		dc.MoveTo(pBase->m_Point_Start);
-		dc.LineTo(pBase->m_Point_End);
-	
-
-		////////////////////////////////////////////	画秒针的短轴	
-		S   = (S + 30) % 60;
-	
-		if ( !pBase->m_bFirstClock )
-		{
-			//擦除上次的指针
-			pBase->m_Point_End = pBase->m_point_lastSecS;
-			cRgb = pBase->m_pBmpColor[pBase->m_Point_End.x][pBase->m_Point_End.y];
-
-			PenNew.DeleteObject();
-			PenNew.CreatePen(PS_DASHDOTDOT, 2, cRgb);
-			pPenOld = dc.SelectObject(&PenNew);
-			dc.MoveTo(pBase->m_Point_Start);
-			dc.LineTo(pBase->m_Point_End);
-		}
-
-
-		//画秒针短轴
-		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_DASHDOTDOT, 2, RGB(255, 0, 0));
-		pPenOld = dc.SelectObject(&PenNew);
-		pBase->m_Point_End.x = 65 + LONG(6 * sin(S*PI / 30));
-		pBase->m_Point_End.y = 64 - LONG(6 * cos(S*PI / 30));
-
-		pBase->m_point_lastSecS = pBase->m_Point_End;
-
-		dc.MoveTo(pBase->m_Point_Start);
-		dc.LineTo(pBase->m_Point_End);
-	
-
-
-		///////////////////////画秒针的长轴
-		S   = (S + 30) % 60;
-	
-		if ( !pBase->m_bFirstClock )
-		{
-			//擦除上次的指针
-			pBase->m_Point_End = pBase->m_point_lastSecL;
-			cRgb = pBase->m_pBmpColor[pBase->m_Point_End.x][pBase->m_Point_End.y];
-
-			//		BrushNew.DeleteObject();
-			//		BrushNew.CreateSolidBrush(RGB(C,C,C));
-			//		BrushOld=dc.SelectObject(&BrushNew);
-			PenNew.DeleteObject();
-			PenNew.CreatePen(PS_DASHDOTDOT, 2, cRgb);
-			pPenOld = dc.SelectObject(&PenNew);
-			dc.MoveTo(pBase->m_Point_Start);
-			dc.LineTo(pBase->m_Point_End);
-		}
-
-
-		//画秒针长轴
-		//		BrushNew.DeleteObject();
-		//		BrushNew.CreateSolidBrush(RGB(255,0,0));
-		//		BrushOld=dc.SelectObject(&BrushNew);
-		PenNew.DeleteObject();
-		PenNew.CreatePen(PS_DASHDOTDOT, 2, RGB(255, 0, 0));
-		pPenOld = dc.SelectObject(&PenNew);
-		pBase->m_Point_End.x = 65 + LONG(30 * sin(S*PI / 30));
-		pBase->m_Point_End.y = 64 - LONG(30 * cos(S*PI / 30));
-
-		pBase->m_point_lastSecL = pBase->m_Point_End;
-
-		dc.MoveTo(pBase->m_Point_Start);
-		dc.LineTo(pBase->m_Point_End);
-
-
-		PenNew.DeleteObject();
-		BrushNew.DeleteObject();
-		//////////////////////////////////////////////////////////////////
-		pBase->m_bFirstClock = FALSE;
-	
-		dc.SetPixel(pBase->m_Point_Start, RGB(0, 0, 0));
-		dc.SetPixel(pBase->m_Point_Start.x + 1, pBase->m_Point_Start.y,		RGB(0, 0, 0));
-		dc.SetPixel(pBase->m_Point_Start.x,		pBase->m_Point_Start.y + 1, RGB(0, 0, 0));
-		dc.SetPixel(pBase->m_Point_Start.x + 1, pBase->m_Point_Start.y + 1, RGB(0, 0, 0));
-		dc.SetPixel(pBase->m_Point_Start.x - 1, pBase->m_Point_Start.y,		RGB(0, 0, 0));
-		dc.SetPixel(pBase->m_Point_Start.x,		pBase->m_Point_Start.y - 1, RGB(0, 0, 0));
-		dc.SetPixel(pBase->m_Point_Start.x - 1, pBase->m_Point_Start.y - 1, RGB(0, 0, 0));
-
-		//报时
-		if (!g_bWork)	
-		{
-			break;
-		}
-		if (pBase->m_nSayTime==SAYTIME_ALL &&S == 0 && M == 0)//判断是否整点报时
-			pBase->OnSaytimeNow();
-
-		if (pBase->m_nSayTime==SAYTIME_HALF &&S == 0 && (M == 0 || M == 30))
-			pBase->OnSaytimeNow();
-
-		//定时任务
-		if (!g_bWork)	
-		{
-			break;
-		}
-		CTask::CheckTask(tTime);
-
-		//闹钟
-		if (!g_bWork)
-		{
-			break;
-		}
-		CClock::CheckClock(tTime);
-
-	}
-	return 0;
-
-}
 
 
 //-------------------------------------------------------------------------------------------------------------------------
-
-
-
 void CAngoTimeDlg::OnTimer(UINT_PTR nIDEvent)//控制时钟走动
 {
 	//判断传递过来的时钟触发器是否是自己定义的时钟触发器
 
 	if (nIDEvent = m_uClock_Timer)
 	{
-		ReleaseSemaphore(m_hSemaph_Clock, 1, NULL);
+		ReleaseSemaphore(g_hSemaph_Clock, 1, NULL);
 	}
 	else
 	{
 
-// 		for(int i=0;i<ringnum;i++)//判断是否有闹钟应被执行
-// 		{
-// 			if(time.GetHour()==mytimearray[i].hour&&time.GetMinute()==mytimearray[i].minute&&time.GetSecond()==mytimearray[i].second)
-// 			{
-// 				pThread2->ResumeThread();
-// 				break;
-// 			}
-// 		}
-
-
-
-// 		for(int i=0;i<tasknum;i++)//判断是否有定时任务应被执行
-// 		{
-// 			if(time.GetYear()==mytaskarray[i].year&&time.GetMonth()==mytaskarray[i].month&&time.GetDay()==mytaskarray[i].day)
-// 			{
-// 				if(time.GetHour()==mytaskarray[i].hour&&time.GetMinute()==mytaskarray[i].minute&&time.GetSecond()==mytaskarray[i].second)
-// 				{
-// 					tasktyple=mytaskarray[i].typle;
-// 					pThread3->ResumeThread();
-// 					break;
-// 				}
-// 			}
-// 		}
-
-
-// 		if(hoursound&&S==0&&M==0)//判断是否整点报时
-// 			SoundTime();
-// 		//判断是否半点报时
-// 		if(halfhoursound&&S==0&&(M==0||M==30))
-// 			SoundTime();
-		//this->UpdateData(false);
 	}
 	CDialog::OnTimer(nIDEvent);
 }
@@ -729,7 +445,8 @@ void CAngoTimeDlg::OnMenuAngo()
 
 void CAngoTimeDlg::OnMenuExit()
 {
-	OnCancel();
+	OnClose();
+	CDialogEx::OnCancel();
 }
 
 
@@ -742,22 +459,57 @@ void CAngoTimeDlg::OnSaytimeNow()
 	ReleaseSemaphore(g_hSemaph_SayTime, 1, NULL);	//释放1个信号量
 }
 
+BOOL CAngoTimeDlg::SetSayTimeState()
+{
+	UINT uCheck_Close = MF_BYCOMMAND | MF_UNCHECKED;
+	UINT uCheck_All   = MF_BYCOMMAND | MF_UNCHECKED;
+	UINT uCheck_Half  = MF_BYCOMMAND | MF_UNCHECKED;
 
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(MENU_NO_FIRST);
+	if (!pMenu)
+		return FALSE;
+	pMenu = pMenu->GetSubMenu(MENU_SAYTIME);
+	if (!pMenu)
+		return FALSE;
+
+
+	switch (m_nSayTime)
+	{
+	case SAYTIME_CLOSE:
+	{
+		uCheck_Close |= MF_CHECKED;
+	}
+	break;
+	case SAYTIME_ALL:
+	{
+		uCheck_All |= MF_CHECKED;
+	}
+	break;
+	case SAYTIME_HALF:
+	{
+		uCheck_Half |= MF_CHECKED;
+	}
+	break;
+	default:
+	{
+		uCheck_Close |= MF_CHECKED;
+	}
+		break;
+	}
+
+	pMenu->CheckMenuItem(ID_SAYTIME_ALL, uCheck_All);
+	pMenu->CheckMenuItem(ID_SAYTIME_HALF, uCheck_Half);
+	pMenu->CheckMenuItem(ID_SAYTIME_CLOSE, uCheck_Close);
+	return TRUE;
+}
 
 void CAngoTimeDlg::OnSaytimeAll()
 {
 	m_nSayTime = SAYTIME_ALL;
-
-	CMenu* pMenu = m_popMenu.GetSubMenu(0);
-	if (pMenu)
+	if (SetSayTimeState() == FALSE)
 	{
-		pMenu = pMenu->GetSubMenu(6);
-		if (pMenu)
-		{
-			pMenu->CheckMenuItem(ID_SAYTIME_ALL, MF_BYCOMMAND | MF_CHECKED);
-			pMenu->CheckMenuItem(ID_SAYTIME_HALF, MF_BYCOMMAND | MF_UNCHECKED);
-			pMenu->CheckMenuItem(ID_SAYTIME_CLOSE, MF_BYCOMMAND | MF_UNCHECKED);
-		}
+		return;
 	}
 	AfxGetApp()->WriteProfileInt(ANGO_SECTION, SAYTIME_ENTRY, m_nSayTime);
 }
@@ -766,17 +518,9 @@ void CAngoTimeDlg::OnSaytimeAll()
 void CAngoTimeDlg::OnSaytimeHalf()
 {
 	m_nSayTime = SAYTIME_HALF;
-
-	CMenu* pMenu = m_popMenu.GetSubMenu(0);
-	if (pMenu)
+	if (SetSayTimeState() == FALSE)
 	{
-		pMenu = pMenu->GetSubMenu(6);
-		if (pMenu)
-		{
-			pMenu->CheckMenuItem(ID_SAYTIME_ALL, MF_BYCOMMAND | MF_UNCHECKED);
-			pMenu->CheckMenuItem(ID_SAYTIME_HALF, MF_BYCOMMAND | MF_CHECKED);
-			pMenu->CheckMenuItem(ID_SAYTIME_CLOSE, MF_BYCOMMAND | MF_UNCHECKED);
-		}
+		return;
 	}
 	AfxGetApp()->WriteProfileInt(ANGO_SECTION, SAYTIME_ENTRY, m_nSayTime);
 }
@@ -785,29 +529,15 @@ void CAngoTimeDlg::OnSaytimeHalf()
 void CAngoTimeDlg::OnSaytimeClose()
 {
 	m_nSayTime = SAYTIME_CLOSE;
-
-	CMenu* pMenu = m_popMenu.GetSubMenu(0);
-	if (pMenu)
+	if (SetSayTimeState() == FALSE)
 	{
-		pMenu = pMenu->GetSubMenu(6);
-		if (pMenu)
-		{
-			pMenu->CheckMenuItem(ID_SAYTIME_ALL, MF_BYCOMMAND | MF_UNCHECKED);
-			pMenu->CheckMenuItem(ID_SAYTIME_HALF, MF_BYCOMMAND | MF_UNCHECKED);
-			pMenu->CheckMenuItem(ID_SAYTIME_CLOSE, MF_BYCOMMAND | MF_CHECKED);
-		}
+		return;
 	}
 	AfxGetApp()->WriteProfileInt(ANGO_SECTION, SAYTIME_ENTRY, m_nSayTime);
 }
 
-
-void CAngoTimeDlg::OnCfgAutoStart()
+BOOL CAngoTimeDlg::SetAutoStart()
 {
-	//开机启动...
-
-	m_bAutoRun = !m_bAutoRun;
-
-
 #if _WIN64
 	HMODULE hModule = GetModuleHandle(NULL);
 	HKEY hRoot = HKEY_LOCAL_MACHINE;
@@ -846,13 +576,15 @@ void CAngoTimeDlg::OnCfgAutoStart()
 	}
 	else
 	{
-		lRet = ::RegDeleteValueA(hKey,data_Name);   
+		lRet = ::RegDeleteValueA(hKey, data_Name);
 	}
 
 
 	if (lRet != ERROR_SUCCESS)
-	{	
-		OutputDebugStringA("打开注册表失败");
+	{
+		OutputDebugStringA("打开注册表失败\n");
+		RegCloseKey(hKey);
+		return FALSE;
 	}
 
 	RegCloseKey(hKey);
@@ -860,18 +592,28 @@ void CAngoTimeDlg::OnCfgAutoStart()
 #endif
 
 
+	CMenu* pMenu = m_popMenu.GetSubMenu(MENU_NO_FIRST);
+	if (!pMenu)
+		return FALSE;
+	pMenu = pMenu->GetSubMenu(MENU_CONFIG);
+	if (!pMenu)
+		return FALSE;
 
-	CMenu* pMenu = m_popMenu.GetSubMenu(0);
-	if (pMenu)
+	if (m_bAutoRun)
+		pMenu->CheckMenuItem(ID_CFG_AUTORUN, MF_BYCOMMAND | MF_CHECKED);
+	else
+		pMenu->CheckMenuItem(ID_CFG_AUTORUN, MF_BYCOMMAND | MF_UNCHECKED);
+
+
+	return TRUE;
+}
+
+void CAngoTimeDlg::OnCfgAutoStart()
+{
+	m_bAutoRun = !m_bAutoRun;
+	if (SetAutoStart() == FALSE)
 	{
-		pMenu = pMenu->GetSubMenu(8);
-		if (pMenu)
-		{
-			if (m_bAutoRun)
-				pMenu->CheckMenuItem(ID_CFG_AUTORUN, MF_BYCOMMAND | MF_CHECKED);
-			else
-				pMenu->CheckMenuItem(ID_CFG_AUTORUN, MF_BYCOMMAND | MF_UNCHECKED);
-		}
+		return;
 	}
 	AfxGetApp()->WriteProfileInt(ANGO_SECTION, AUTORUN_ENTRY, m_bAutoRun);
 }
@@ -879,39 +621,48 @@ void CAngoTimeDlg::OnCfgAutoStart()
 
 void CAngoTimeDlg::OnClockOn()
 {
-	m_bClockState = TRUE;
-
-	CMenu* pMenu = m_popMenu.GetSubMenu(0);
-	if (pMenu)
+	m_bClockOn = TRUE;
+	if (SetClockState() == FALSE)
 	{
-		pMenu = pMenu->GetSubMenu(5);
-		if (pMenu)
-		{
-			pMenu->CheckMenuItem(ID_CLOCK_ON, MF_BYCOMMAND | MF_CHECKED);
-			pMenu->CheckMenuItem(ID_CLOCK_OFF, MF_BYCOMMAND | MF_UNCHECKED);
-		}
+		return;
 	}
-	AfxGetApp()->WriteProfileInt(ANGO_SECTION, CLOCK_ENTRY, m_bClockState);
+	AfxGetApp()->WriteProfileInt(ANGO_SECTION, CLOCK_ENTRY, m_bClockOn);
 }
 
 
 void CAngoTimeDlg::OnClockOff()
 {
-	m_bClockState = FALSE;
-
-	CMenu* pMenu = m_popMenu.GetSubMenu(0);
-	if (pMenu)
+	m_bClockOn = FALSE;
+	if (SetClockState() == FALSE)
 	{
-		pMenu = pMenu->GetSubMenu(5);
-		if (pMenu)
-		{
-			pMenu->CheckMenuItem(ID_CLOCK_ON, MF_BYCOMMAND | MF_UNCHECKED);
-			pMenu->CheckMenuItem(ID_CLOCK_OFF, MF_BYCOMMAND | MF_CHECKED);
-		}
+		return;
 	}
-	AfxGetApp()->WriteProfileInt(ANGO_SECTION, CLOCK_ENTRY, m_bClockState);
+	AfxGetApp()->WriteProfileInt(ANGO_SECTION, CLOCK_ENTRY, m_bClockOn);
 }
 
+BOOL CAngoTimeDlg::SetClockState()
+{
+	CMenu* pMenu = m_popMenu.GetSubMenu(MENU_NO_FIRST);
+	if (!pMenu)
+		return FALSE;
+	
+	pMenu = pMenu->GetSubMenu(MENU_CLOCK);
+	if (!pMenu)
+		return FALSE;
+
+	if (m_bClockOn)
+	{
+		pMenu->CheckMenuItem(ID_CLOCK_ON, MF_BYCOMMAND | MF_CHECKED);
+		pMenu->CheckMenuItem(ID_CLOCK_OFF, MF_BYCOMMAND | MF_UNCHECKED);
+	}
+	else
+	{
+		pMenu->CheckMenuItem(ID_CLOCK_ON, MF_BYCOMMAND | MF_UNCHECKED);
+		pMenu->CheckMenuItem(ID_CLOCK_OFF, MF_BYCOMMAND | MF_CHECKED);
+	}
+
+	return TRUE;
+}
 
 void CAngoTimeDlg::OnClockConfig()
 {
@@ -945,36 +696,16 @@ void CAngoTimeDlg::OnCfgOther()
 void CAngoTimeDlg::InitSettings()
 {
 	//闹钟设置
-	m_bClockState = AfxGetApp()->GetProfileInt(ANGO_SECTION, CLOCK_ENTRY, 0);
-	if (m_bClockState)
-	{
-		OnClockOn();
-	}
-	else
-	{
-		OnClockOff();
-	}
-
+	m_bClockOn = AfxGetApp()->GetProfileInt(ANGO_SECTION, CLOCK_ENTRY, 0);
+	SetClockState();
 
 	//报时设置
 	m_nSayTime = AfxGetApp()->GetProfileInt(ANGO_SECTION, SAYTIME_ENTRY, 0);
-	if (SAYTIME_CLOSE == m_nSayTime)
-	{
-		OnSaytimeClose();
-	}
-	else if (SAYTIME_ALL == m_nSayTime)
-	{
-		OnSaytimeAll();
-	}
-	else if (SAYTIME_HALF == m_nSayTime)
-	{
-		OnSaytimeHalf();
-	}
+	SetSayTimeState();
 
 	//开机启动设置
 	m_bAutoRun = AfxGetApp()->GetProfileInt(ANGO_SECTION, AUTORUN_ENTRY, 0);
-	m_bAutoRun = !m_bAutoRun;
-	OnCfgAutoStart();
+	SetAutoStart();
 
 }
 //---------------------------------------------------------------------------------------------------------------------

@@ -8,7 +8,7 @@
 #include "Config.h"
 #include "Task.h"
 
-#include <hash_map>
+#include <vector>
 using namespace std;
 
 
@@ -49,16 +49,9 @@ protected:
 	afx_msg LRESULT				OnNotifyIcon(WPARAM, LPARAM);
 	virtual void				WinHelpInternal(DWORD_PTR dwData, UINT nCmd = HELP_CONTEXT);
 
-	struct tagRGB
-	{
-		DWORD r;
-		DWORD g;
-		DWORD b;
-	};
-
 public:
 	
-	CTrayIcon					m_trayIcon;				//通知区域图标
+	CTrayIcon					m_trayIcon;					//通知区域图标
 	CMenu						m_popMenu;
 
 
@@ -74,15 +67,14 @@ public:
 	BOOL						m_bFirstClock;				//第一次进入定时器
 
 
-
-	COLORREF**					m_pBmpColor;					//根据坐标存放color
+	vector<vector<COLORREF>>	m_vBmpColor;				//根据坐标存放color
 	BITMAP						m_bmpClock;
 	void						InitRgbMap();
 	afx_msg HBRUSH				OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg void				OnTimer(UINT_PTR nIDEvent);
 	void						InitClock();					// 初始化
-	HANDLE						m_hThread_Clock;
-	HANDLE						m_hSemaph_Clock;
+	void						InitPosition();
+	HANDLE						m_hOnlyMutex;
 
 
 	afx_msg void				OnMenuExit();					//退出
@@ -94,7 +86,7 @@ public:
 
 
 	int							m_nSayTime;						//报时设置
-	BOOL						m_bClockState;					//闹钟启动状态
+	BOOL						m_bClockOn;						//闹钟启动状态
 	BOOL						m_bAutoRun;						//开机启动
 	void						InitSettings();					//读取配置，设置对应界面显示
 
@@ -102,10 +94,15 @@ public:
 	afx_msg void				OnSaytimeAll();
 	afx_msg void				OnSaytimeHalf();
 	afx_msg void				OnSaytimeClose();
-	afx_msg void				OnCfgAutoStart();					//开机启动
+	BOOL						SetSayTimeState();
+
+	afx_msg void				OnCfgAutoStart();				//开机启动
+	BOOL						SetAutoStart();
 
 	afx_msg void				OnClockOn();
 	afx_msg void				OnClockOff();
+	BOOL						SetClockState();
+
 	afx_msg void				OnClockConfig();				//闹钟设置
 	afx_msg void				OnMenuTask();					//定时任务
 	afx_msg void				OnCfgOther();					//设置
@@ -114,4 +111,3 @@ public:
 };
 
 
-static unsigned int __stdcall	Thread_Clock(LPVOID pParam);					// 执行时钟操作

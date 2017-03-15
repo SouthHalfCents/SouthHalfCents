@@ -87,7 +87,14 @@ int CTask::OnCreate(LPCREATESTRUCT lpCreateStruct)
 BOOL CTask::OnInitDialog()
 {
 	CDialog::OnInitDialog();
+	InitPosition();
+	ReloadData();
 
+	return TRUE;
+}
+
+BOOL CTask::InitPosition()
+{
 	//居中
 	CRect rcWindow;
 	GetWindowRect(&rcWindow);
@@ -102,14 +109,15 @@ BOOL CTask::OnInitDialog()
 	rcWindow.bottom = rcWindow.top + Height;
 
 	MoveWindow(&rcWindow);
-
-	m_lstContent.InsertColumn(0, L"定时任务", LVCFMT_LEFT, 120, 0);
-	m_lstContent.InsertColumn(1, L"响铃时间", LVCFMT_LEFT, 120, 1);
-	m_lstContent.InsertColumn(2, L"重复", LVCFMT_LEFT, 120, 2);
-
 	return TRUE;
 }
 
+void CTask::ReloadData()
+{
+	m_lstContent.InsertColumn(0, L"定时任务", LVCFMT_LEFT, 120, 0);
+	m_lstContent.InsertColumn(1, L"响铃时间", LVCFMT_LEFT, 120, 1);
+	m_lstContent.InsertColumn(2, L"重复", LVCFMT_LEFT, 120, 2);
+}
 
 //------------------------------------------------------------------------------------------------------------------------
 list<TASKCONT>	CTask::m_TaskList;
@@ -252,3 +260,5 @@ void CTask::OnBnClickedButtonDel()
 
 	}
 }
+
+

@@ -9,8 +9,7 @@
 
 using namespace std;
 
-//任务类型
-#define TASK_TYPE_CLOSE		0		//定时关机
+
 
 
 
@@ -37,6 +36,7 @@ public:
 protected:
 	virtual void			DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 	virtual BOOL			OnInitDialog();
+	BOOL					InitPosition();
 	afx_msg int				OnCreate(LPCREATESTRUCT lpCreateStruct);
 	DECLARE_MESSAGE_MAP()
 
@@ -44,6 +44,8 @@ protected:
 	HBRUSH					m_MyHBrush;
 	afx_msg HBRUSH			OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor);
 	afx_msg BOOL			OnEraseBkgnd(CDC* pDC);
+
+	void					ReloadData();
 
 public:
 
@@ -57,4 +59,6 @@ public:
 	afx_msg void			OnBnClickedButtonAdd();
 	afx_msg void			OnBnClickedButtonModi();
 	afx_msg void			OnBnClickedButtonDel();
+
+	
 };

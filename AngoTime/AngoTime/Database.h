@@ -29,6 +29,7 @@ using namespace std;
 #define SAYTIME_ENTRY		_T("saytime")
 #define CLOCK_ENTRY			_T("clock")
 #define AUTORUN_ENTRY		_T("autorun")
+#define RECENT_FILE_PATH	_T("RecentFilePath")
 
 
 
@@ -50,11 +51,23 @@ using namespace std;
 #define DAY_SUNDAY		0x00000040
 
 
+//菜单对应位置
+#define MENU_NO_FIRST	0	//菜单第一列
+
+#define MENU_VIEW		0	//第一列的第一个位置
+#define MENU_CLOCK		5
+#define MENU_SAYTIME	6
+#define MENU_QUICK_OP	7
+#define MENU_CONFIG		8
+
+
+
 extern HANDLE				g_hThread_Alarm;
 extern HANDLE				g_hThread_SayTime;
 extern HANDLE				g_hThread_CusJob;
+extern HANDLE				g_hThread_Clock;
 
-
+extern HANDLE				g_hSemaph_Clock;		//时钟
 extern HANDLE				g_hSemaph_Alarm;		//闹钟
 extern HANDLE				g_hSemaph_SayTime;		//报时
 extern HANDLE				g_hSemaph_CusJob;		//定时任务
@@ -64,9 +77,10 @@ extern BOOL					g_bWork;
 unsigned int __stdcall		Thread_Alarm(LPVOID pParam);
 unsigned int __stdcall		Thread_SayTime(LPVOID pParam);
 unsigned int __stdcall		Thread_CusJob(LPVOID pParam);
+unsigned int __stdcall		Thread_Clock(LPVOID pParam);					// 执行时钟操作
 
-void						InitThread();
-void						CleanThread();
+void						StartWork(void *pThis);
+void						StopWork();
 extern mutex				g_MutexSound;			//声音锁
 
 //定时任务函数指针 

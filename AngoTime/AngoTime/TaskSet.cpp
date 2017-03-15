@@ -51,6 +51,59 @@ BEGIN_MESSAGE_MAP(CTaskSet, CDialogEx)
 	ON_BN_CLICKED(IDCANCEL, &CTaskSet::OnBnClickedCancel)
 END_MESSAGE_MAP()
 
+BOOL CTaskSet::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+	InitTaskType();
+	InitHourCmb();
+	InitMinCmb();
+	InitFrequen();
+
+	return TRUE;
+}
+
+void CTaskSet::InitTaskType()
+{
+	m_cmbTask.ResetContent();
+
+	for (int i = 0; i < sizeof(g_TaskType); i++)
+	{
+		m_cmbTask.InsertString(i, g_TaskType[i].strValue);
+		m_cmbTask.SetItemData(i, g_TaskType[i].nValue);
+	}
+	m_cmbTask.SetCurSel(0);
+}
+
+void CTaskSet::InitHourCmb()
+{
+	m_cmbHour.ResetContent();
+	CString strHour;
+	for (int i = 0; i < 24; i++)
+	{
+		strHour.Format(L"%d",i);
+		m_cmbHour.InsertString(i,strHour);
+		m_cmbHour.SetItemData(i,i);
+	}
+	m_cmbHour.SetCurSel(0);
+}
+
+void CTaskSet::InitMinCmb()
+{
+	m_cmbMin.ResetContent();
+	CString strMin;
+	for (int i = 0; i < 60; i++)
+	{
+		strMin.Format(L"%d", i);
+		m_cmbMin.InsertString(i, strMin);
+		m_cmbMin.SetItemData(i, i);
+	}
+	m_cmbMin.SetCurSel(0);
+}
+
+void CTaskSet::InitFrequen()
+{
+
+}
 
 // CTaskSet 消息处理程序
 HBRUSH CTaskSet::OnCtlColor(CDC* pDC, CWnd* pWnd, UINT nCtlColor)
@@ -94,3 +147,5 @@ void CTaskSet::OnBnClickedCancel()
 	
 	EndDialog(IDCANCEL);
 }
+
+
