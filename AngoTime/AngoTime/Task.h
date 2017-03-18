@@ -60,5 +60,5 @@ public:
 	afx_msg void			OnBnClickedButtonModi();
 	afx_msg void			OnBnClickedButtonDel();
 
-	
+				
 };

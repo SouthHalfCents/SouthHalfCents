@@ -108,9 +108,10 @@ BOOL CClock::OnInitDialog()
 
 	MoveWindow(&rcWindow);
 
-	m_lstContent.InsertColumn(0, L"响铃时间", LVCFMT_LEFT, 120, 0);
-	m_lstContent.InsertColumn(1, L"重复", LVCFMT_LEFT, 120, 1);
-	m_lstContent.InsertColumn(2, L"说明", LVCFMT_LEFT, 100, 2);
+	m_lstContent.InsertColumn(0, L"序号", LVCFMT_LEFT, 40, 0);
+	m_lstContent.InsertColumn(1, L"响铃时间", LVCFMT_LEFT, 120, 1);
+	m_lstContent.InsertColumn(2, L"重复次数", LVCFMT_LEFT, 80, 2);
+	m_lstContent.InsertColumn(3, L"说明", LVCFMT_LEFT, 100, 3);
 	return TRUE;
 }
 

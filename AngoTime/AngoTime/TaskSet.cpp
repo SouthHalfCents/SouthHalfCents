@@ -14,6 +14,7 @@ IMPLEMENT_DYNAMIC(CTaskSet, CDialogEx)
 CTaskSet::CTaskSet(CWnd* pParent /*=NULL*/)
 	: CDialogEx(CTaskSet::IDD, pParent)
 {
+	m_dwWeekSet = 0;
 	m_MyBrush.CreateSolidBrush(DIALOG_BACKGROUND_COLOR);
 	m_MyHBrush = CreateSolidBrush(DIALOG_BACKGROUND_COLOR);
 }
@@ -30,8 +31,6 @@ void CTaskSet::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDOK, m_btnOK);
 	DDX_Control(pDX, IDC_COMBO_TASK, m_cmbTask);
-	DDX_Control(pDX, IDC_COMBO_HOUR, m_cmbHour);
-	DDX_Control(pDX, IDC_COMBO_MIN, m_cmbMin);
 	DDX_Control(pDX, IDC_COMBO_FREQUEN, m_cmbFrequen);
 	DDX_Control(pDX, IDC_DATETIMEPICKER_ONCE, m_dateOnce);
 	DDX_Control(pDX, IDC_CHECK_MON, m_chkMonday);
@@ -41,6 +40,8 @@ void CTaskSet::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_CHECK_FRI, m_chkFriday);
 	DDX_Control(pDX, IDC_CHECK_SAT, m_chkSaturday);
 	DDX_Control(pDX, IDC_CHECK_SUN, m_chkSunday);
+	DDX_Control(pDX, IDC_EDIT_SCRIPT, m_edtScript);
+	DDX_Control(pDX, IDC_BTN_SCRIPT, m_btnScript);
 }
 
 
@@ -49,16 +50,18 @@ BEGIN_MESSAGE_MAP(CTaskSet, CDialogEx)
 	ON_WM_ERASEBKGND()
 	ON_BN_CLICKED(IDOK, &CTaskSet::OnBnClickedOk)
 	ON_BN_CLICKED(IDCANCEL, &CTaskSet::OnBnClickedCancel)
+	ON_CBN_SELCHANGE(IDC_COMBO_FREQUEN, &CTaskSet::OnCbnSelchangeComboFrequen)
+	ON_BN_CLICKED(IDC_BTN_SCRIPT, &CTaskSet::OnBnClickedBtnScript)
+	ON_CBN_SELCHANGE(IDC_COMBO_TASK, &CTaskSet::OnCbnSelchangeComboTask)
 END_MESSAGE_MAP()
 
 BOOL CTaskSet::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 	InitTaskType();
-	InitHourCmb();
-	InitMinCmb();
 	InitFrequen();
 
+	EnableWeekChk();
 	return TRUE;
 }
 
@@ -74,31 +77,7 @@ void CTaskSet::InitTaskType()
 	m_cmbTask.SetCurSel(0);
 }
 
-void CTaskSet::InitHourCmb()
-{
-	m_cmbHour.ResetContent();
-	CString strHour;
-	for (int i = 0; i < 24; i++)
-	{
-		strHour.Format(L"%d",i);
-		m_cmbHour.InsertString(i,strHour);
-		m_cmbHour.SetItemData(i,i);
-	}
-	m_cmbHour.SetCurSel(0);
-}
 
-void CTaskSet::InitMinCmb()
-{
-	m_cmbMin.ResetContent();
-	CString strMin;
-	for (int i = 0; i < 60; i++)
-	{
-		strMin.Format(L"%d", i);
-		m_cmbMin.InsertString(i, strMin);
-		m_cmbMin.SetItemData(i, i);
-	}
-	m_cmbMin.SetCurSel(0);
-}
 
 void CTaskSet::InitFrequen()
 {
@@ -138,13 +117,57 @@ BOOL CTaskSet::OnEraseBkgnd(CDC* pDC)
 
 }
 
+BOOL CTaskSet::IsValidData()
+{
+	UpdateData(TRUE);
 
+	int nItem = m_cmbFrequen.GetCurSel();
+	DWORD_PTR dwData = m_cmbFrequen.GetItemData(nItem);
+	
+
+	if (dwData == TIMES_WEEK)
+	{
+		m_dwWeekSet = 0;
+		if (m_chkMonday.GetCheck())
+			m_dwWeekSet |= DAY_MONDAY;
+
+		if (m_chkTuesday.GetCheck())
+			m_dwWeekSet |= DAY_TUESDAY;
+
+		if (m_chkWednesday.GetCheck())
+			m_dwWeekSet |= DAY_WEDNESDAY;
+
+		if (m_chkThursday.GetCheck())
+			m_dwWeekSet |= DAY_THURSDAY;
+
+		if (m_chkFriday.GetCheck())
+			m_dwWeekSet |= DAY_FRIDAY;
+
+		if (m_chkSaturday.GetCheck())
+			m_dwWeekSet |= DAY_SATURDAY;
+
+		if (m_chkSunday.GetCheck())
+			m_dwWeekSet |= DAY_SUNDAY;
+
+		if (m_dwWeekSet == 0)
+		{
+			AngoMessageBox(L"每周执行时间至少选择一天");
+			return FALSE;
+		}
+	}
+
+
+
+	return TRUE;
+}
 
 void CTaskSet::OnBnClickedOk()
 {
-	
+	if ( !IsValidData())
+	{ 
+		return;
+	}
 	EndDialog(IDOK);
-	
 }
 
 
@@ -155,3 +178,85 @@ void CTaskSet::OnBnClickedCancel()
 }
 
 
+void CTaskSet::GetTaskMsg()
+{
+
+}
+
+void CTaskSet::SetTaskMsg()
+{
+
+}
+
+
+
+
+void CTaskSet::OnCbnSelchangeComboFrequen()
+{
+	int nItem = m_cmbFrequen.GetCurSel();
+	DWORD_PTR dwData = m_cmbFrequen.GetItemData(nItem);
+	BOOL bEnable = FALSE;
+
+	if (dwData == TIMES_WEEK)
+	{
+		bEnable = TRUE;
+	}
+	EnableWeekChk(bEnable);
+
+}
+
+void CTaskSet::EnableWeekChk(BOOL bEnable /* = FALSE */)
+{
+	m_chkMonday.EnableWindow(bEnable);
+	m_chkTuesday.EnableWindow(bEnable);
+	m_chkWednesday.EnableWindow(bEnable);
+	m_chkThursday.EnableWindow(bEnable);
+	m_chkFriday.EnableWindow(bEnable);
+	m_chkSaturday.EnableWindow(bEnable);
+	m_chkSunday.EnableWindow(bEnable);
+}
+
+
+void CTaskSet::OnBnClickedBtnScript()
+{
+	CFileDialog dlg(TRUE, _T("py"), NULL, OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT | OFN_ALLOWMULTISELECT, \
+		_T("python文件 (*.py)|*.py|批处理文件 (*.cmd;*.bat)|*.cmd;*.bat|所有文件 (*.*)|*.*||"));
+
+	CString strInitDir = CUtils::GetAppDir();
+	strInitDir += _T("\\script");
+
+	WCHAR szWinDir[MAX_PATH] = { 0 };
+	GetCurrentDirectoryW(MAX_PATH, szWinDir);
+
+	if (!PathIsDirectoryW(strInitDir))
+	{
+		if (!CreateDirectoryW(strInitDir, NULL))
+		{
+			GetSystemDirectoryW(szWinDir, MAX_PATH);
+			strInitDir.Format(L"%c:\\", szWinDir[0]);
+		}
+	}
+
+
+	dlg.m_ofn.lpstrInitialDir = strInitDir;
+	dlg.m_ofn.lpstrTitle = _T("选择脚本文件");
+	INT_PTR nRet = dlg.DoModal();
+	if (nRet != IDOK)
+		return;
+
+	m_edtScript.SetWindowTextW(dlg.GetPathName());
+}
+
+
+void CTaskSet::OnCbnSelchangeComboTask()
+{
+	int nItem = m_cmbTask.GetCurSel();
+	DWORD_PTR dwData = m_cmbTask.GetItemData(nItem);
+	BOOL bEnable = FALSE;
+
+	if (dwData == TASK_TYPE_SCRIPT)
+	{
+		bEnable = TRUE;
+	}
+	m_btnScript.EnableWindow(bEnable);
+}

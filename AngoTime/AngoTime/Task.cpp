@@ -114,9 +114,11 @@ BOOL CTask::InitPosition()
 
 void CTask::ReloadData()
 {
-	m_lstContent.InsertColumn(0, L"定时任务", LVCFMT_LEFT, 120, 0);
-	m_lstContent.InsertColumn(1, L"响铃时间", LVCFMT_LEFT, 120, 1);
-	m_lstContent.InsertColumn(2, L"重复", LVCFMT_LEFT, 120, 2);
+	m_lstContent.InsertColumn(0, L"序号", LVCFMT_LEFT, 40, 0);
+	m_lstContent.InsertColumn(1, L"定时任务", LVCFMT_LEFT, 100, 1);
+	m_lstContent.InsertColumn(2, L"执行时间", LVCFMT_LEFT, 120, 2);
+	m_lstContent.InsertColumn(3, L"重复次数", LVCFMT_LEFT, 80, 3);
+	m_lstContent.InsertColumn(4, L"脚本路径", LVCFMT_LEFT, 200, 4);
 }
 
 //------------------------------------------------------------------------------------------------------------------------
@@ -223,7 +225,8 @@ void CTask::OnBnClickedButtonAdd()
 
 	if (IDOK == tasksetDlg.DoModal())
 	{
-		
+		tasksetDlg.GetTaskMsg();
+		//AfxGetApp()->WriteProfileInt(ANGO_SECTION_SET, CLOCK_ENTRY, 1);
 	}
 	else
 	{
@@ -235,6 +238,7 @@ void CTask::OnBnClickedButtonAdd()
 void CTask::OnBnClickedButtonModi()
 {
 	CTaskSet tasksetDlg;
+	tasksetDlg.SetTaskMsg();
 
 	if (IDOK == tasksetDlg.DoModal())
 	{
