@@ -120,7 +120,7 @@ BOOL CAngoTimeDlg::OnInitDialog()
 	InitRgbMap();
 	StartWork((void*)this);
 	OnViewShow();
-	OnViewUp();
+	//OnViewUp();
 	InitSettings();
 	
 	return TRUE;  

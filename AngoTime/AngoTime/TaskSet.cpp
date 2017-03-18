@@ -241,6 +241,7 @@ void CTaskSet::OnBnClickedBtnScript()
 	dlg.m_ofn.lpstrInitialDir = strInitDir;
 	dlg.m_ofn.lpstrTitle = _T("选择脚本文件");
 	INT_PTR nRet = dlg.DoModal();
+
 	if (nRet != IDOK)
 		return;
 
