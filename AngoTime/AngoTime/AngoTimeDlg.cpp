@@ -511,7 +511,7 @@ void CAngoTimeDlg::OnSaytimeAll()
 	{
 		return;
 	}
-	AfxGetApp()->WriteProfileInt(ANGO_SECTION, SAYTIME_ENTRY, m_nSayTime);
+	AfxGetApp()->WriteProfileInt(ANGO_SECTION_SET, SAYTIME_ENTRY, m_nSayTime);
 }
 
 
@@ -522,7 +522,7 @@ void CAngoTimeDlg::OnSaytimeHalf()
 	{
 		return;
 	}
-	AfxGetApp()->WriteProfileInt(ANGO_SECTION, SAYTIME_ENTRY, m_nSayTime);
+	AfxGetApp()->WriteProfileInt(ANGO_SECTION_SET, SAYTIME_ENTRY, m_nSayTime);
 }
 
 
@@ -533,11 +533,24 @@ void CAngoTimeDlg::OnSaytimeClose()
 	{
 		return;
 	}
-	AfxGetApp()->WriteProfileInt(ANGO_SECTION, SAYTIME_ENTRY, m_nSayTime);
+	AfxGetApp()->WriteProfileInt(ANGO_SECTION_SET, SAYTIME_ENTRY, m_nSayTime);
 }
 
 BOOL CAngoTimeDlg::SetAutoStart()
 {
+	CMenu* pMenu = m_popMenu.GetSubMenu(MENU_NO_FIRST);
+	if (!pMenu)
+		return FALSE;
+	pMenu = pMenu->GetSubMenu(MENU_CONFIG);
+	if (!pMenu)
+		return FALSE;
+
+	if (m_bAutoRun)
+		pMenu->CheckMenuItem(ID_CFG_AUTORUN, MF_BYCOMMAND | MF_CHECKED);
+	else
+		pMenu->CheckMenuItem(ID_CFG_AUTORUN, MF_BYCOMMAND | MF_UNCHECKED);
+
+
 #if _WIN64
 	HMODULE hModule = GetModuleHandle(NULL);
 	HKEY hRoot = HKEY_LOCAL_MACHINE;
@@ -592,17 +605,7 @@ BOOL CAngoTimeDlg::SetAutoStart()
 #endif
 
 
-	CMenu* pMenu = m_popMenu.GetSubMenu(MENU_NO_FIRST);
-	if (!pMenu)
-		return FALSE;
-	pMenu = pMenu->GetSubMenu(MENU_CONFIG);
-	if (!pMenu)
-		return FALSE;
 
-	if (m_bAutoRun)
-		pMenu->CheckMenuItem(ID_CFG_AUTORUN, MF_BYCOMMAND | MF_CHECKED);
-	else
-		pMenu->CheckMenuItem(ID_CFG_AUTORUN, MF_BYCOMMAND | MF_UNCHECKED);
 
 
 	return TRUE;
@@ -615,7 +618,7 @@ void CAngoTimeDlg::OnCfgAutoStart()
 	{
 		return;
 	}
-	AfxGetApp()->WriteProfileInt(ANGO_SECTION, AUTORUN_ENTRY, m_bAutoRun);
+	AfxGetApp()->WriteProfileInt(ANGO_SECTION_SET, AUTORUN_ENTRY, m_bAutoRun);
 }
 
 
@@ -626,7 +629,7 @@ void CAngoTimeDlg::OnClockOn()
 	{
 		return;
 	}
-	AfxGetApp()->WriteProfileInt(ANGO_SECTION, CLOCK_ENTRY, m_bClockOn);
+	AfxGetApp()->WriteProfileInt(ANGO_SECTION_SET, CLOCK_ENTRY, m_bClockOn);
 }
 
 
@@ -637,7 +640,7 @@ void CAngoTimeDlg::OnClockOff()
 	{
 		return;
 	}
-	AfxGetApp()->WriteProfileInt(ANGO_SECTION, CLOCK_ENTRY, m_bClockOn);
+	AfxGetApp()->WriteProfileInt(ANGO_SECTION_SET, CLOCK_ENTRY, m_bClockOn);
 }
 
 BOOL CAngoTimeDlg::SetClockState()
@@ -696,17 +699,18 @@ void CAngoTimeDlg::OnCfgOther()
 void CAngoTimeDlg::InitSettings()
 {
 	//闹钟设置
-	m_bClockOn = AfxGetApp()->GetProfileInt(ANGO_SECTION, CLOCK_ENTRY, 0);
+	m_bClockOn = AfxGetApp()->GetProfileInt(ANGO_SECTION_SET, CLOCK_ENTRY, 0);
 	SetClockState();
 
 	//报时设置
-	m_nSayTime = AfxGetApp()->GetProfileInt(ANGO_SECTION, SAYTIME_ENTRY, 0);
+	m_nSayTime = AfxGetApp()->GetProfileInt(ANGO_SECTION_SET, SAYTIME_ENTRY, 0);
 	SetSayTimeState();
 
 	//开机启动设置
-	m_bAutoRun = AfxGetApp()->GetProfileInt(ANGO_SECTION, AUTORUN_ENTRY, 0);
+	m_bAutoRun = AfxGetApp()->GetProfileInt(ANGO_SECTION_SET, AUTORUN_ENTRY, 0);
 	SetAutoStart();
 
+	//AfxGetApp()->GetProfileString(ANGO_SECTION_SET, AUTORUN_ENTRY, 0);
 }
 //---------------------------------------------------------------------------------------------------------------------
 

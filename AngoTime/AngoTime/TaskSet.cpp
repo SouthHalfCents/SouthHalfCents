@@ -66,7 +66,7 @@ void CTaskSet::InitTaskType()
 {
 	m_cmbTask.ResetContent();
 
-	for (int i = 0; i < sizeof(g_TaskType); i++)
+	for (int i = 0; i < _countof(g_TaskType); i++)
 	{
 		m_cmbTask.InsertString(i, g_TaskType[i].strValue);
 		m_cmbTask.SetItemData(i, g_TaskType[i].nValue);
@@ -102,7 +102,13 @@ void CTaskSet::InitMinCmb()
 
 void CTaskSet::InitFrequen()
 {
-
+	m_cmbFrequen.ResetContent();
+	for (int i = 0; i < _countof(g_Clock_Freq); i++)
+	{
+		m_cmbFrequen.InsertString(i, g_Clock_Freq[i].strValue);
+		m_cmbFrequen.SetItemData(i, g_Clock_Freq[i].nValue);
+	}
+	m_cmbFrequen.SetCurSel(0);
 }
 
 // CTaskSet 消息处理程序

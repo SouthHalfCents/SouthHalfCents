@@ -1,18 +1,19 @@
 #pragma once
 #include "afxwin.h"
 #include "afxdtctl.h"
+#include "Database.h"
 
+//json
+#include "document.h"
+#include "stringbuffer.h"
+#include "writer.h"
 
 
 //任务类型
 #define TASK_TYPE_CLOSE		0		//定时关机
 
 
-typedef struct tagNumStrEx
-{
-	int		nValue;		
-	CString	strValue;		
-} num_string_t;
+
 
 
 static num_string_t g_TaskType[] =

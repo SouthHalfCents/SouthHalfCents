@@ -95,7 +95,7 @@ unsigned int __stdcall Thread_Alarm(LPVOID pParam)
 			break;
 		}
 
-		CString strPath = AfxGetApp()->GetProfileStringW(ANGO_SECTION, CLOCK_MUSIC, 0);
+		CString strPath = AfxGetApp()->GetProfileStringW(ANGO_SECTION_SET, CLOCK_MUSIC, 0);
 		CString strTemp = _T("open ") + strPath;
 		g_MutexSound.lock();
 

@@ -23,7 +23,9 @@ using namespace std;
 
 
 //注册表信息section和entry
-#define ANGO_SECTION		_T("settings")
+#define ANGO_SECTION_SET		_T("settings")	//基础设置目录名
+#define ANGO_SECTION_CLOCK		_T("clocks")	//闹钟目录名
+#define ANGO_SECTION_TASK		_T("tasks")		//任务目录名
 
 #define CLOCK_MUSIC			_T("clock_music")
 #define SAYTIME_ENTRY		_T("saytime")
@@ -31,8 +33,8 @@ using namespace std;
 #define AUTORUN_ENTRY		_T("autorun")
 #define RECENT_FILE_PATH	_T("RecentFilePath")
 
-
-
+#define ANGO_CLOCK_NAME		_T("clock_name")	//闹钟基础名
+#define ANGO_TASK_NAME		_T("task_name")		//任务基础名
 
 //执行时间频率
 #define TIMES_ONCE		0
@@ -59,6 +61,21 @@ using namespace std;
 #define MENU_SAYTIME	6
 #define MENU_QUICK_OP	7
 #define MENU_CONFIG		8
+
+//id对应字符串
+typedef struct tagNumStrEx
+{
+	int		nValue;
+	CString	strValue;
+} num_string_t;
+
+static num_string_t g_Clock_Freq[] =
+{
+	{ TIMES_ONCE, _T("一次") },
+	{ TIMES_DAY, _T("每天") },
+	{ TIMES_WEEK, _T("每周") }
+};
+
 
 
 
