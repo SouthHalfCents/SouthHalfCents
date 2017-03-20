@@ -8,6 +8,10 @@
 #include "afxdialogex.h"
 #include "MsgBoxEx.h"
 
+#include <afxinet.h>
+#include <string>
+
+#include <sstream>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -112,6 +116,7 @@ BOOL CAngoTimeDlg::OnInitDialog()
 		CloseHandle(m_hOnlyMutex);
 		m_hOnlyMutex = NULL;
 		CDialog::OnCancel();
+		return TRUE;
 	}
 
 	InitClock();
@@ -123,8 +128,83 @@ BOOL CAngoTimeDlg::OnInitDialog()
 	//OnViewUp();
 	InitSettings();
 	
+	testDownload();
 	return TRUE;  
 }
+
+void CAngoTimeDlg::testDownload()
+{
+	 //自定义http头信息
+	 CString strHeader=L"Accept:*/*\r\n" 
+	  L"Accept-Language:zh-cn\r\n"
+	  L"User-Agent:VCTestClient\r\n";
+
+	 CString strURL = _T("http://weather.gtimg.cn/city/01010101.js?ref=qqchannel");
+	 CString m_strHTML;
+
+	 char szTemp[2048] = {0};
+	 try
+	 {
+		CInternetSession sess;//建立会话
+		CHttpFile* pF=(CHttpFile*)sess.OpenURL(strURL,1,INTERNET_FLAG_TRANSFER_ASCII||INTERNET_FLAG_RELOAD,NULL,0);
+		// 注意:OpenURL 方法的dwFlags参数 必须选择传输模式为INTERNET_FLAG_TRANSFER_ASCII 或者 INTERNET_FLAG_TRANSFER_BINARY 
+		CString strData;
+
+		int nPfLen = pF->GetLength();
+		string strTemp;
+		pF->Read(szTemp, 2048);
+		strTemp = szTemp;
+		
+
+		
+		CString strFile = pF->GetFileName();
+		strFile = pF->GetFilePath();
+		// while(pF->ReadString(strTemp))
+// 		  {	
+// 			   strData+=szTemp;
+// 		  }
+		pF->Close();
+		sess.Close();
+
+		string newstr = CUtils::GBK_UTF8(szTemp);
+		
+		int wcsLen = ::MultiByteToWideChar(CP_ACP, NULL, szTemp, 2048, NULL, 0);
+		wchar_t* wszString = new wchar_t[wcsLen + 1];
+		::MultiByteToWideChar(CP_ACP, NULL, szTemp, 2048, wszString, wcsLen);
+		 wszString[wcsLen] = '\0';
+
+		size_t nLen = 1024;
+		size_t nCount = 0;
+		wchar_t * pMBBuffer = (wchar_t *)malloc(nLen+1);
+		memset(pMBBuffer,0x00, nLen+1);
+		//char * pData = (char*)strData.GetBuffer();
+
+ 		//std::wstringstream wss;
+ 		//wss << szTemp;
+ 		//m_strHTML = wss.str().c_str(); 
+		//_wsetlocale(LC_ALL,L"chs");
+		wcstombs_s(&nCount, szTemp, (size_t)nLen, pMBBuffer, (size_t)nLen);
+		
+
+		if (pMBBuffer)
+		{
+			free(pMBBuffer);
+		}
+
+		//m_strHTML = pData;
+		strData.ReleaseBuffer();
+
+		m_strHTML = strData;
+	 }
+	 catch(std::exception *e)
+	 {
+		CString strTemp;
+		strTemp.Format(L"获取数据失败,%s",e->what());
+		AfxMessageBox(strTemp);
+	 }
+	 return;
+}
+
 
 
 void CAngoTimeDlg::OnPaint()

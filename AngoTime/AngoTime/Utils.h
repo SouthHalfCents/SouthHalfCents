@@ -1,5 +1,6 @@
 #pragma once
 #include "Database.h"
+#include <string>
 
 //工具类
 class CUtils
@@ -15,5 +16,10 @@ public:
 
 	static	BOOL    	FileExist(LPCTSTR   pszFileName);			//检查文件是否存在
 	static	BOOL		IsFileType(LPCTSTR lpsz, LPCTSTR lpszType); //检查文件是否为指定类型（lpszType为后缀名）
+
+	static	std::string	GBK_UTF8(string& strMsg);///< 将GBK字符串转化为UTF8编码
+	static	std::string	GBK_UTF8(char* strMsg);
+	static	std::string	UTF8_GBK(string& strMsg);///< 将UTF8编码转化为GBK编码
+	static	std::string	UTF8_GBK(char* strMsg);
 };
 
