@@ -492,7 +492,10 @@ void CAngoDlg::OnAngoTime()
 {
 	//WinExec("AngoTime.exe", SW_SHOW);  
 	//WinExec("D:\\Program Files\\Test\\Test.exe", SW_SHOWMAXIMIZED);
-	ShellExecute(NULL, L"open", L"AngoTime.exe", NULL, NULL, SW_SHOWNORMAL);
+	CString strPath = CUtils::GetAppDir();
+	strPath += _T("\\AngoTime.exe");
+	//这个API会提示是否以管理员身份启动
+	ShellExecute(NULL, _T("open"), strPath, NULL, NULL, SW_SHOWNORMAL);
 
 // 	PROCESS_INFORMATION pi;
 // 	STARTUPINFO si;

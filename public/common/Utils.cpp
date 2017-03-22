@@ -78,6 +78,7 @@ CString CUtils::GetAppDir()
 {
 	TCHAR szLocalPath[MAX_PATH];
 	GetModuleFileName(0, szLocalPath, MAX_PATH);
+	//AngoMessageBox(szLocalPath);
 	CString strTemp;
 	strTemp = szLocalPath;
 	strTemp = strTemp.Left(strTemp.ReverseFind('\\'));

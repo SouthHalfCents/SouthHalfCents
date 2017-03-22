@@ -107,7 +107,7 @@ public:
 	afx_msg void				OnMenuTask();					//定时任务
 	afx_msg void				OnCfgOther();					//设置
 
-	void testDownload();
+	
 	
 };
 
