@@ -285,9 +285,6 @@ void CAngoDlg::OnCancel()
 	CString strMsg;
 	strMsg = "是否退出程序？";
 	//if( AngoMessageBox(strMsg,L"退出",MB_OKCANCEL) == IDCANCEL)
-	{
-		return;
-	}
 	CDialog::OnCancel();
 }
 
