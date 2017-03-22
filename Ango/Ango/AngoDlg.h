@@ -4,9 +4,9 @@
 
 #pragma once
 #include "CustomView.h"
-#include "TrayIcon.h"
+#include "./common/log.h"
+#include "./common/TrayIcon.h"
 #include "ConfigMng.h"
-#include "log.h"
 
 // CAngoDlg ¶Ô»°¿ò
 class CAngoDlg : public CDialogEx

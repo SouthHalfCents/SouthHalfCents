@@ -128,6 +128,7 @@ BOOL CAngoTimeDlg::OnInitDialog()
 	//OnViewUp();
 	InitSettings();
 	
+	CString strAppDir = CUtils::GetAppDir();
 	testDownload();
 	return TRUE;  
 }

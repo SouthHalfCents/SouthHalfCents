@@ -11,7 +11,7 @@ using namespace std;
 
 
 
-#define MAIN_WM_NOTIFYICON		(WM_USER+100)		//通知区域图标消息
+
 
 
 #define PI 3.1415926535897932384626433832795028841971693993751058209
@@ -43,14 +43,7 @@ using namespace std;
 #define TIMES_MONTH		3
 #define TIMES_YEAR		4
 
-#define DAY_NONE		0x00000000
-#define DAY_MONDAY		0x00000001
-#define DAY_TUESDAY		0x00000002
-#define DAY_WEDNESDAY	0x00000004
-#define DAY_THURSDAY	0x00000008
-#define DAY_FRIDAY		0x00000010
-#define DAY_SATURDAY	0x00000020
-#define DAY_SUNDAY		0x00000040
+
 
 
 //菜单对应位置

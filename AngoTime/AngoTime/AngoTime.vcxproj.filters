@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="commom">
+      <UniqueIdentifier>{8c53a1e6-642b-473a-94f1-2724b8b81878}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -33,13 +36,7 @@
     <ClInclude Include="Resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="log.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="MsgBoxEx.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="TrayIcon.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Database.h">
@@ -54,14 +51,20 @@
     <ClInclude Include="Config.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Utils.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="TaskSet.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ClockSet.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\public\common\log.h">
+      <Filter>commom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\public\common\TrayIcon.h">
+      <Filter>commom</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\public\common\Utils.h">
+      <Filter>commom</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -74,13 +77,7 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="log.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="MsgBoxEx.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="TrayIcon.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Database.cpp">
@@ -95,14 +92,20 @@
     <ClCompile Include="Config.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Utils.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="TaskSet.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ClockSet.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\public\common\log.cpp">
+      <Filter>commom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\public\common\TrayIcon.cpp">
+      <Filter>commom</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\public\common\Utils.cpp">
+      <Filter>commom</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -6,7 +6,7 @@
 #include "Clock.h"
 #include "afxdialogex.h"
 #include "Database.h"
-#include "Utils.h"
+
 
 // CClock ¶Ô»°¿ò
 

@@ -3,7 +3,7 @@
 //
 
 #pragma once
-#include "TrayIcon.h"
+#include "./common/TrayIcon.h"
 #include "Clock.h"
 #include "Config.h"
 #include "Task.h"

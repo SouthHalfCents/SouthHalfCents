@@ -8,16 +8,13 @@
 #include "MsgBoxEx.h"
 #include "afxdialogex.h"
 
-#include "string"
-#include "Database.h"
+#include <string>
 
-#include "log.h"
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
-
-using std::string;
 
 // CAngoDlg ¶Ô»°¿ò
 

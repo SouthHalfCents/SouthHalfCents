@@ -105,19 +105,19 @@ BOOL CUtils::IsFileType(LPCTSTR lpsz, LPCTSTR lpszType)
 }
 
 ///< 将GBK字符串转化为UTF8编码
-string	CUtils::GBK_UTF8(string& strMsg)
+std::string	CUtils::GBK_UTF8(std::string& strMsg)
 {
 	return GBK_UTF8((char*)strMsg.c_str());
 }
 
-string	CUtils::GBK_UTF8(char* strMsg)
+std::string	CUtils::GBK_UTF8(char* strMsg)
 {
 	if (strMsg == NULL)
 	{
 		return "";
 	}
 
-	string strOutUTF8 = "";
+	std::string strOutUTF8 = "";
 
 	int nWsize = MultiByteToWideChar(CP_ACP, 0, strMsg, -1, NULL, 0);
 	WCHAR * strW = new WCHAR[nWsize + 1];
@@ -133,19 +133,19 @@ string	CUtils::GBK_UTF8(char* strMsg)
 	return strOutUTF8;
 }
 ///< 将UTF8编码转化为GBK编码
-string	CUtils::UTF8_GBK(string& strMsg)
+std::string CUtils::UTF8_GBK(std::string& strMsg)
 {
 	return UTF8_GBK((char*)strMsg.c_str());
 }
 
-string	CUtils::UTF8_GBK(char* strMsg)
+std::string	CUtils::UTF8_GBK(char* strMsg)
 {
 	if (strMsg == NULL)
 	{
 		return "";
 	}
 
-	string strOutGBK = "";
+	std::string strOutGBK = "";
 
 	int nWsize = MultiByteToWideChar(CP_UTF8, 0, strMsg, -1, NULL, 0);
 	WCHAR * strW = new WCHAR[nWsize + 1];

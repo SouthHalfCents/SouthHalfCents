@@ -54,4 +54,4 @@
 #define DIALOG_BACKGROUND_COLOR RGB(197,222,255)
 
 #include "MsgBoxEx.h"
-#include "Utils.h"
+#include "./common/Utils.h"

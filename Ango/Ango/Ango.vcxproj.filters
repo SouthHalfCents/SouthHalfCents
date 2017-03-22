@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{66dd9734-2e8d-4472-9a2d-60228a1f6e54}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -39,17 +42,20 @@
     <ClInclude Include="CustomView.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="TrayIcon.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="ConfigMng.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MsgBoxEx.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="log.h">
-      <Filter>头文件</Filter>
+    <ClInclude Include="..\..\public\common\log.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\public\common\TrayIcon.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\public\common\Utils.h">
+      <Filter>common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -68,17 +74,20 @@
     <ClCompile Include="CustomView.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="TrayIcon.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="ConfigMng.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="MsgBoxEx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="log.cpp">
-      <Filter>源文件</Filter>
+    <ClCompile Include="..\..\public\common\log.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\public\common\TrayIcon.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\public\common\Utils.cpp">
+      <Filter>common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
