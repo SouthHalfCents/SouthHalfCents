@@ -1,0 +1,229 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="gzip">
+      <UniqueIdentifier>{cb434cd8-9625-498a-9f89-817e27f1bc9c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="json">
+      <UniqueIdentifier>{b2c5d905-7515-403a-bfea-3c7c9e323824}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AngoWeather.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="AngoWeatherDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="HttpWeather.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageEx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="OptionDlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ParseJson.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderEngine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ServiceThread.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="gzip\GZipHelper.h">
+      <Filter>gzip</Filter>
+    </ClInclude>
+    <ClInclude Include="gzip\zconf.h">
+      <Filter>gzip</Filter>
+    </ClInclude>
+    <ClInclude Include="gzip\zlib.h">
+      <Filter>gzip</Filter>
+    </ClInclude>
+    <ClInclude Include="json\json.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\json_batchallocator.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\autolink.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\config.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\features.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\forwards.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\writer.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\value.h">
+      <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="json\reader.h">
+      <Filter>json</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AngoWeather.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="AngoWeatherDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="HttpWeather.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageEx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="OptionDlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ParseJson.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderEngine.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ServiceThread.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="json\json_writer.cpp">
+      <Filter>json</Filter>
+    </ClCompile>
+    <ClCompile Include="json\json_value.cpp">
+      <Filter>json</Filter>
+    </ClCompile>
+    <ClCompile Include="json\json_reader.cpp">
+      <Filter>json</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="AngoWeather.rc">
+      <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\AngoWeather.rc2">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="res\city.json" />
+    <None Include="json\json_internalarray.inl">
+      <Filter>json</Filter>
+    </None>
+    <None Include="json\json_internalmap.inl">
+      <Filter>json</Filter>
+    </None>
+    <None Include="json\json_valueiterator.inl">
+      <Filter>json</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\AngoWeather.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\0.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\1.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\2.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\3.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\4.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\5.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\6.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\7.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\8.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\9.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\10.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\13.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\14.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\16.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\17.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\18.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\19.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\20.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\29.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\30.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\32.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\weather\33.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\VIEW_BACK.png">
+      <Filter>资源文件</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
