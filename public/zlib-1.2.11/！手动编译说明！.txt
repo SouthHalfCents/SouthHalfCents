@@ -7,3 +7,23 @@
 如果有SAFESEH的error，更改zlibvc的项目Properties->Linker->Advanced->Image Has Safe Exception Handlers，设置为No
 
 build成功后，可以看见我们需要的lib dll等都输出到x64的文件夹下了，如果要build 32位的，configuration更改为Win32即可。
+
+
+
+*********   http://www.cppblog.com/querw/archive/2016/06/02/213639.html   *******
+
+4. Windows平台下编译
+既然是一个自由库,我们还是下载 zlib 的源码自己编译,不要使用已经编译好的 DLL 库,访问 http://www.zlib.net/ 下载 ".zip" 格式的源码包.
+打开 "README", 看到 "For Windows, use one of the special makefiles in win32/ or contrib/vstudio/ ." 切换到 contrib/vstudio/ 目录,又发现一个 readme.txt 是关于不同版本的 VS 的一些细节, 根据自己安装的 VS 版本打开对于的工程文件(耐心阅读 readme 很有必要,少走好多弯路.)
+方法1 使用 Visual Studio IDE: 由于我已经安装了 Visual Studio 2013 所以直接用 VS2013 打开 /contrib/vstudio/vc11/zlibvc.sln (这其实是 VS2012 的工程文件). 编译 "zlibvc" 这是最基本的动态库 DLL 工程,提示 3 个链接错误:
+1>match686.obj : error LNK2026: module unsafe for SAFESEH image.
+1>inffas32.obj : error LNK2026: module unsafe for SAFESEH image.
+1>.\zlibvc.def(4): fatal error LNK1118: syntax error in 'VERSION' statement
+先看看 LNK1118 错误: 在 StackOverflow (http://stackoverflow.com/questions/20021950/def-file-syntax-error-in-visual-studio-2012) 看到原来是 .def 中 VERSION 定义的语法改了(其实是修正了)只允许两个数字的版本号:主版本号和副版本号.所以要么把 "VERSION 1.2.8" 改为两个数字的版本号,要么创建一个 VERSION 类型的资源.事实上 version 1.2.8 的资源已经包含在工程中,所以我们只要简单的在 zlibvc.def 中把 VERSION 这行注释掉就好了.
+再看 LNK2026 错误: SAFESEH 按字面上理解应该是 SAFE SEH - 安全的结构化异常处理, SEH 是windows平台的结构化异常处理机制,通过扩展 C 编译器 __try, __finally 关键字来控制程序流程<<Windows核心编程>>有相关内容介绍. libzlib 大概是不会使用 SEH 的.也许是因为 VS2013 把这个选项的默认设置改变了,具体什么原因导致不兼容我不知道.总之把 SAFESEH 关闭吧: 工程属性 -> Linker -> Advanced -> Image Has Safe Exception Handlers 改为 NO,重新编译,发现 testzlib 也有同样的问题,关闭 SAFESEH 再次编译就好了.
+库文件: zlibwapi.lib, zlibwapi.dll, zlibstat.lib(静态库)
+头文件: zconf.h, zlib.h
+微软这种更新一个版本就使旧工程无法编译链接的做法真是不可理喻.
+方法2 使用 nmake, 把 win32/Makefile.msc 复制到上一层源码目录,启动 "Developer Command Prompt for VS2013" (在开始菜单里), 用 CD 命令切换到 zlib 1.2.8 源码目录,输入 "nmake /f Makefile.msc" 编译完成.
+库文件: zdll.lib, zlib1.dll, zlib.lib(静态库)
+头文件: zconf.h, zlib.h
