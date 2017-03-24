@@ -1,0 +1,9 @@
+1、进入zlib-1.2.8\contrib\vstudio，可以看见下面有各个版本的VS工程文件夹，进入对应的文件夹，如果文件夹的版本落后，用你的VS打开较近的版本，然后让VS自动转换一下即可
+
+2、用打开sln文件后，可以看见解决方案中包含了几个project，build。
+
+如果有VERSION的error，更改zlibvc.def中的VERSION 1.2.8为 VERSION1.28
+
+如果有SAFESEH的error，更改zlibvc的项目Properties->Linker->Advanced->Image Has Safe Exception Handlers，设置为No
+
+build成功后，可以看见我们需要的lib dll等都输出到x64的文件夹下了，如果要build 32位的，configuration更改为Win32即可。
