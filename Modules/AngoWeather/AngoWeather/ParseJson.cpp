@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "ParseJson.h"
 #include <Shlwapi.h>
-#include "gzip/GZipHelper.h"
+#include "GZipHelper.h"
 
 CParseJson::CParseJson(void)
 {

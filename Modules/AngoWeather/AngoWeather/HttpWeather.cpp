@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "HttpWeather.h"
-#include "gzip/GZipHelper.h"
+#include "GZipHelper.h"
 
 const TCHAR szHeaders[] = TEXT("Accept: text/*\r\nUser-Agent: LCD's Infobay Http Client\r\n");
 

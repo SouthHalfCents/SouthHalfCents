@@ -55,9 +55,9 @@
 #include "json/json.h"
 
 #ifndef _WIN64  
-#pragma comment(lib, "gzip/x86/zlib.lib")
+#pragma comment(lib, "zlib-1.2.11/bin/x86/zlib.lib")
 #else  
-#pragma comment(lib, "gzip/x64/zlib.lib")
+#pragma comment(lib, "zlib-1.2.11/bin/x64/zlib.lib")
 #endif  
 
 //  #ifdef _DEBUG  

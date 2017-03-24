@@ -47,7 +47,7 @@ int  aLen=plain.Length;    // Length is length of unzipped data.
 #ifndef __GZipHelper__
 #define __GZipHelper__
 
-#include "zutil.h"
+#include "zlib-1.2.11/zutil.h"
 
 
 #define ALLOC(size) malloc(size)

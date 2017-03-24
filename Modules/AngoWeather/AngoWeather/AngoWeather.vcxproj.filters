@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="gzip">
-      <UniqueIdentifier>{cb434cd8-9625-498a-9f89-817e27f1bc9c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="json">
       <UniqueIdentifier>{b2c5d905-7515-403a-bfea-3c7c9e323824}</UniqueIdentifier>
     </Filter>
@@ -57,15 +54,6 @@
     <ClInclude Include="ServiceThread.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="gzip\GZipHelper.h">
-      <Filter>gzip</Filter>
-    </ClInclude>
-    <ClInclude Include="gzip\zconf.h">
-      <Filter>gzip</Filter>
-    </ClInclude>
-    <ClInclude Include="gzip\zlib.h">
-      <Filter>gzip</Filter>
-    </ClInclude>
     <ClInclude Include="json\json.h">
       <Filter>json</Filter>
     </ClInclude>
@@ -92,6 +80,9 @@
     </ClInclude>
     <ClInclude Include="json\reader.h">
       <Filter>json</Filter>
+    </ClInclude>
+    <ClInclude Include="GZipHelper.h">
+      <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
