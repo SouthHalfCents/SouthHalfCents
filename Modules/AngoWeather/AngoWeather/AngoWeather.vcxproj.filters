@@ -16,6 +16,9 @@
     <Filter Include="json">
       <UniqueIdentifier>{b2c5d905-7515-403a-bfea-3c7c9e323824}</UniqueIdentifier>
     </Filter>
+    <Filter Include="common">
+      <UniqueIdentifier>{1a8f02fc-2620-4c80-a09c-c0cab7b84af8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -84,6 +87,12 @@
     <ClInclude Include="GZipHelper.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\..\public\common\TrayIcon.h">
+      <Filter>common</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\..\public\common\Utils.h">
+      <Filter>common</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AngoWeather.cpp">
@@ -121,6 +130,12 @@
     </ClCompile>
     <ClCompile Include="json\json_reader.cpp">
       <Filter>json</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\public\common\TrayIcon.cpp">
+      <Filter>common</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\public\common\Utils.cpp">
+      <Filter>common</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -32,8 +32,9 @@ COptionDlg::~COptionDlg()
 void COptionDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	DDX_Control(pDX,IDC_COMBO_PROVINCE,m_comProvince);
-	DDX_Control(pDX,IDC_COMBO_CITY,m_comCity);
+	DDX_Control(pDX, IDC_COMBO_PROVINCE, m_comProvince);
+	DDX_Control(pDX, IDC_COMBO_CITY, m_comCity);
+	DDX_Control(pDX, IDC_COMBO_DISTRICT, m_comDistrict);
 }
 
 
@@ -54,9 +55,20 @@ BOOL COptionDlg::OnInitDialog()
 		m_comProvince.AddString(szProvince[i]);
 	}
 
-	m_comProvince.SetCurSel(0);
+	CString strProvince = AfxGetApp()->GetProfileString(TEXT("weather"), TEXT("Province"), TEXT("广东省"));
+	CString strCity = AfxGetApp()->GetProfileString(TEXT("weather"), TEXT("City"), TEXT("广州市"));
+	CString strDistrict = AfxGetApp()->GetProfileString(TEXT("weather"), TEXT("District"), TEXT("天河区"));
 
-	SetCityList(0);
+
+	int nItem = m_comProvince.FindString(0,strProvince);
+	nItem = nItem>=0? nItem:0;
+	m_comProvince.SetCurSel(nItem);
+
+	SetCityList(nItem);
+
+	m_comDistrict.ResetContent();
+	m_comDistrict.AddString(strDistrict);
+	m_comDistrict.SetCurSel(0);
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	// 异常: OCX 属性页应返回 FALSE
@@ -85,13 +97,17 @@ void COptionDlg::SetCityList(int nSel)
 
 void COptionDlg::OnCbnSelchangeProvince()
 {
-	SetCityList(m_comProvince.GetCurSel());
+	int nItem = m_comProvince.GetCurSel();
+	SetCityList(nItem);
 }
 
 void COptionDlg::OnBnClickedOk()
 {
+	int nItem = 0;
 	m_comProvince.GetLBText(m_comProvince.GetCurSel(),m_strProvince);
 	m_comCity.GetLBText(m_comCity.GetCurSel(),m_strCity);
+
+	m_comDistrict.GetLBText(m_comDistrict.GetCurSel(),m_strDistrict);
 
 	OnOK();
 }

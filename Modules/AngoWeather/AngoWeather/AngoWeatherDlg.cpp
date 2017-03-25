@@ -45,6 +45,9 @@ CAngoWeatherDlg::CAngoWeatherDlg(CWnd* pParent /*=NULL*/)
 	memset(&m_Weather, -1, sizeof m_Weather);
 	m_Weather.szCity[0] = 0;
 	m_bLoadFinished = false;
+
+	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	m_popMenu.LoadMenu(IDR_MENU_RBTN);
 }
 CAngoWeatherDlg::~CAngoWeatherDlg()
 {
@@ -58,12 +61,25 @@ void CAngoWeatherDlg::DoDataExchange(CDataExchange* pDX)
 BEGIN_MESSAGE_MAP(CAngoWeatherDlg, CDialogEx)
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+	ON_MESSAGE(MAIN_WM_NOTIFYICON, &CAngoWeatherDlg::OnNotifyIcon)
 
 	ON_WM_DESTROY()
-	ON_WM_LBUTTONDOWN()
 	ON_WM_SIZE()
+	ON_WM_LBUTTONDOWN()
 	ON_WM_RBUTTONDOWN()
-	ON_BN_CLICKED(4000, OnBnClickOption)
+	ON_WM_CLOSE()
+	ON_WM_CREATE()
+
+	ON_COMMAND(ID_MENU_SHOW, &CAngoWeatherDlg::OnMenuShow)
+	ON_COMMAND(ID_MENU_HIDE, &CAngoWeatherDlg::OnMenuHide)
+	ON_COMMAND(ID_MENU_UP, &CAngoWeatherDlg::OnMenuUp)
+	ON_COMMAND(ID_MENU_DOWN, &CAngoWeatherDlg::OnMenuDown)
+	ON_COMMAND(ID_MENU_CITY_OPT, &CAngoWeatherDlg::OnMenuCityOpt)
+	ON_COMMAND(ID_MENU_PREVIEW, &CAngoWeatherDlg::OnMenuPreview)
+	ON_COMMAND(ID_MENU_ANGO, &CAngoWeatherDlg::OnMenuAngo)
+	ON_COMMAND(ID_MENU_CONFIG, &CAngoWeatherDlg::OnMenuConfig)
+	ON_COMMAND(ID_MENU_EXIT, &CAngoWeatherDlg::OnMenuExit)
+	
 END_MESSAGE_MAP()
 
 
@@ -72,11 +88,24 @@ END_MESSAGE_MAP()
 BOOL CAngoWeatherDlg::OnInitDialog()
 {
 	CDialogEx::OnInitDialog();
-
-	// 设置此对话框的图标。  当应用程序主窗口不是对话框时，框架将自动
-	//  执行此操作
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
+
+	//隐藏任务栏
+	ModifyStyleEx(WS_EX_APPWINDOW, WS_EX_TOOLWINDOW);
+
+	// 唯一实例
+	m_hOnlyMutex = CreateMutex(NULL, FALSE, L"//AngoWeather.exe");
+	if (GetLastError() == ERROR_ALREADY_EXISTS)
+	{
+		// 如果程序已经存在并且正在运行 如果已有互斥量存在则释放句柄并复位互斥量，退出程序
+		CloseHandle(m_hOnlyMutex);
+		m_hOnlyMutex = NULL;
+		OutputDebugString(_T("AngoWeather is already exit!\n"));
+		CDialog::OnCancel();
+		return TRUE;
+	}
+
 
 	m_pParseJson = CParseJson::GetInstance();
 
@@ -88,23 +117,19 @@ BOOL CAngoWeatherDlg::OnInitDialog()
 	//::SetLayeredWindowAttributes(GetSafeHwnd(), 0, 255, LWA_ALPHA);    // 设置不透明
 	UpdateLayered();
 
-	//读取配置文件--没有数据默认为北京市
-	m_strProvince = AfxGetApp()->GetProfileString(TEXT("weather"), TEXT("Province"), TEXT("广东省"));
-	m_strCity = AfxGetApp()->GetProfileString(TEXT("weather"), TEXT("city"), TEXT("广州市"));
+	//读取配置文件--没有数据默认为
+	m_strProvince	= AfxGetApp()->GetProfileString(TEXT("weather"), TEXT("Province"), TEXT("广东省"));
+	m_strCity		= AfxGetApp()->GetProfileString(TEXT("weather"), TEXT("City"), TEXT("广州市"));
+	m_strDistrict	= AfxGetApp()->GetProfileString(TEXT("weather"), TEXT("District"), TEXT("天河区"));
 
 	//开启线程设置数据并查询天气
 	StartThread();
 
-	CRect rtClient;
-	GetWindowRect(rtClient);
-	::SetWindowPos(m_hWnd, HWND_TOPMOST, rtClient.left, rtClient.top, rtClient.Width(), rtClient.Height(), SWP_SHOWWINDOW);
-
-	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
+	InitPosition();
+	return TRUE;  
 }
 
-// 如果向对话框添加最小化按钮，则需要下面的代码
-//  来绘制该图标。  对于使用文档/视图模型的 MFC 应用程序，
-//  这将由框架自动完成。
+
 
 void CAngoWeatherDlg::OnPaint()
 {
@@ -141,6 +166,7 @@ HCURSOR CAngoWeatherDlg::OnQueryDragIcon()
 
 bool CAngoWeatherDlg::OnEventThreadRun()
 {
+	bool bRet = false;
 	HINSTANCE hInstance = AfxGetInstanceHandle();
 
 	//这里的数据很大，没有必须每次查询的时候都插入一次容器，所以只初始化一次就好了
@@ -154,7 +180,7 @@ bool CAngoWeatherDlg::OnEventThreadRun()
 		//读取资源
 		LPVOID pBuffer = LoadResource(hInstance, hResource);
 
-		m_pParseJson->SetCityJsonData((LPCTSTR)pBuffer);
+		bRet = m_pParseJson->SetCityJsonData((LPCTSTR)pBuffer);
 
 		bInit = true;
 	}
@@ -168,7 +194,7 @@ bool CAngoWeatherDlg::OnEventThreadRun()
 	CString strURL, StrJson;
 	strURL.Format(TEXT("http://weather.gtimg.cn/city/%s.js?ref=qqchannel"), str);
 
-	m_pParseJson->SetWeatherJsonData(m_HttpWeather.GetHttpFile(strURL));
+	bRet = m_pParseJson->SetWeatherJsonData(m_HttpWeather.GetHttpFile(strURL));
 
 	//获取天气
 	CString strData;
@@ -396,22 +422,144 @@ int CAngoWeatherDlg::GetValue(CString StrData)
 
 void CAngoWeatherDlg::OnRButtonDown(UINT nFlags, CPoint point)
 {
-	CMenu PopMenu;
-
-	//建立菜单
-	PopMenu.CreatePopupMenu();
-	PopMenu.AppendMenu(0, 4000, TEXT("城市设置"));
-	PopMenu.AppendMenu(0, 1, TEXT("退出"));
-
-	//显示菜单
-	ClientToScreen(&point);
-	PopMenu.TrackPopupMenu(TPM_RIGHTBUTTON, point.x, point.y, this);
-	PopMenu.DestroyMenu();
+	CMenu* pmenu = m_popMenu.GetSubMenu(0);		//弹出的菜单实际上是IDR_MENU_POPUP菜单的某项的子菜单，这里是第一项
+	CPoint pos;
+	GetCursorPos(&pos);							//弹出菜单的位置，这里就是鼠标的当前位置
+	//显示该菜单，第一个参数的两个值分别表示在鼠标的右边显示、响应鼠标右击
+	pmenu->TrackPopupMenu(TPM_RIGHTBUTTON, pos.x, pos.y, AfxGetMainWnd(), 0);
 
 	__super::OnRButtonDown(nFlags, point);
 }
 
-void CAngoWeatherDlg::OnBnClickOption()
+
+
+void CAngoWeatherDlg::OnClose()
+{
+	if (m_hOnlyMutex)
+	{
+		CloseHandle(m_hOnlyMutex);
+		m_hOnlyMutex = NULL;
+	}
+
+	__super::OnClose();
+}
+
+
+//重载windows帮助，屏蔽F1帮助
+void CAngoWeatherDlg::WinHelpInternal(DWORD_PTR dwData, UINT nCmd)
+{
+	return;
+	//CDialog::WinHelp(dwData, nCmd);
+}
+
+void CAngoWeatherDlg::OnOK()
+{
+}
+
+void CAngoWeatherDlg::OnCancel()
+{
+	OnClose();
+	CDialogEx::OnCancel();
+}
+
+
+LRESULT CAngoWeatherDlg::OnNotifyIcon(WPARAM wparam, LPARAM lparam)
+{
+	if (lparam == WM_LBUTTONDOWN)
+	{
+		//恢复窗口或者最小化
+		//AfxGetMainWnd()->ShowWindow(SW_SHOW);
+		//AfxGetMainWnd()->ShowWindow(SW_RESTORE);
+		//这里貌似只有写这样两句才能保证恢复窗口后，该窗口处于活动状态（在最前面）
+	}
+	else if (lparam == WM_RBUTTONDOWN)
+	{
+		//弹出右键菜单
+		CMenu* pmenu = m_popMenu.GetSubMenu(0);		//弹出的菜单实际上是IDR_MENU_POPUP菜单的某项的子菜单，这里是第一项
+		CPoint pos;
+		GetCursorPos(&pos);							//弹出菜单的位置，这里就是鼠标的当前位置
+		//显示该菜单，第一个参数的两个值分别表示在鼠标的右边显示、响应鼠标右击
+		pmenu->TrackPopupMenu(TPM_RIGHTBUTTON, pos.x, pos.y, AfxGetMainWnd(), 0);
+	}
+	return 0;
+}
+
+void CAngoWeatherDlg::OnMenuShow()
+{
+	//这里貌似只有写这样两句才能保证恢复窗口后，该窗口处于活动状态（在最前面）
+	AfxGetMainWnd()->ShowWindow(SW_SHOW);
+	AfxGetMainWnd()->ShowWindow(SW_RESTORE);
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	//设置第一层：工具箱勾选
+	//pmenu->CheckMenuItem(ID_MENU_TOOL, MF_BYCOMMAND | MF_CHECKED);	//通过命令ID，选中ID_MENU_TOOL
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(0);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_MENU_SHOW, MF_BYCOMMAND | MF_CHECKED);
+			pMenu->CheckMenuItem(ID_MENU_HIDE, MF_BYCOMMAND | MF_UNCHECKED);
+		}
+	}
+}
+
+
+void CAngoWeatherDlg::OnMenuHide()
+{
+	AfxGetMainWnd()->ShowWindow(SW_HIDE);
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(0);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_MENU_SHOW, MF_BYCOMMAND | MF_UNCHECKED);
+			pMenu->CheckMenuItem(ID_MENU_HIDE, MF_BYCOMMAND | MF_CHECKED);
+		}
+	}
+}
+
+
+void CAngoWeatherDlg::OnMenuUp()
+{
+	CRect rtClient;
+	GetWindowRect(rtClient);
+	::SetWindowPos(m_hWnd, HWND_TOPMOST, rtClient.left, rtClient.top, rtClient.Width(), rtClient.Height(), SWP_SHOWWINDOW);
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(0);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_MENU_UP, MF_BYCOMMAND | MF_CHECKED);
+			pMenu->CheckMenuItem(ID_MENU_DOWN, MF_BYCOMMAND | MF_UNCHECKED);
+		}
+	}
+}
+
+
+void CAngoWeatherDlg::OnMenuDown()
+{
+	CRect rtClient;
+	GetWindowRect(rtClient);
+	::SetWindowPos(m_hWnd, HWND_NOTOPMOST, rtClient.left, rtClient.top, rtClient.Width(), rtClient.Height(), SWP_SHOWWINDOW);
+
+	CMenu* pMenu = m_popMenu.GetSubMenu(0);
+	if (pMenu)
+	{
+		pMenu = pMenu->GetSubMenu(0);
+		if (pMenu)
+		{
+			pMenu->CheckMenuItem(ID_MENU_UP, MF_BYCOMMAND | MF_UNCHECKED);
+			pMenu->CheckMenuItem(ID_MENU_DOWN, MF_BYCOMMAND | MF_CHECKED);
+		}
+	}
+}
+
+
+void CAngoWeatherDlg::OnMenuCityOpt()
 {
 	if (m_OptionDlg.GetSafeHwnd() == NULL)
 	{
@@ -419,16 +567,76 @@ void CAngoWeatherDlg::OnBnClickOption()
 
 		if (OptionDlg.DoModal() == IDOK)
 		{
-			m_strCity = OptionDlg.m_strCity;
-			m_strProvince = OptionDlg.m_strProvince;
+
+			m_strCity		= OptionDlg.m_strCity;
+			m_strProvince	= OptionDlg.m_strProvince;
+			m_strDistrict	= OptionDlg.m_strDistrict;
 
 			//写入配置文件
 			AfxGetApp()->WriteProfileString(TEXT("weather"), TEXT("Province"), m_strProvince);
-			AfxGetApp()->WriteProfileString(TEXT("weather"), TEXT("city"), m_strCity);
-
+			AfxGetApp()->WriteProfileString(TEXT("weather"), TEXT("City"), m_strCity);
+			AfxGetApp()->WriteProfileString(TEXT("weather"), TEXT("District"), m_strDistrict);
 			if (IsRuning()) ConcludeThread(0);
 
 			StartThread();
 		}
 	}
+}
+
+
+void CAngoWeatherDlg::OnMenuPreview()
+{
+	// TODO:  在此添加命令处理程序代码
+}
+
+
+void CAngoWeatherDlg::OnMenuAngo()
+{
+	CString strPath = CUtils::GetAppDir();
+	strPath += _T("\\Ango.exe");
+	//这个API会提示是否以管理员身份启动
+	ShellExecute(NULL, _T("open"), strPath, NULL, NULL, SW_SHOWNORMAL);
+}
+
+
+void CAngoWeatherDlg::OnMenuConfig()
+{
+	// TODO:  在此添加命令处理程序代码
+}
+
+
+void CAngoWeatherDlg::OnMenuExit()
+{
+	OnClose();
+	CDialogEx::OnCancel();
+}
+
+
+int CAngoWeatherDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
+{
+	if (__super::OnCreate(lpCreateStruct) == -1)
+		return -1;
+
+	
+	//通知区域图标，托盘图标
+	m_trayIcon.m_pCwnd = this;
+	m_trayIcon.m_dwIconId = IDR_MAINFRAME;
+	m_trayIcon.m_strTips = _T("天气");
+	m_trayIcon.InitTrayIcon();
+
+	return 0;
+}
+
+
+void CAngoWeatherDlg::InitPosition()
+{
+	//调整位置
+	CRect cr;
+	GetClientRect(&cr);//获取对话框客户区域大小
+	ClientToScreen(&cr);//转换为荧幕坐标
+	int x = GetSystemMetrics(SM_CXSCREEN);//获取荧幕坐标的宽度，单位为像素
+	int y = GetSystemMetrics(SM_CYSCREEN);//获取荧幕坐标的高度，单位为像素
+	//MoveWindow((x-cr.Width() *2)/2 ,cr.top,cr.Width() *2,cr.Height() *2);//左上角
+	//MoveWindow(x - cr.Width(), cr.Height(), cr.Width(), cr.Height());
+	MoveWindow(x - cr.Width(), 0, 0, 0);
 }

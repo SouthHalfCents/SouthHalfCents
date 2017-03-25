@@ -19,4 +19,7 @@ public:
 	CString GetHttpFile(LPCTSTR lpURL);
 
 	int OnProcessError(int dwRetcode,CInternetSession& session,CHttpConnection* pServer,CHttpFile* pFile);
+
+	void OnClean(CHttpConnection* pServer,CHttpFile* pFile);
+
 };

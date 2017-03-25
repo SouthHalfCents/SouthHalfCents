@@ -36,8 +36,8 @@ SIZE CRenderEngine::GetDrawSize(HDC hDc,LPTSTR lpszText,UINT uFormat,bool& bHave
 		}
 		if(GetGlyphOutline(hDc,nChar,GGO_GRAY8_BITMAP,&gm,0,NULL,&mat2)!=GDI_ERROR)
 		{
-			size.cx+=gm.gmBlackBoxX+m_cxSpacing;
-			size.cy=max(size.cy,gm.gmBlackBoxY);
+			size.cx += gm.gmBlackBoxX+m_cxSpacing;
+			size.cy  = max(size.cy,(LONG)gm.gmBlackBoxY);
 		}
 		if(nChar == _T(' '))
 		{

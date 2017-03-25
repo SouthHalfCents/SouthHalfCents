@@ -65,8 +65,6 @@
 //数组维数
 #define CountArray(Array) (sizeof(Array)/sizeof(Array[0]))
 //删除指针
-#define SafeDelete(pData) { try { delete pData; } catch (...) { ASSERT(FALSE); } pData=NULL; } 
+#define SafeDelete(pData) { try { if(pData) delete pData; } catch (...) { ASSERT(FALSE); } pData=NULL; } 
 //删除数组
-#define  SafeDeleteArray(pData) { try { delete [] pData; } catch (...) { ASSERT(FALSE); } pData=NULL; } 
-//接口释放
-#define SafeRelease(pObject) { if (pObject!=NULL) { pObject->Release(); pObject=NULL; } }
+#define  SafeDeleteArray(pData) { try { if(pData) delete [] pData; } catch (...) { ASSERT(FALSE); } pData=NULL; } 

@@ -13,6 +13,22 @@ CHttpWeather::~CHttpWeather(void)
 {
 	m_StrError.ReleaseBuffer();
 }
+void CHttpWeather::OnClean(CHttpConnection* pServer, CHttpFile* pFile)
+{
+	if (pServer)
+	{
+		pServer->Close();
+		delete pServer;
+		pServer = NULL;
+	}
+
+	if (pFile)
+	{
+		pFile->Close();
+		delete pFile;
+		pFile = NULL;
+	}
+}
 
 CString CHttpWeather::GetHttpFile( LPCTSTR lpURL )
 {
@@ -67,6 +83,7 @@ CString CHttpWeather::GetHttpFile( LPCTSTR lpURL )
 			if(!pFile->AddRequestHeaders(szHeaders)|| !pFile->SendRequest())
 			{
 				m_StrError = TEXT("网络错误－无法发送请求报头");
+				OnClean(pServer,pFile);
 				return NULL;
 			}
 		}
@@ -75,6 +92,7 @@ CString CHttpWeather::GetHttpFile( LPCTSTR lpURL )
 			StrContent.Empty();
 			m_StrError = TEXT("无法发送http报头,可能网络状况有问题");
 			ex->Delete();
+			OnClean(pServer,pFile);
 			return NULL;		
 		}
 		//////////////////////////////////////////////////////////////////////////
@@ -82,6 +100,7 @@ CString CHttpWeather::GetHttpFile( LPCTSTR lpURL )
 		if(!pFile->QueryInfoStatusCode(dwRetcode))
 		{
 			m_StrError = TEXT("网络错误－无法查询反馈代码");
+			OnClean(pServer,pFile);
 			return NULL;
 		}
 
@@ -112,17 +131,16 @@ CString CHttpWeather::GetHttpFile( LPCTSTR lpURL )
 				m_pszHttpFile.Format(TEXT("%s"),unCpString);
 
 				StrContent.ReleaseBuffer();
-				if (pFile != NULL) SafeDelete(pFile);
-				if (pServer != NULL) SafeDelete(pServer);
 
+				OnClean(pServer,pFile);
 				session.Close();
-
 				return m_pszHttpFile;
 			}
 			catch (CInternetException* pEx)
 			{
 				m_StrError = TEXT("接收数据错误");
 				pEx->Delete();
+				OnClean(pServer,pFile);
 				return NULL;
 			}
 
@@ -132,18 +150,19 @@ CString CHttpWeather::GetHttpFile( LPCTSTR lpURL )
 		{
 			StrContent.Empty();
 			OnProcessError(dwRetcode,session,pServer,pFile);
-
+			OnClean(pServer,pFile);
 			return NULL;
 		}
 	}
 	catch (CInternetException* pEx)
 	{
 		m_StrError = TEXT("网络错误");
-
+		OnClean(pServer,pFile);
 		pEx->Delete();   
 		return NULL;
 	}
 
+	OnClean(pServer,pFile);
 	return NULL;
 }
 
@@ -290,12 +309,10 @@ int CHttpWeather::OnProcessError( int dwRetcode,CInternetSession& session,CHttpC
 		break;
 		//
 	}
-
+	ASSERT(FALSE);
 	try
 	{
-		if (pFile != NULL) SafeDelete(pFile);
-		if (pServer != NULL) SafeDelete(pServer);
-
+		OnClean(pServer,pFile);
 		session.Close();
 
 		return FALSE;

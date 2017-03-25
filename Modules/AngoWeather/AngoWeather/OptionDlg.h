@@ -1,4 +1,5 @@
 #pragma once
+#include "afxwin.h"
 
 
 // COptionDlg 对话框
@@ -13,6 +14,7 @@ protected:
 public:
 	CString						m_strProvince;
 	CString						m_strCity;
+	CString						m_strDistrict;
 
 public:
 	COptionDlg(CWnd* pParent = NULL);   // 标准构造函数
@@ -32,4 +34,5 @@ public:
 
 	afx_msg void OnCbnSelchangeProvince();
 	afx_msg void OnBnClickedOk();
+	CComboBox m_comDistrict;
 };

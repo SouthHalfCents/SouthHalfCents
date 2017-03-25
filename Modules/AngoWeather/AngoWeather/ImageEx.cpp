@@ -66,7 +66,9 @@ bool CImageEx::LoadImage(HINSTANCE hInstance, LPCTSTR pszResourceName,LPCTSTR ps
 	HRESULT hr = CImage::Load(pIStream);
 
  	//ÊÍ·Å×ÊÔ´
- 	SafeRelease(pIStream);
+	pIStream->Release();
+	pIStream = NULL;
+ 	
 
 	if (hr == S_OK)
 	{

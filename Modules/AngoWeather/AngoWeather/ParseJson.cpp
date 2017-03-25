@@ -10,13 +10,12 @@ CParseJson::CParseJson(void)
 
 CParseJson::~CParseJson(void)
 {
- 	CityInfoArray::iterator iter = m_CityInfoArray.begin();
- 
- 	for (;iter != m_CityInfoArray.end();++iter)
- 	{
- 		SafeDelete(*iter);
- 	}
- 
+	int nSize = m_CityInfoArray.size();
+	for (int i = 0; i < nSize; i++)
+	{
+		delete m_CityInfoArray[i];
+		m_CityInfoArray[i] = NULL;
+	} 
  	m_CityInfoArray.clear();
 }
 
@@ -38,8 +37,8 @@ void ConvertGBKToUtf8(CString &szString)
 	CT2CA CurrentServer(pwText);
 
 	szString = CurrentServer;
+	SafeDelete(pwText);
 
-	SafeDeleteArray(pwText);
 }
 
 void ConvertGBKToUtf8(LPCTSTR lpszString,TCHAR* pOutString,int nSize)
@@ -72,7 +71,7 @@ bool CParseJson::SetCityJsonData( LPCTSTR lpszData )
 
 	CityInfoArray::iterator iter = m_CityInfoArray.begin();
 
-	for (int i=0;i<root.size();i++)
+	for (unsigned i=0;i<root.size();i++)
 	{
  		tagCityInfo *pCityInfo = new tagCityInfo;
 
@@ -108,9 +107,9 @@ LPCTSTR CParseJson::GetCode(LPCTSTR lpTitle,LPCTSTR lpszProvince/*=NULL*/)
 
 		if ( StrCmp(pCityInfo->strTitle,lpTitle)==0 )
 		{
-			if ( lpszProvince != NULL )
+			if ( lpszProvince )
 			{
-				if( StrCmp(pCityInfo->strTitle,lpTitle)==0 )
+				if( StrCmp(pCityInfo->strProvince,lpszProvince)==0 )
 					return pCityInfo->strCode;
 				else continue;
 			}

@@ -212,6 +212,8 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\..\public\common\TrayIcon.h" />
+    <ClInclude Include="..\..\..\public\common\Utils.h" />
     <ClInclude Include="AngoWeather.h" />
     <ClInclude Include="AngoWeatherDlg.h" />
     <ClInclude Include="GZipHelper.h" />
@@ -235,6 +237,8 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\public\common\TrayIcon.cpp" />
+    <ClCompile Include="..\..\..\public\common\Utils.cpp" />
     <ClCompile Include="AngoWeather.cpp" />
     <ClCompile Include="AngoWeatherDlg.cpp" />
     <ClCompile Include="HttpWeather.cpp" />
@@ -307,4 +311,9 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="AngoWeather.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
 </Project>
