@@ -80,6 +80,8 @@ BEGIN_MESSAGE_MAP(CAngoTimeDlg, CDialogEx)
 	ON_COMMAND(ID_CLOCK_CONFIG, &CAngoTimeDlg::OnClockConfig)
 	ON_COMMAND(ID_MENU_TASK, &CAngoTimeDlg::OnMenuTask)
 	ON_COMMAND(ID_CFG_OTHER, &CAngoTimeDlg::OnCfgOther)
+	ON_COMMAND(ID_MENU_WEATHER, &CAngoTimeDlg::OnMenuWeather)
+	ON_COMMAND(ID_MENU_MAGIC_TIME, &CAngoTimeDlg::OnMenuMagicTime)
 END_MESSAGE_MAP()
 
 
@@ -727,3 +729,21 @@ void CAngoTimeDlg::InitSettings()
 
 
 
+
+
+void CAngoTimeDlg::OnMenuWeather()
+{
+	CString strPath = CUtils::GetAppDir();
+	strPath += _T("\\AngoWeather.exe");
+	//这个API会提示是否以管理员身份启动
+	ShellExecute(NULL, _T("open"), strPath, NULL, NULL, SW_SHOWNORMAL);
+}
+
+//软媒时间
+void CAngoTimeDlg::OnMenuMagicTime()
+{
+	CString strPath = CUtils::GetAppDir();
+	strPath += _T("\\Tools\\mytime\\mytime.exe");
+	//这个API会提示是否以管理员身份启动
+	ShellExecute(NULL, _T("open"), strPath, NULL, NULL, SW_SHOWNORMAL);
+}

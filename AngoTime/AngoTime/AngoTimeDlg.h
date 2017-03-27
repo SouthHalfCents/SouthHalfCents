@@ -83,7 +83,7 @@ public:
 	afx_msg void				OnViewShow();					//显示
 	afx_msg void				OnViewHide();					//隐藏
 	afx_msg void				OnMenuAngo();					//运行Ango主程序
-
+	afx_msg void				OnMenuWeather();
 
 	int							m_nSayTime;						//报时设置
 	BOOL						m_bClockOn;						//闹钟启动状态
@@ -109,6 +109,8 @@ public:
 
 	
 	
+	
+	afx_msg void OnMenuMagicTime();
 };
 
 
