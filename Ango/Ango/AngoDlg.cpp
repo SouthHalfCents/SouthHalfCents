@@ -73,8 +73,7 @@ BOOL CAngoDlg::OnInitDialog()
 	HANDLE m_hMutex = CreateMutex(NULL, FALSE, L"//Ango.exe");
 	if (GetLastError() == ERROR_ALREADY_EXISTS)
 	{
-		// 如果程序已经存在并且正在运行 
-		// 如果已有互斥量存在则释放句柄并复位互斥量，退出程序
+		// 如果程序已经存在并且正在运行  如果已有互斥量存在则释放句柄并复位互斥量，退出程序
 		CloseHandle(m_hMutex);
 		m_hMutex = NULL;
 		AngoMessageBox(_T("程序已经在运行"));
@@ -104,7 +103,7 @@ BOOL CAngoDlg::OnInitDialog()
 
 	OnMenuShow();
 	OnMenuUp();
-	//RegAutoStart();
+	RegAutoStart();
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
