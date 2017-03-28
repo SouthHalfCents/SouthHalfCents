@@ -1,7 +1,7 @@
 #pragma once
 
 //// 托盘图标，任务栏图标，通知区域图标
-//#include "Database.h"
+#include <afxwin.h>
 
 #define MAIN_WM_NOTIFYICON		(WM_USER+100)		//通知区域图标消息
 

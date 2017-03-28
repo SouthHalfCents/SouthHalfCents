@@ -563,65 +563,11 @@ BOOL CAngoTimeDlg::SetAutoStart()
 	else
 		pMenu->CheckMenuItem(ID_CFG_AUTORUN, MF_BYCOMMAND | MF_UNCHECKED);
 
+	CString strKeyName = _T("AngoTime");
+	CString strKeyValue = CUtils::GetAppPath();
 
-#if _WIN64
-	HMODULE hModule = GetModuleHandle(NULL);
-	HKEY hRoot = HKEY_LOCAL_MACHINE;
-	HKEY hKey;
-	LONG lRet;
-	DWORD dwDisposition;
-
-	char szPath[MAX_PATH] = { 0 };
-	GetModuleFileNameA(hModule, szPath, sizeof(szPath));
-
-	const char *subkey = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";	//RunOnce
-
-	lRet = RegCreateKeyExA(hRoot,
-		subkey,
-		0,   //保留参数，必须为0
-		NULL,//键的种类，同通常为NULL
-		REG_OPTION_NON_VOLATILE,
-		KEY_ALL_ACCESS,
-		NULL,
-		&hKey,
-		&dwDisposition  //返回参数
-		);
-
-
-	char data_Name[MAX_PATH] = "Ango";
-	if (m_bAutoRun)
-	{
-		lRet = ::RegSetValueExA(
-			hKey,
-			data_Name,
-			0,						//保留
-			REG_SZ,					//字符串
-			(CONST BYTE *)szPath,	//具体内容
-			(DWORD)strlen(szPath)
-			);
-	}
-	else
-	{
-		lRet = ::RegDeleteValueA(hKey, data_Name);
-	}
-
-
-	if (lRet != ERROR_SUCCESS)
-	{
-		OutputDebugStringA("打开注册表失败\n");
-		RegCloseKey(hKey);
-		return FALSE;
-	}
-
-	RegCloseKey(hKey);
-
-#endif
-
-
-
-
-
-	return TRUE;
+	BOOL bResult = CUtils::SetRegAutoStart(TRUE, strKeyName, strKeyValue);
+	return bResult;
 }
 
 void CAngoTimeDlg::OnCfgAutoStart()

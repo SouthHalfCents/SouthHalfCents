@@ -1,8 +1,12 @@
 #pragma once
 
+
+#include <afxwin.h>
 #include <mutex>          // std::mutex
 #include <fstream>
 #include <string>
+
+#include "Utils.h"
 
 using namespace std;
 

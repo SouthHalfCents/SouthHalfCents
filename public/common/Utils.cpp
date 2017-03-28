@@ -1,4 +1,4 @@
-#include "stdafx.h"
+
 #include "Utils.h"
 
 
@@ -73,14 +73,27 @@ BOOL CUtils::FileExist(LPCTSTR   pszFileName)
 }
 
 
+CString CUtils::GetAppPath()
+{
+	TCHAR szLocalPath[MAX_PATH];
+	GetModuleFileName(0, szLocalPath, MAX_PATH);
+
+	TCHAR szFullPath[4096] = { 0 };
+	GetFullPathName(szLocalPath, 4096, szFullPath, NULL);
+
+	CString strTemp = szFullPath;
+	return strTemp;
+}
 
 CString CUtils::GetAppDir()
 {
 	TCHAR szLocalPath[MAX_PATH];
 	GetModuleFileName(0, szLocalPath, MAX_PATH);
-	//AngoMessageBox(szLocalPath);
-	CString strTemp;
-	strTemp = szLocalPath;
+
+	TCHAR szFullPath[4096] = { 0 };
+	GetFullPathName(szLocalPath, 4096, szFullPath, NULL);
+
+	CString strTemp = szFullPath;
 	strTemp = strTemp.Left(strTemp.ReverseFind('\\'));
 	return strTemp;
 }
@@ -160,4 +173,100 @@ std::string	CUtils::UTF8_GBK(char* strMsg)
 	delete[]strW;
 	delete[]strM;
 	return strOutGBK;
+}
+
+/*
+BOOL bEnable: TRUE 增加自启动  FALSE 删除自启动 
+*/
+BOOL CUtils::SetRegAutoStart(BOOL bEnable, CString strKeyName, CString strKeyValue)
+{
+	if (strKeyName.GetLength() == 0 || strKeyValue.GetLength() == 0)
+		return FALSE;
+
+	BOOL bResult = TRUE;
+	BOOL bIsWow64 = IsWow64();
+	HKEY hRoot = HKEY_CURRENT_USER;			// HKEY_LOCAL_MACHINE 也可以
+	HKEY hKey = 0;
+	DWORD dwRetValue = 0;
+	DWORD dwRetParam = 0;
+
+	TCHAR * pKeyName  = strKeyName.GetBuffer();
+	TCHAR * pKeyValue = strKeyValue.GetBuffer();
+	DWORD dwKeyValueLen = (DWORD)wcslen(pKeyValue) * sizeof(TCHAR);
+	
+	//HKEY_CURRENT_USER "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"
+#if _WIN64
+	const TCHAR *subkey = _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");	//RunOnce
+#else
+	//64位系统下而32位注册表项被重定位到：   HKEY_LOCAL_MACHINE\Software\WOW6432Node
+	const TCHAR *subkey = _T("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run");	//RunOnce
+#endif
+
+
+	dwRetValue = RegCreateKeyEx(hRoot,
+		subkey,
+		0,   //保留参数，必须为0
+		NULL,//键的种类，同通常为NULL
+		REG_OPTION_NON_VOLATILE,
+		KEY_ALL_ACCESS,
+		NULL,
+		&hKey,
+		&dwRetParam  //返回参数
+		);
+
+
+	//自启动？删除自启动
+	if (bEnable)
+	{
+		dwRetValue = ::RegSetValueEx(
+			hKey,
+			pKeyName,
+			0,							//强制保留
+			REG_SZ,						//宽字符串
+			(CONST BYTE *)pKeyValue,	//具体内容
+			dwKeyValueLen
+			);
+	}
+	else
+	{
+		dwRetValue = ::RegDeleteValue(hKey, pKeyName);
+	}
+
+	if (dwRetValue != ERROR_SUCCESS)
+	{
+		OutputDebugString(_T("打开注册表失败\n"));
+		bResult = FALSE;
+	}
+
+	strKeyName.ReleaseBuffer();
+	strKeyValue.ReleaseBuffer();
+
+	RegCloseKey(hKey);
+	return bResult;
+}
+
+BOOL CUtils::IsWow64()
+{
+	BOOL bRet = FALSE;
+
+	SYSTEM_INFO si;
+
+	typedef VOID(__stdcall*GETNATIVESYSTEMINFO)(LPSYSTEM_INFO lpSystemInfo);
+
+	GETNATIVESYSTEMINFO fnGetNativeSystemInfo;
+	fnGetNativeSystemInfo = (GETNATIVESYSTEMINFO)GetProcAddress(GetModuleHandle(TEXT("kernel32.dll")), "GetNativeSystemInfo");
+	if (fnGetNativeSystemInfo != NULL)
+	{
+		fnGetNativeSystemInfo(&si);
+
+		if (si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 ||
+
+			si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_IA64)
+
+		{
+			bRet = TRUE;
+		}
+	}
+
+	return bRet;
 }

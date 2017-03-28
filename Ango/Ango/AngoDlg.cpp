@@ -338,69 +338,14 @@ void CAngoDlg::OnConfigCustom()
 
 
 //设置自启动
-//输入 wszPath[]绝对路径， wszName[]新建项名
 BOOL CAngoDlg::RegAutoStart()
 {
-	// 32位程序在64位系统运行,操作注册表被重定向的问题.
+	CString strKeyName = _T("Ango");
+	CString strKeyValue = CUtils::GetAppPath();
 
+	BOOL bResult = CUtils::SetRegAutoStart(TRUE, strKeyName, strKeyValue);
+	return bResult;
 
-	HMODULE hModule = GetModuleHandle(NULL);
-
-	//得到自身完整的路径
-	//GetModuleFileName(hModule, wszPath, sizeof(wszPath));
-
-
-
-	
-#if _WIN64
-	//AngoMsgBox::MessageBox(L"WIN_64", L"", MB_POST_CENTER);
-	HKEY hRoot = HKEY_LOCAL_MACHINE;
-	HKEY hKey;
-	LONG lRet;
-	DWORD dwDisposition;
-
-	char szPath[MAX_PATH] = {0};
-	GetModuleFileNameA(hModule, szPath, sizeof(szPath));
-
-	const char *subkey = "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\RunOnce";	//RunOnce
-
-	lRet = RegCreateKeyExA(hRoot,
-		subkey,
-		0,   //保留参数，必须为0
-		NULL,//键的种类，同通常为NULL
-		REG_OPTION_NON_VOLATILE,
-		KEY_ALL_ACCESS,
-		NULL,
-		&hKey,
-		&dwDisposition  //返回参数
-		);
-	
-
-	char data_Name[MAX_PATH] = "Ango";
-
-	lRet = ::RegSetValueExA(
-		hKey,
-		data_Name,
-		0,						//保留
-		REG_SZ,					//字符串
-		(CONST BYTE *)szPath,	//具体内容
-		(DWORD)strlen(szPath)
-		);
-
-	if (lRet != ERROR_SUCCESS)
-	{
-		RegCloseKey(hKey);
-		OutputDebugStringA("打开注册表失败");
-		return FALSE;
-	}
-
-	RegCloseKey(hKey);
-
-#endif
-
-
-
-	return TRUE;
 }
 //-------------------------------------------------------------------------------------------------------------------------
 
@@ -490,18 +435,10 @@ void CAngoDlg::OnMenuDown()
 
 void CAngoDlg::OnAngoTime()
 {
-	//WinExec("AngoTime.exe", SW_SHOW);  
-	//WinExec("D:\\Program Files\\Test\\Test.exe", SW_SHOWMAXIMIZED);
+
 	CString strPath = CUtils::GetAppDir();
 	strPath += _T("\\AngoTime.exe");
 	//这个API会提示是否以管理员身份启动
 	ShellExecute(NULL, _T("open"), strPath, NULL, NULL, SW_SHOWNORMAL);
 
-// 	PROCESS_INFORMATION pi;
-// 	STARTUPINFO si;
-// 	memset(&si, 0, sizeof(si));
-// 	si.cb = sizeof(si);
-// 	si.wShowWindow = SW_SHOW;
-// 	si.dwFlags = STARTF_USESHOWWINDOW;
-// 	BOOL fRet = CreateProcess(L"AngoTime.exe", NULL, NULL, FALSE, NULL, NULL, NULL, NULL, &si, &pi);
 }

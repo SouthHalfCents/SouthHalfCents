@@ -76,7 +76,7 @@ public:
 	afx_msg void				OnBnClickedBtnYes();
 	afx_msg void				OnBnClickedBtnNo();
 	afx_msg void				OnBnClickedBtnCancle();
-	void						InitMsgBox(CString strMsg, CString strTitle=L"", UINT nType=MB_OK);
+	void						InitMsgBox(CString strMsg, CString strTitle=_T(""), UINT nType=MB_OK);
 	void						SetRayout();
 	void						SetDlgPos();
 	
@@ -86,4 +86,4 @@ public:
 
 
 
-extern int AngoMessageBox(CString strMsg, CString strTitle=L"", UINT nType= MB_POST_BESIDE | MB_OK);
+extern int AngoMessageBox(CString strMsg, CString strTitle=_T(""), UINT nType= MB_POST_BESIDE | MB_OK);

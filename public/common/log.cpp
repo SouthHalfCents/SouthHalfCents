@@ -1,5 +1,5 @@
 
-#include "stdafx.h"
+
 #include "log.h"
 #include <time.h>
 
@@ -11,7 +11,9 @@ ofstream CLog::m_Fout;
 CLog::CLog(void) 
 {
 	
-	m_strFileName = "运行日志.log";
+	wstring ws(CUtils::GetAppDir());
+	string temp(ws.begin(), ws.end());
+	m_strFileName += temp + "\\运行日志.log";
 }
 //------------------------------------------------------------------------------------------
 CLog::~CLog(void)
