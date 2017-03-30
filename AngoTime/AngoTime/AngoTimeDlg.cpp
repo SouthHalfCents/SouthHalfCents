@@ -689,6 +689,7 @@ void CAngoTimeDlg::OnMenuWeather()
 //软媒时间
 void CAngoTimeDlg::OnMenuMagicTime()
 {
+	AngoBox.AngoMessageBox(_T("123"), _T("233"), MB_POST_CENTER);
 	CString strPath = CUtils::GetAppDir();
 	strPath += _T("\\Tools\\mytime\\mytime.exe");
 	//这个API会提示是否以管理员身份启动

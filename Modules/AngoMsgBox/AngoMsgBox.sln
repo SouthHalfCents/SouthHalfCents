@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AngoMsgBox", "AngoMsgBox\AngoMsgBox.vcxproj", "{884554E3-7991-4C03-9FE5-D3905EAD08FE}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AngoMsgBoxTest", "AngoMsgBoxTest\AngoMsgBoxTest.vcxproj", "{6CB29D79-9DA6-4854-887D-2DA6452D2983}"
+	ProjectSection(ProjectDependencies) = postProject
+		{884554E3-7991-4C03-9FE5-D3905EAD08FE} = {884554E3-7991-4C03-9FE5-D3905EAD08FE}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{884554E3-7991-4C03-9FE5-D3905EAD08FE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{884554E3-7991-4C03-9FE5-D3905EAD08FE}.Debug|Win32.Build.0 = Debug|Win32
+		{884554E3-7991-4C03-9FE5-D3905EAD08FE}.Debug|x64.ActiveCfg = Debug|x64
+		{884554E3-7991-4C03-9FE5-D3905EAD08FE}.Debug|x64.Build.0 = Debug|x64
+		{884554E3-7991-4C03-9FE5-D3905EAD08FE}.Release|Win32.ActiveCfg = Release|Win32
+		{884554E3-7991-4C03-9FE5-D3905EAD08FE}.Release|Win32.Build.0 = Release|Win32
+		{884554E3-7991-4C03-9FE5-D3905EAD08FE}.Release|x64.ActiveCfg = Release|x64
+		{884554E3-7991-4C03-9FE5-D3905EAD08FE}.Release|x64.Build.0 = Release|x64
+		{6CB29D79-9DA6-4854-887D-2DA6452D2983}.Debug|Win32.ActiveCfg = Debug|Win32
+		{6CB29D79-9DA6-4854-887D-2DA6452D2983}.Debug|Win32.Build.0 = Debug|Win32
+		{6CB29D79-9DA6-4854-887D-2DA6452D2983}.Debug|x64.ActiveCfg = Debug|x64
+		{6CB29D79-9DA6-4854-887D-2DA6452D2983}.Debug|x64.Build.0 = Debug|x64
+		{6CB29D79-9DA6-4854-887D-2DA6452D2983}.Release|Win32.ActiveCfg = Release|Win32
+		{6CB29D79-9DA6-4854-887D-2DA6452D2983}.Release|Win32.Build.0 = Release|Win32
+		{6CB29D79-9DA6-4854-887D-2DA6452D2983}.Release|x64.ActiveCfg = Release|x64
+		{6CB29D79-9DA6-4854-887D-2DA6452D2983}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
