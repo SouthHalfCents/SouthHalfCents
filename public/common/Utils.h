@@ -36,5 +36,10 @@ public:
 
 	static BOOL			IsWow64();						//判断是否64位系统
 	static BOOL			SetRegAutoStart(BOOL bEnable, CString strKeyName, CString strKeyValue);
+
+	static BOOL			IsRunAsAdmin();					//是否以管理员权限运行中
+	static BOOL			IsInAdminGroup(BOOL bCheckAdminMode = FALSE);//如果bCheckAdminMode是TRUE， 则除了检测Admin账号外，还检测是真的运行在Admin环境， 否则只是检测Admin账号。
+	static BOOL			EnablePrivilege(HANDLE hToken, LPCTSTR lpszPrivilegeName);		//按项提升权限
+	static BOOL			UpPrivilege();
 };
 

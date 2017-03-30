@@ -127,7 +127,7 @@ BOOL CAngoTimeDlg::OnInitDialog()
 	InitRgbMap();
 	StartWork((void*)this);
 	OnViewShow();
-	//OnViewUp();
+	OnViewUp();
 	InitSettings();
 	
 
@@ -442,6 +442,7 @@ void CAngoTimeDlg::OnViewHide()
 
 void CAngoTimeDlg::OnMenuAngo()
 {
+	BOOL bAdmin = CUtils::UpPrivilege();
 	CString strPath = CUtils::GetAppDir();
 	strPath += _T("\\Ango.exe");
 	//这个API会提示是否以管理员身份启动

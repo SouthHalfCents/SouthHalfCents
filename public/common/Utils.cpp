@@ -270,3 +270,145 @@ BOOL CUtils::IsWow64()
 
 	return bRet;
 }
+
+BOOL CUtils::IsRunAsAdmin()
+{
+	BOOL bElevated = FALSE;
+	HANDLE hToken = NULL;
+
+	// Get current process token
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &hToken))
+		return FALSE;
+
+	TOKEN_ELEVATION tokenEle;
+	DWORD dwRetLen = 0;
+
+	// Retrieve token elevation information
+	if (GetTokenInformation(hToken, TokenElevation, &tokenEle, sizeof(tokenEle), &dwRetLen))
+	{
+		if (dwRetLen == sizeof(tokenEle))
+		{
+			bElevated = tokenEle.TokenIsElevated;
+		}
+	}
+
+	CloseHandle(hToken);
+	return bElevated;
+}
+
+//如果bCheckAdminMode是TRUE， 则除了检测Admin账号外，还检测是真的运行在Admin环境， 否则只是检测Admin账号。
+BOOL CUtils::IsInAdminGroup(BOOL bCheckAdminMode /*= FALSE*/)
+{
+	BOOL   fAdmin;
+	HANDLE  hThread;
+	TOKEN_GROUPS *ptg = NULL;
+	DWORD  cbTokenGroups;
+	DWORD  dwGroup;
+	PSID   psidAdmin;
+	SID_IDENTIFIER_AUTHORITY SystemSidAuthority = SECURITY_NT_AUTHORITY;
+	if (!OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, FALSE, &hThread))
+	{
+		if (GetLastError() == ERROR_NO_TOKEN)
+		{
+			if (! OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY,&hThread))
+				return (FALSE);
+		}
+		else
+			return (FALSE);
+	}
+	if (GetTokenInformation(hThread, TokenGroups, NULL, 0, &cbTokenGroups))
+		return (FALSE);
+	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+		return (FALSE);
+	if (! (ptg = (TOKEN_GROUPS*)_alloca(cbTokenGroups)))
+		return (FALSE);
+	if (!GetTokenInformation(hThread, TokenGroups, ptg, cbTokenGroups,
+		&cbTokenGroups))
+		return (FALSE);
+	if (! AllocateAndInitializeSid(&SystemSidAuthority, 2,
+		SECURITY_BUILTIN_DOMAIN_RID,
+		DOMAIN_ALIAS_RID_ADMINS,
+		0, 0, 0, 0, 0, 0, &psidAdmin))
+		return (FALSE);
+	fAdmin = FALSE;
+	for (dwGroup = 0; dwGroup < ptg->GroupCount; dwGroup++)
+	{
+		if (EqualSid(ptg->Groups[dwGroup].Sid, psidAdmin))
+		{
+			if (bCheckAdminMode)
+			{
+				if ((ptg->Groups[dwGroup].Attributes) & SE_GROUP_ENABLED)
+				{
+					fAdmin = TRUE;
+				}
+			}
+			else
+			{
+				fAdmin = TRUE;
+			}
+			break;
+		}
+	}
+
+	CloseHandle(hThread);
+	FreeSid(psidAdmin);
+	return (fAdmin);
+}
+
+
+//EnablePrivilege(token, SE_SHUTDOWN_NAME);
+BOOL CUtils::EnablePrivilege(HANDLE hToken, LPCTSTR lpszPrivilegeName)
+{
+	TOKEN_PRIVILEGES tkp = { 0 };
+	BOOL bRet = LookupPrivilegeValue(NULL, lpszPrivilegeName, &tkp.Privileges[0].Luid);
+	if (!bRet) return FALSE;
+
+	tkp.PrivilegeCount = 1;
+	tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+	bRet = AdjustTokenPrivileges(hToken, FALSE, &tkp, sizeof(tkp), NULL, NULL);
+
+	return bRet;
+}
+
+BOOL CUtils::UpPrivilege()
+{
+	BOOL bReturn = FALSE;
+	HANDLE hToken= NULL;
+	bReturn = OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES, &hToken);
+	if (!bReturn)
+	{
+		OutputDebugString(_T("获取令牌句柄失败!")); 
+		return FALSE;
+	}
+
+	TOKEN_PRIVILEGES tp; //新特权结构体    
+	LUID Luid;
+	bReturn = LookupPrivilegeValue(NULL, SE_DEBUG_NAME, &Luid);
+
+	if (!bReturn)
+	{
+		OutputDebugString(_T("获取Luid失败"));
+		CloseHandle(hToken);
+		return FALSE;
+	}
+
+	//给TP和TP里的LUID结构体赋值    
+	tp.PrivilegeCount = 1;
+	tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+	tp.Privileges[0].Luid = Luid;
+
+	AdjustTokenPrivileges(hToken, FALSE, &tp, sizeof(TOKEN_PRIVILEGES), NULL, NULL);
+	if (GetLastError() != ERROR_SUCCESS)
+	{
+		OutputDebugString(_T("修改特权不完全或失败!"));
+		bReturn = FALSE;
+	}
+	else
+	{
+		OutputDebugString(_T("修改成功!"));
+		bReturn = TRUE;
+	}
+
+	CloseHandle(hToken);
+	return bReturn;
+}

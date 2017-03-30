@@ -69,4 +69,5 @@ public:
 	CMenu						m_popMenu;
 
 	afx_msg void				OnAngoTime();			//‘À––AngoTime
+	afx_msg void OnToolMytime();
 };

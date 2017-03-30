@@ -7,7 +7,7 @@
 #include "AngoDlg.h"
 #include "MsgBoxEx.h"
 #include "afxdialogex.h"
-
+#include<atlconv.h>
 #include <string>
 
 
@@ -51,6 +51,7 @@ BEGIN_MESSAGE_MAP(CAngoDlg, CDialogEx)
 	ON_COMMAND(ID_MENU_UP, &CAngoDlg::OnMenuUp)
 	ON_COMMAND(ID_MENU_DOWN, &CAngoDlg::OnMenuDown)
 	ON_COMMAND(ID_ANGO_TIME, &CAngoDlg::OnAngoTime)
+	ON_COMMAND(ID_TOOL_MYTIME, &CAngoDlg::OnToolMytime)
 END_MESSAGE_MAP()
 
 
@@ -353,7 +354,7 @@ BOOL CAngoDlg::RegAutoStart()
 
 void CAngoDlg::OnToolCustom()
 {
-	AngoMessageBox(L"工具箱");
+	AngoMessageBox(_T("工具箱"));
 }
 
 void CAngoDlg::OnMenuShow()
@@ -439,5 +440,22 @@ void CAngoDlg::OnAngoTime()
 	strPath += _T("\\AngoTime.exe");
 	//这个API会提示是否以管理员身份启动
 	ShellExecute(NULL, _T("open"), strPath, NULL, NULL, SW_SHOWNORMAL);
+
+}
+
+
+void CAngoDlg::OnToolMytime()
+{
+	BOOL bRet = CUtils::IsRunAsAdmin();
+
+	CString strPath = CUtils::GetAppDir();
+	strPath += _T("\\Ango.exe");
+
+	USES_CONVERSION;
+#ifdef  UNICODE                     
+	WinExec(T2A(strPath), SW_SHOW);
+#else           
+	WinExec(strPath, SW_SHOW);
+#endif   
 
 }
