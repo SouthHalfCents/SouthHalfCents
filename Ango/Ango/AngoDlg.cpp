@@ -5,9 +5,8 @@
 #include "stdafx.h"
 #include "Ango.h"
 #include "AngoDlg.h"
-#include "MsgBoxEx.h"
 #include "afxdialogex.h"
-#include<atlconv.h>
+#include <atlconv.h>
 #include <string>
 
 
@@ -77,7 +76,7 @@ BOOL CAngoDlg::OnInitDialog()
 		// 如果程序已经存在并且正在运行  如果已有互斥量存在则释放句柄并复位互斥量，退出程序
 		CloseHandle(m_hMutex);
 		m_hMutex = NULL;
-		AngoMessageBox(_T("程序已经在运行"));
+		AngoBox.AngoMessageBox(_T("程序已经在运行"));
 		CDialog::OnCancel();
 	}
 
@@ -213,7 +212,7 @@ void CAngoDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 	case 27:
 	{
 		strMsg = "是否退出程序？";
-		if (AngoMessageBox(strMsg, L"退出", MB_OKCANCEL) == IDOK)
+		if (AngoBox.AngoMessageBox(strMsg, L"退出", MB_OKCANCEL) == IDOK)
 		{
 			CDialog::OnCancel();
 		}
@@ -261,7 +260,7 @@ void CAngoDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 
 	if (strMsg.GetLength())
 	{
-		AngoMessageBox(strMsg,L"按键", MB_POST_CENTER);
+		AngoBox.AngoMessageBox(strMsg,L"按键", MB_POST_CENTER);
 	}
 
 
@@ -273,7 +272,7 @@ void CAngoDlg::OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags)
 void CAngoDlg::OnOK()
 {
 	CString strMsg = L"回车键";
-	AngoMessageBox(strMsg);
+	AngoBox.AngoMessageBox(strMsg);
 
 }
 
@@ -281,7 +280,7 @@ void CAngoDlg::OnCancel()
 {
 	CString strMsg;
 	strMsg = "是否退出程序？";
-	//if( AngoMessageBox(strMsg,L"退出",MB_OKCANCEL) == IDCANCEL)
+	//if( AngoBox.AngoMessageBox(strMsg,L"退出",MB_OKCANCEL) == IDCANCEL)
 	CDialog::OnCancel();
 }
 
@@ -317,7 +316,7 @@ void CAngoDlg::OnMenuAbout()
 {
 	CString strMsg;
 	strMsg = "说明";
-	AngoMessageBox(strMsg);
+	AngoBox.AngoMessageBox(strMsg);
 }
 
 void CAngoDlg::OnMenuExit()
@@ -354,7 +353,7 @@ BOOL CAngoDlg::RegAutoStart()
 
 void CAngoDlg::OnToolCustom()
 {
-	AngoMessageBox(_T("工具箱"));
+	AngoBox.AngoMessageBox(_T("工具箱"));
 }
 
 void CAngoDlg::OnMenuShow()

@@ -5,4 +5,4 @@
 
 #include "stdafx.h"
 
-
+CAngoBox &AngoBox = CAngoBox::GetInstance();

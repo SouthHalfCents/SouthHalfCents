@@ -45,9 +45,6 @@
     <ClInclude Include="ConfigMng.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="MsgBoxEx.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\public\common\log.h">
       <Filter>common</Filter>
     </ClInclude>
@@ -75,9 +72,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="ConfigMng.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="MsgBoxEx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="..\..\public\common\log.cpp">
