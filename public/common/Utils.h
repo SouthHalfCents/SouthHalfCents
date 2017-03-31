@@ -2,7 +2,7 @@
 
 #include <afxwin.h>
 #include <string>
-
+#include "StringToolEx.h"
 #define DAY_NONE		0x00000000
 #define DAY_MONDAY		0x00000001
 #define DAY_TUESDAY		0x00000002
@@ -33,6 +33,8 @@ public:
 	static std::string	GBK_UTF8(char* strMsg);
 	static std::string	UTF8_GBK(std::string& strMsg);///< 将UTF8编码转化为GBK编码
 	static std::string	UTF8_GBK(char* strMsg);
+
+	static CString		GetLastErrorStr();				//获取错误的解析
 
 	static BOOL			IsWow64();						//判断是否64位系统
 	static BOOL			SetRegAutoStart(BOOL bEnable, CString strKeyName, CString strKeyValue);

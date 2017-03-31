@@ -2,16 +2,23 @@
 
 #include <afxwin.h>
 #include "AngoBoxDefine.h"
+#include "Utils.h"
 
 #ifndef MODULES_PATH
-
 #if _WIN64
 #define  MODULES_PATH _T("Modules")
 #else
 #define  MODULES_PATH _T("Modules(x86)")
 #endif
-
 #endif // !MODULES_PATH
+
+
+#ifdef UNICODE
+#define AngoMessageBox  AngoMessageBoxW
+#else
+#define AngoMessageBox  AngoMessageBoxA
+#endif // !UNICODE
+
 
 /*
 hpp:
@@ -75,8 +82,7 @@ private:
 		HMODULE hDll = LoadLibrary(strTemp);
 		if (!hDll)
 		{
-			LPVOID lpMsgBuf;
-			TCHAR szError[1024] = {0};
+			LPVOID lpMsgBuf = NULL;
 			DWORD dwError = GetLastError();
 			FormatMessage(
 				FORMAT_MESSAGE_ALLOCATE_BUFFER |
@@ -91,6 +97,7 @@ private:
 				);
 			CString strMsg;
 			strMsg.Format(_T("加载AngoMsgBox.dll失败，%s\n"),lpMsgBuf);
+
 			OutputDebugString(strMsg);
 			return false;
 		}
@@ -105,7 +112,28 @@ private:
 	}
 
 public:
-	int AngoMessageBox(CString strMsg, CString strTitle = _T(""), UINT nType = MB_POST_BESIDE | MB_OK )
+	int AngoMessageBoxA(CStringA straMsg, CStringA straTitle = "提示", UINT nType = MB_POST_BESIDE | MB_OK)
+	{
+		if (!m_bInit)
+		{
+			Init();
+		}
+		
+		CString strMsg   = CStringToolEx::CStrA2CStrT(straMsg);
+		CString strTitle = CStringToolEx::CStrA2CStrT(straTitle);
+
+		
+		if (m_pfAngoMessageBox)
+		{
+			return m_pfAngoMessageBox(strMsg, strTitle, nType);
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	//    _In_opt_ LPCWSTR lpText,_In_opt_ LPCWSTR lpCaption,
+	int AngoMessageBoxW(CString strMsg, CString strTitle = _T("提示"), UINT nType = MB_POST_BESIDE | MB_OK )
 	{
 		if (!m_bInit)
 		{

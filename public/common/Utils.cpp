@@ -175,6 +175,30 @@ std::string	CUtils::UTF8_GBK(char* strMsg)
 	return strOutGBK;
 }
 
+
+CString CUtils::GetLastErrorStr()
+{
+	CString strMsg;
+
+	LPVOID lpMsgBuf = NULL;
+	DWORD dwError = GetLastError();
+	FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_FROM_SYSTEM |
+		FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,
+		GetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+		(LPTSTR)&lpMsgBuf,
+		0,
+		NULL
+		);
+	strMsg.Format(_T("加载AngoMsgBox.dll失败，%s\n"), lpMsgBuf);
+
+	return strMsg;
+}
+
+
 /*
 BOOL bEnable: TRUE 增加自启动  FALSE 删除自启动 
 */
