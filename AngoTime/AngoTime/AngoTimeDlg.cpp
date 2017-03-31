@@ -6,7 +6,7 @@
 #include "AngoTime.h"
 #include "AngoTimeDlg.h"
 #include "afxdialogex.h"
-#include "MsgBoxEx.h"
+
 
 #include <afxinet.h>
 #include <string>
@@ -315,7 +315,7 @@ void CAngoTimeDlg::InitRgbMap()
 	{
 		delete pBits;
 		pBits = NULL;
-		AngoMessageBox(L"初始化时钟位图失败");
+		AngoBox.AngoMessageBox(_T("初始化时钟位图失败"));
 		OnMenuExit();
 	}
 
@@ -689,7 +689,7 @@ void CAngoTimeDlg::OnMenuWeather()
 //软媒时间
 void CAngoTimeDlg::OnMenuMagicTime()
 {
-	AngoBox.AngoMessageBox(_T("123"), _T("233"), MB_POST_CENTER);
+	
 	CString strPath = CUtils::GetAppDir();
 	strPath += _T("\\Tools\\mytime\\mytime.exe");
 	//这个API会提示是否以管理员身份启动

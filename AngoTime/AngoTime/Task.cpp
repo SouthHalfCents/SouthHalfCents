@@ -213,7 +213,7 @@ void CTask::CheckTask(CTime & tTime)
 void CTask::ClosePC(void *pData)
 {
 	system("shutdown -s -t 0");
-	AngoMessageBox(_T("close pc"));
+	AngoBox.AngoMessageBox(_T("close pc"));
 }
 
 //------------------------------------------------------------------------------------------------------------------------
@@ -255,7 +255,7 @@ void CTask::OnBnClickedButtonDel()
 {
 	CTaskSet tasksetDlg;
 
-	if (IDOK == AngoMessageBox(_T("É¾³ý")))
+	if (IDOK == AngoBox.AngoMessageBox(_T("É¾³ý")))
 	{
 		
 	}

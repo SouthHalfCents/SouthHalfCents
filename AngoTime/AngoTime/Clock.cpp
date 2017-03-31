@@ -209,7 +209,7 @@ void CClock::OnBnClickedButtonModi()
 
 void CClock::OnBnClickedButtonDel()
 {
-	if (IDOK == AngoMessageBox(_T("É¾³ý")) )
+	if (IDOK == AngoBox.AngoMessageBox(_T("É¾³ý")) )
 	{
 
 	}

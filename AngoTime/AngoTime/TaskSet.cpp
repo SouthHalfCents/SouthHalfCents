@@ -151,7 +151,7 @@ BOOL CTaskSet::IsValidData()
 
 		if (m_dwWeekSet == 0)
 		{
-			AngoMessageBox(L"每周执行时间至少选择一天");
+			AngoBox.AngoMessageBox(L"每周执行时间至少选择一天");
 			return FALSE;
 		}
 	}

@@ -1,7 +1,7 @@
 #pragma once
 #include "afxwin.h"
 #include "afxdtctl.h"
-
+#include "resource.h"
 
 // CClockSet ¶Ô»°¿ò
 

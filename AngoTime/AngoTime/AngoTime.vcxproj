@@ -201,7 +201,6 @@
     <ClInclude Include="ClockSet.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="Database.h" />
-    <ClInclude Include="MsgBoxEx.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
@@ -233,7 +232,6 @@
     <ClCompile Include="ClockSet.cpp" />
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="Database.cpp" />
-    <ClCompile Include="MsgBoxEx.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
