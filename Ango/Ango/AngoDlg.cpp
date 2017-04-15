@@ -25,6 +25,8 @@ CAngoDlg::CAngoDlg(CWnd* pParent /*=NULL*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_pCfgMng	=	NULL;
 	m_popMenu.LoadMenu(IDR_MENU1);	
+
+	m_hOnlyMutex	=	NULL;
 }
 
 void CAngoDlg::DoDataExchange(CDataExchange* pDX)
@@ -39,6 +41,7 @@ BEGIN_MESSAGE_MAP(CAngoDlg, CDialogEx)
 	ON_WM_RBUTTONDOWN()
 	ON_WM_KEYDOWN()
 	ON_WM_CREATE()
+	ON_WM_CLOSE()
 
 	ON_MESSAGE(MAIN_WM_NOTIFYICON, &CAngoDlg::OnNotifyIcon)   
 	ON_COMMAND(ID_MENU_ABOUT, &CAngoDlg::OnMenuAbout)
@@ -55,6 +58,18 @@ END_MESSAGE_MAP()
 
 
 // CAngoDlg 消息处理程序
+void CAngoDlg::OnClose()
+{
+	//StopWork();
+
+	if (m_hOnlyMutex)
+	{
+		CloseHandle(m_hOnlyMutex);
+		m_hOnlyMutex = NULL;
+	}
+	CDialogEx::OnClose();
+
+}
 //-------------------------------------------------------------------------------------------------------------------------
 BOOL CAngoDlg::OnInitDialog()
 {
@@ -70,14 +85,15 @@ BOOL CAngoDlg::OnInitDialog()
 	ModifyStyleEx(WS_EX_APPWINDOW, WS_EX_TOOLWINDOW);
 
 	// 唯一实例
-	HANDLE m_hMutex = CreateMutex(NULL, FALSE, L"//Ango.exe");
+	m_hOnlyMutex = CreateMutex(NULL, FALSE, _T("//Ango.exe"));
 	if (GetLastError() == ERROR_ALREADY_EXISTS)
 	{
 		// 如果程序已经存在并且正在运行  如果已有互斥量存在则释放句柄并复位互斥量，退出程序
-		CloseHandle(m_hMutex);
-		m_hMutex = NULL;
-		AngoBox.AngoMessageBox(_T("程序已经在运行"));
+		CloseHandle(m_hOnlyMutex);
+		m_hOnlyMutex = NULL;
+		//AngoBox.AngoMessageBox(_T("程序已经在运行"));
 		CDialog::OnCancel();
+		return TRUE;
 	}
 
 
@@ -321,6 +337,7 @@ void CAngoDlg::OnMenuAbout()
 
 void CAngoDlg::OnMenuExit()
 {
+	OnClose();
 	OnCancel();
 }
 

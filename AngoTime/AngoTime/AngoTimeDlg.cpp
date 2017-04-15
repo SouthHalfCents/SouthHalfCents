@@ -111,7 +111,7 @@ BOOL CAngoTimeDlg::OnInitDialog()
 	ModifyStyleEx(WS_EX_APPWINDOW, WS_EX_TOOLWINDOW);
 
 	// 唯一实例
-	m_hOnlyMutex = CreateMutex(NULL, FALSE, L"//AngoTime.exe");
+	m_hOnlyMutex = CreateMutex(NULL, FALSE, _T("//AngoTime.exe"));
 	if (GetLastError() == ERROR_ALREADY_EXISTS)
 	{
 		// 如果程序已经存在并且正在运行 如果已有互斥量存在则释放句柄并复位互斥量，退出程序

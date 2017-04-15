@@ -29,6 +29,7 @@ protected:
 	//// 
 	virtual BOOL				OnInitDialog();
 	afx_msg int					OnCreate(LPCREATESTRUCT lpCreateStruct);
+	afx_msg void				OnClose();
 	afx_msg void				OnPaint();
 	afx_msg HCURSOR				OnQueryDragIcon();
 
@@ -68,6 +69,8 @@ public:
 	BOOL						RegAutoStart();
 	CMenu						m_popMenu;
 
+	HANDLE						m_hOnlyMutex;
+
 	afx_msg void				OnAngoTime();			//‘À––AngoTime
-	afx_msg void OnToolMytime();
+	afx_msg void				OnToolMytime();
 };
