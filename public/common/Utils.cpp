@@ -11,6 +11,61 @@ CUtils::~CUtils()
 {
 }
 
+void CUtils::DebugMsg(const char* pszFormat, ...)
+{
+#ifdef _DEBUG
+	char buf[8192] = { 0 };
+	char date[50] = { 0 };
+	char time[50] = { 0 };
+
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+	GetDateFormatA(LOCALE_SYSTEM_DEFAULT, 0, &st, "yyyy'-'MM'-'dd", date, sizeof(date));
+	GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &st, "HH':'mm':'ss", time, sizeof(time));
+
+	_snprintf(buf, 8192, "[Ango](%s %s):", date, time);
+	//_snprintf(buf, 8192, "[BDAServer](%lu - %s %s): ", GetCurrentThreadId(),date,time);
+	va_list arglist;
+	va_start(arglist, pszFormat);
+	_vsnprintf(&buf[strlen(buf)], 8192 - strlen(buf) - 1, pszFormat, arglist);
+	va_end(arglist);
+	_snprintf(buf, 8192, "%s\n", buf);
+	OutputDebugStringA(buf);
+#endif
+
+}
+
+void CUtils::DebugShow(const char* pszFormat, ...)
+{
+#ifdef _DEBUG
+	char buf[8192] = {0};
+	char date[50]  = {0};
+	char time[50]  = {0};
+
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+	GetDateFormatA(LOCALE_SYSTEM_DEFAULT, 0, &st, "yyyy'-'MM'-'dd", date, sizeof(date));
+	GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &st, "HH':'mm':'ss", time, sizeof(time));
+
+	_snprintf(buf, 8192, "[Ango](%s %s):", date, time);
+	//_snprintf(buf, 8192, "[BDAServer](%lu - %s %s): ", GetCurrentThreadId(),date,time);
+	va_list arglist;
+	va_start(arglist, pszFormat);
+	_vsnprintf(&buf[strlen(buf)], 8192 - strlen(buf) - 1, pszFormat, arglist);
+	va_end(arglist);
+	_snprintf(buf, 8192, "%s\n", buf);
+	OutputDebugStringA(buf);
+
+	FILE *fp = fopen("c:\\Ango.txt", "a+");
+	if (fp != NULL)
+	{
+		fprintf(fp, buf);
+		fclose(fp);
+	}
+#endif
+
+}
+
 int CUtils::TranDayweekToInt(int nDayofWeek, int & nDayValue)
 {
 	if (nDayofWeek <= 0 || nDayofWeek > 7)
@@ -65,6 +120,7 @@ CString CUtils::FileNameFromPath(CString strPath)
 
 BOOL CUtils::FileExist(LPCTSTR   pszFileName)
 {
+	//BOOL bRet=::PathFileExists(pszFileName);
 	if (GetFileAttributes(pszFileName) == -1)
 	{
 		return FALSE;
@@ -178,26 +234,38 @@ std::string	CUtils::UTF8_GBK(char* strMsg)
 
 CString CUtils::GetLastErrorStr()
 {
-	CString strMsg;
-
-	LPVOID lpMsgBuf = NULL;
 	DWORD dwError = GetLastError();
+	CString strMsg = GetStrFromError(dwError);
+	return strMsg;
+}
+
+CString CUtils::GetStrFromError(DWORD dwError)
+{
+	CString strError;
+	LPTSTR lpMsgBuf = NULL;
+
 	FormatMessage(
 		FORMAT_MESSAGE_ALLOCATE_BUFFER |
 		FORMAT_MESSAGE_FROM_SYSTEM |
 		FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL,
-		GetLastError(),
+		dwError,
 		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
 		(LPTSTR)&lpMsgBuf,
 		0,
 		NULL
 		);
-	strMsg.Format(_T("加载AngoMsgBox.dll失败，%s\n"), lpMsgBuf);
 
-	return strMsg;
+	if (lpMsgBuf == NULL)
+	{
+		return strError = "解析错误失败，申请内存不成功\r\n";
+	}
+
+	strError = lpMsgBuf;
+	LocalFree(lpMsgBuf);
+	lpMsgBuf = NULL;
+	return strError;
 }
-
 
 /*
 BOOL bEnable: TRUE 增加自启动  FALSE 删除自启动 
@@ -216,7 +284,10 @@ BOOL CUtils::SetRegAutoStart(BOOL bEnable, CString strKeyName, CString strKeyVal
 
 	TCHAR * pKeyName  = strKeyName.GetBuffer();
 	TCHAR * pKeyValue = strKeyValue.GetBuffer();
-	DWORD dwKeyValueLen = (DWORD)wcslen(pKeyValue) * sizeof(TCHAR);
+	DWORD dwKeyValueLen = (DWORD)lstrlen(pKeyValue) * sizeof(TCHAR);
+
+
+	
 	
 	//HKEY_CURRENT_USER "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"
 #if _WIN64

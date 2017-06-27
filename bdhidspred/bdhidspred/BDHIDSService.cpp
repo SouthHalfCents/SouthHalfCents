@@ -18,6 +18,8 @@
 
 #include "bdhidspred.h"
 #include "bdhidsservice.h"
+#include "..\..\public\common\Utils.h"
+
 #include <Wtsapi32.h>
 #include <Userenv.h>
 #pragma comment(lib, "Wtsapi32.lib")
@@ -68,32 +70,7 @@ CBDHIDSService::~CBDHIDSService()
 {
 
 }
-void CBDHIDSService::DebugMsg(const char* pszFormat, ...)
-{
-#ifdef _DEBUGVIEW   
-	char buf[8192];
-	char date[32];
-	char time[32];
 
-	SYSTEMTIME st;
-
-	GetLocalTime(&st);
-	GetDateFormat(LOCALE_SYSTEM_DEFAULT,0,&st,"dd'/'MM'/'yyyy",date,sizeof(date));
-	GetTimeFormat(LOCALE_SYSTEM_DEFAULT,0,&st,"HH':'mm':'ss",time,sizeof(time));
-
-	_snprintf(buf, 8192, "[%s](%lu - %s %s): ", m_szServiceName, GetCurrentThreadId(),date,time);
-	va_list arglist;
-	va_start(arglist, pszFormat);
-	_vsnprintf(&buf[strlen(buf)],8192-strlen(buf)-1,pszFormat,arglist);
-	va_end(arglist);
-	_snprintf(buf,8192,"%s\n",buf);
-	if(buf) 
-	{ 
-
-		OutputDebugString(buf); 
-	}
-#endif
-}
 
 BOOL CBDHIDSService::FindApp(const char * szAppName)
 {
@@ -279,7 +256,7 @@ BOOL CBDHIDSService::FindDestopProc(HANDLE& hToken,DWORD& dwSessionId)
 	HANDLE hSnapshot=CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS,0);
 	if (!hSnapshot)
 	{
-		DebugView("Leave CBDHIDSCoreService::CreateToolhelp32Snapshot failed");
+		CUtils::DebugShow("Leave CBDHIDSCoreService::CreateToolhelp32Snapshot failed");
 		return FALSE;
 	}
 
@@ -296,7 +273,7 @@ BOOL CBDHIDSService::FindDestopProc(HANDLE& hToken,DWORD& dwSessionId)
 
 		if(!_stricmp(pe.szExeFile,/*"winlogon.exe"*/  "explorer.exe"  /*"bdhidspred.exe"*/))
 		{
-			DebugView("IN CBDHIDSCoreService::FindDestopProc=> Process id:%ld  name:%s\n",pe.th32ProcessID,pe.szExeFile);
+			CUtils::DebugShow("IN CBDHIDSCoreService::FindDestopProc=> Process id:%ld  name:%s\n",pe.th32ProcessID,pe.szExeFile);
 			dwSessionId=0L;
 
 			ProcessIdToSessionId(pe.th32ProcessID, &dwSessionId); 
@@ -480,7 +457,7 @@ void CBDHIDSService::BdHidsUpdate(void)
 
 	char szFile[MAX_PATH];
 	_snprintf(szFile,MAX_PATH,"%s\\bdupdate.exe",szAppPath);
-	if(::FileExists(szFile))
+	if(CUtils::FileExist(szFile))
 	{
 		BOOL bRet=ExecCommand(szFile);
 		::SleeperFunc(50);
@@ -488,7 +465,7 @@ void CBDHIDSService::BdHidsUpdate(void)
 	}
 
 	_snprintf(szFile,MAX_PATH,"%s\\bdhidsupdate.exe",szAppPath);
-	if(::FileExists(szFile))
+	if(CUtils::FileExist(szFile))
 	{
 		BOOL bRet=ExecCommand(szFile);
 		::SleeperFunc(50);
@@ -738,6 +715,7 @@ TOKEN_PRIVILEGES * MakeAdminPriv(void)
 
 BOOL CBDHIDSService::CreateDestopProcess(char * szPs)
 {
+
 	OSVERSIONINFOEX os; 
 	os.dwOSVersionInfoSize=sizeof(OSVERSIONINFOEX);   
 	if( !GetVersionEx((OSVERSIONINFO *)&os)) 
@@ -745,7 +723,7 @@ BOOL CBDHIDSService::CreateDestopProcess(char * szPs)
 		return FALSE;
 	}
 
-	DebugView("系统版本号: %d.%d", os.dwMajorVersion, os.dwMinorVersion);
+	CUtils::DebugShow("系统版本号: %d.%d", os.dwMajorVersion, os.dwMinorVersion);
 	if(os.dwMajorVersion >= 6)
 	{
 		return Win7_CreateDestopProcess(szPs);
@@ -885,7 +863,7 @@ BOOL CBDHIDSService::Win7_CreateDestopProcess(char *szPs)
 		//查找DEBUG权限的UID  
 		if (!LookupPrivilegeValue(NULL,SE_DEBUG_NAME,&luid))  
 		{  
-			dwRet = GetLastError();  
+			CUtils::DebugShow( "LookupPrivilegeValue:"+CUtils::GetLastErrorStr());
 			break;  
 		}  
 
@@ -898,14 +876,14 @@ BOOL CBDHIDSService::Win7_CreateDestopProcess(char *szPs)
 		if (!DuplicateTokenEx(hPToken,MAXIMUM_ALLOWED,NULL,SecurityIdentification,  
 			TokenPrimary,&hUserTokenDup))  
 		{  
-			dwRet  = GetLastError();  
+			CUtils::DebugShow( "DuplicateTokenEx:"+CUtils::GetLastErrorStr());
 			break;  
 		}  
 
 		//设置当前进程的令牌信息  
 		if (!SetTokenInformation(hUserTokenDup,TokenSessionId,(void*)&dwSessionId,sizeof(DWORD)))  
 		{  
-			dwRet = GetLastError();  
+			CUtils::DebugShow( "SetTokenInformation:"+CUtils::GetLastErrorStr());
 			break;  
 		}  
 
@@ -913,7 +891,7 @@ BOOL CBDHIDSService::Win7_CreateDestopProcess(char *szPs)
 		if (!AdjustTokenPrivileges(hUserTokenDup,FALSE,&tp,sizeof(TOKEN_PRIVILEGES),  
 			(PTOKEN_PRIVILEGES)NULL,NULL))  
 		{  
-			dwRet = GetLastError();  
+			CUtils::DebugShow( "AdjustTokenPrivileges:"+CUtils::GetLastErrorStr());
 			break;  
 		}  
 
@@ -932,7 +910,7 @@ BOOL CBDHIDSService::Win7_CreateDestopProcess(char *szPs)
 		if (!CreateProcessAsUser(hUserTokenDup,NULL,szPs,NULL,NULL,FALSE,  
 			dwCreationFlags,pEnv,NULL,&si,&pi))  
 		{  
-			dwRet = GetLastError();  
+			CUtils::DebugShow( "CreateProcessAsUser:"+CUtils::GetLastErrorStr());
 			break;  
 		} 
 
@@ -969,7 +947,7 @@ BOOL CBDHIDSService::XP_CreateDestopProcess(char *szPs)
 	}
 	else
 	{
-		DebugView("ShellExecute fail error : %d", (int)hInstance);
+		CUtils::DebugShow("ShellExecute fail error : %d", (int)hInstance);
 		return FALSE;
 	}
 }
@@ -986,7 +964,7 @@ BOOL CBDHIDSService::StartClient(void)
 	char szFile[MAX_PATH];
 	_snprintf(szFile,MAX_PATH,"%s\\%s",szAppPath,BDHAUDIT_CLIENT);
 
-	if(::FileExists(szFile))
+	if(CUtils::FileExist(szFile))
 	{
 		//AfxMessageBox(szFile);
 
@@ -995,7 +973,7 @@ BOOL CBDHIDSService::StartClient(void)
 			//if(!IsUacEnabled())
 			{
 				bRet=CreateDestopProcess(szFile);
-				DebugView("CBDHIDSService::StartClient  CreateDestopProcess:%d",bRet);
+				CUtils::DebugShow("CBDHIDSService::StartClient  CreateDestopProcess:%d",bRet);
 			}
 		}
 		else
@@ -1035,13 +1013,13 @@ BOOL CBDHIDSService::StopClient(void)
 	HANDLE hEvent=::OpenEvent(EVENT_ALL_ACCESS,TRUE,BDHIDS_EVENT_NOTIFYAPPEXIT);
 	if(hEvent==NULL)
 	{
-		DebugView("StopClient failure because OpenEvent is null");
+		CUtils::DebugShow("StopClient failure because OpenEvent is null");
 		return TRUE;
 	}
 	::SetEvent(hEvent);
 	::Sleep(1000);
 	::CloseHandle(hEvent);
-	DebugView("StopClient ok");
+	CUtils::DebugShow("StopClient ok");
 	return bRet;
 }
 
@@ -1059,7 +1037,7 @@ DWORD WINAPI CBDHIDSService::HandlerEx(
 	CBDHIDSService* pService = m_pThis;
 
 	OutputDebugString("Come in HandlerEx\n");
-	pService->DebugMsg("CBDHIDSService::Handler(%lx)", dwControl);
+	CUtils::DebugMsg("CBDHIDSService::Handler(%lx)", dwControl);
 
 	switch (dwControl) {
 	case SERVICE_CONTROL_STOP: // 1
@@ -1089,7 +1067,7 @@ DWORD WINAPI CBDHIDSService::HandlerEx(
 				fclose(fp);
 			}
 		}
-		DebugView("SERVICE_CONTROL_SHUTDOWN event\n");
+		CUtils::DebugShow("SERVICE_CONTROL_SHUTDOWN event\n");
 		pService->OnShutdown();
 		break;
 
@@ -1148,7 +1126,7 @@ DWORD WINAPI CBDHIDSService::HandlerEx(
 			}
 			*/
 
-			DebugView("WTS_SESSION_LOGON event");
+			CUtils::DebugShow("WTS_SESSION_LOGON event");
 			/*
 			if(!pService->FindMainApp())
 			{
@@ -1194,7 +1172,7 @@ DWORD WINAPI CBDHIDSService::HandlerEx(
 	}
 
 	// Report current status
-	pService->DebugMsg("Updating status (%lu, %lu)",
+	CUtils::DebugMsg("Updating status (%lu, %lu)",
 		pService->m_hServiceStatus,
 		pService->m_Status.dwCurrentState);
 	::SetServiceStatus(pService->m_hServiceStatus, &pService->m_Status);
@@ -1208,7 +1186,7 @@ void CBDHIDSService::Handler(DWORD dwOpcode)
 	// Get a pointer to the object
 	CBDHIDSService* pService = m_pThis;
 
-	pService->DebugMsg("CBDHIDSService::Handler(%lu)", dwOpcode);
+	CUtils::DebugMsg("CBDHIDSService::Handler(%lu)", dwOpcode);
 
 	switch (dwOpcode) {
 	case SERVICE_CONTROL_STOP: // 1
@@ -1254,7 +1232,7 @@ void CBDHIDSService::Handler(DWORD dwOpcode)
 	}
 
 	// Report current status
-	pService->DebugMsg("Updating status (%lu, %lu)",
+	CUtils::DebugMsg("Updating status (%lu, %lu)",
 		pService->m_hServiceStatus,
 		pService->m_Status.dwCurrentState);
 	::SetServiceStatus(pService->m_hServiceStatus, &pService->m_Status);
@@ -1262,7 +1240,7 @@ void CBDHIDSService::Handler(DWORD dwOpcode)
 
 BOOL CBDHIDSService::Initialize()
 {
-	DebugMsg("Entering CBDHIDSService::Initialize()");
+	CUtils::DebugMsg("Entering CBDHIDSService::Initialize()");
 
 	// Start the initialization
 	m_nWinType=BdGetWindowType();
@@ -1290,7 +1268,7 @@ BOOL CBDHIDSService::Initialize()
 	//LogEvent(EVENTLOG_INFORMATION_TYPE, EVMSG_STARTED);//原代码直接送事件日志，现改为统一送控制中心。
 	SetStatus(SERVICE_RUNNING);
 
-	DebugMsg("Leaving CBDHIDSService::Initialize()");
+	CUtils::DebugMsg("Leaving CBDHIDSService::Initialize()");
 
 	return TRUE;
 }
@@ -1366,40 +1344,40 @@ BOOL CBDHIDSService::IsInstalled()
 
 void CBDHIDSService::OnContinue()
 {
-	DebugMsg("CBDHIDSService::OnContinue()");
+	CUtils::DebugMsg("CBDHIDSService::OnContinue()");
 }
 
 BOOL CBDHIDSService::OnInit()
 {
-	DebugMsg("CBDHIDSService::OnInit()");
+	CUtils::DebugMsg("CBDHIDSService::OnInit()");
 	return TRUE;
 }
 
 void CBDHIDSService::OnInterrogate()
 {
-	DebugMsg("CBDHIDSService::OnInterrogate()");
+	CUtils::DebugMsg("CBDHIDSService::OnInterrogate()");
 }
 
 void CBDHIDSService::OnPause()
 {
-	DebugMsg("CBDHIDSService::OnPause()");
+	CUtils::DebugMsg("CBDHIDSService::OnPause()");
 }
 
 void CBDHIDSService::OnShutdown()
 {
-	DebugMsg("CNTService::OnShutdown()");
+	CUtils::DebugMsg("CNTService::OnShutdown()");
 }
 
 void CBDHIDSService::OnStop()
 {
 	m_bIsRunning = FALSE;
 
-	DebugMsg("CBDHIDSService::OnStop()");
+	CUtils::DebugMsg("CBDHIDSService::OnStop()");
 }
 
 BOOL CBDHIDSService::OnUserControl(DWORD dwOpcode)
 {
-	DebugMsg("CBDHIDSService::OnUserControl(%8.8lXH)", dwOpcode);
+	CUtils::DebugMsg("CBDHIDSService::OnUserControl(%8.8lXH)", dwOpcode);
 	return FALSE; // say not handled
 }
 
@@ -1473,7 +1451,7 @@ void CBDHIDSService::Run()
 	}
 
 	// nothing more to do
-	DebugMsg("Leaving CBDHIDSService::Run()");
+	CUtils::DebugMsg("Leaving CBDHIDSService::Run()");
 }
 
 #include <windows.h>
@@ -1513,7 +1491,7 @@ void WINAPI CBDHIDSService::ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 	// Get a pointer to the C++ object
 	CBDHIDSService* pService = m_pThis;
 
-	pService->DebugMsg("Entering CBDHIDSService::ServiceMain()");
+	CUtils::DebugMsg("Entering CBDHIDSService::ServiceMain()");
 	// Register the control request handler
 	pService->m_Status.dwCurrentState = SERVICE_START_PENDING;
 	pService->m_hServiceStatus = RegisterServiceCtrlHandlerEx(pService->m_szServiceName,HandlerEx,NULL);
@@ -1565,13 +1543,13 @@ void WINAPI CBDHIDSService::ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 	// Tell the service manager we are stopped
 	pService->SetStatus(SERVICE_STOPPED);
 
-	pService->DebugMsg("Leaving CBDHIDSService::ServiceMain()");
+	CUtils::DebugMsg("Leaving CBDHIDSService::ServiceMain()");
 
 }
 
 void CBDHIDSService::SetStatus(DWORD dwState)
 {
-	DebugMsg("CBDHIDSService::SetStatus(%lu, %lu)", m_hServiceStatus, dwState);
+	CUtils::DebugMsg("CBDHIDSService::SetStatus(%lu, %lu)", m_hServiceStatus, dwState);
 	m_Status.dwCurrentState = dwState;
 	::SetServiceStatus(m_hServiceStatus, &m_Status);
 }
@@ -1624,13 +1602,13 @@ BOOL CBDHIDSService::StartService()
 		{m_szServiceName, ServiceMain},
 		{NULL, NULL}
 	};
-	DebugMsg("Calling StartServiceCtrlDispatcher()");
+	CUtils::DebugMsg("Calling StartServiceCtrlDispatcher()");
 
 	BOOL b = ::StartServiceCtrlDispatcher(st);
 
 	CString strMsg;
 	strMsg.Format("Returned from StartServiceCtrlDispatcher:return %d",b);
-	DebugMsg(strMsg);
+	CUtils::DebugMsg(strMsg);
 	//	InfoReport.StartHook(TRUE);
 	//	InfoReport.SetStartServerFlag(TRUE);
 	return b;

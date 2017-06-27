@@ -53,7 +53,7 @@ public:
 	static void WINAPI Handler(DWORD dwOpcode);
 	static DWORD WINAPI HandlerEx(DWORD dwControl,DWORD dwEventType,LPVOID lpEventData,LPVOID lpContext);
 
-	void DebugMsg(const char* pszFormat, ...);
+	
 	static BOOL DoRegisterDeviceInterface(HANDLE hRecipient,HDEVNOTIFY *hDevNotify);
 
 

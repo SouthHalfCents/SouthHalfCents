@@ -27,21 +27,7 @@ void SleeperFunc(DWORD dwMilliseconds)
 	Sleeper.Sleep(dwMilliseconds);
 }
 
-//判断文件否存在
-/*
-BOOL FileExists(char * szFile)
-{
-	if( (_access(szFile, 0 )) != -1 )
-		return TRUE;
-	return FALSE;
-}
-*/
 
-BOOL FileExists(char * szFile)
-{
-	BOOL bRet=::PathFileExists(szFile);
-	return bRet;
-}
 //消息处理
 void ProcessMessages()
 {
@@ -53,37 +39,7 @@ void ProcessMessages()
 	}
 }
 
-void DebugView(const char* pszFormat, ...)
-{
-#ifdef _DEBUG
-	char buf[8192];
-	char date[50];
-	char time[50];
 
-	SYSTEMTIME st;
-
-	GetLocalTime(&st);
-	GetDateFormat(LOCALE_SYSTEM_DEFAULT,0,&st,"yyyy'-'MM'-'dd",date,sizeof(date));
-	GetTimeFormat(LOCALE_SYSTEM_DEFAULT,0,&st,"HH':'mm':'ss",time,sizeof(time));
-
-	_snprintf(buf, 8192, "[BDAuthSys](%s %s):",date,time);
-	//_snprintf(buf, 8192, "[BDAServer](%lu - %s %s): ", GetCurrentThreadId(),date,time);
-	va_list arglist;
-	va_start(arglist, pszFormat);
-	_vsnprintf(&buf[strlen(buf)],8192-strlen(buf)-1,pszFormat,arglist);
-	va_end(arglist);
-	_snprintf(buf,8192,"%s\n",buf);
-	OutputDebugString(buf);
-
-	FILE *fp=fopen("c:\\Ango.txt","a+");
-	if(fp!=NULL)
-	{
-		fprintf(fp,buf);
-		fclose(fp);
-	}
-#endif
-
-}
 
 int _tmain(int argc, TCHAR* argv[], TCHAR* envp[])
 {

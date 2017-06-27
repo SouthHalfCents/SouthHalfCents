@@ -9,7 +9,7 @@
 #include "bdhidspred.h"
 #include "CRegistry.h"
 #include "BDHIDSCoreService.h"
-
+#include "..\..\public\common\Utils.h"
 #ifdef _DEBUG
 #undef THIS_FILE
 static char THIS_FILE[]=__FILE__;
@@ -62,7 +62,7 @@ BOOL CBDHIDSCoreService::OnInit()
 
 void CBDHIDSCoreService::OnShutdown()
 {
-	DebugView("CBDHIDSCoreService::OnShutdown()");
+	CUtils::DebugShow("CBDHIDSCoreService::OnShutdown()");
 	//system("")
 	//StopClient();
 }
@@ -132,7 +132,7 @@ void CBDHIDSCoreService::Run()
 		}
 		if(!m_bHasStartClient)
 		{
-			DebugView("CBDHIDSCoreService::Run()  m_nWinType:%d",m_nWinType);
+			CUtils::DebugShow("CBDHIDSCoreService::Run()  m_nWinType:%d",m_nWinType);
 			if(m_nWinType>=5)
 			{
 				if(FindDestopProc(m_hToken,m_dwSessonId)) //服务器端不一定有用户登录

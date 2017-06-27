@@ -20,6 +20,8 @@ public:
 	CUtils();
 	~CUtils();
 
+	static void			DebugMsg(const char* pszFormat, ...);
+	static void			DebugShow(const char* pszFormat, ...);
 	static int			TranDayweekToInt(int nDayofWeek, int & nDayValue);			//把dayofweek转为DAY_MONDAY的值
 
 	static CString		GetAppPath();								//获取应用程序全路径包括文件名
@@ -35,6 +37,7 @@ public:
 	static std::string	UTF8_GBK(char* strMsg);
 
 	static CString		GetLastErrorStr();				//获取错误的解析
+	static CString		GetStrFromError(DWORD dwError);
 
 	static BOOL			IsWow64();						//判断是否64位系统
 	static BOOL			SetRegAutoStart(BOOL bEnable, CString strKeyName, CString strKeyValue);
