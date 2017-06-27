@@ -1,6 +1,7 @@
 
 #include "Utils.h"
 
+#include <tlhelp32.h>
 
 CUtils::CUtils()
 {
@@ -15,15 +16,19 @@ void CUtils::DebugMsg(const char* pszFormat, ...)
 {
 #ifdef _DEBUG
 	char buf[8192] = { 0 };
-	char date[50] = { 0 };
-	char time[50] = { 0 };
+	char date[MAX_PATH] = { 0 };
+	char time[MAX_PATH] = { 0 };
+	char name[MAX_PATH] = { 0 };
+
+	CStringA strName = GetAppName();
+	strncpy(name, strName, MAX_PATH);
 
 	SYSTEMTIME st;
 	GetLocalTime(&st);
 	GetDateFormatA(LOCALE_SYSTEM_DEFAULT, 0, &st, "yyyy'-'MM'-'dd", date, sizeof(date));
 	GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &st, "HH':'mm':'ss", time, sizeof(time));
 
-	_snprintf(buf, 8192, "[Ango](%s %s):", date, time);
+	_snprintf(buf, 8192, "[%s](%s %s):", name, date, time);
 	//_snprintf(buf, 8192, "[BDAServer](%lu - %s %s): ", GetCurrentThreadId(),date,time);
 	va_list arglist;
 	va_start(arglist, pszFormat);
@@ -37,17 +42,22 @@ void CUtils::DebugMsg(const char* pszFormat, ...)
 
 void CUtils::DebugShow(const char* pszFormat, ...)
 {
+
 #ifdef _DEBUG
 	char buf[8192] = {0};
-	char date[50]  = {0};
-	char time[50]  = {0};
+	char date[MAX_PATH]  = {0};
+	char time[MAX_PATH]  = {0};
+	char name[MAX_PATH]  = {0};
+	CStringA strPath = GetAppDir();
+	CStringA strName = GetAppName();
+	strncpy(name,strName,MAX_PATH);
 
 	SYSTEMTIME st;
 	GetLocalTime(&st);
 	GetDateFormatA(LOCALE_SYSTEM_DEFAULT, 0, &st, "yyyy'-'MM'-'dd", date, sizeof(date));
 	GetTimeFormatA(LOCALE_SYSTEM_DEFAULT, 0, &st, "HH':'mm':'ss", time, sizeof(time));
 
-	_snprintf(buf, 8192, "[Ango](%s %s):", date, time);
+	_snprintf(buf, 8192, "[%s](%s %s):", name, date, time);
 	//_snprintf(buf, 8192, "[BDAServer](%lu - %s %s): ", GetCurrentThreadId(),date,time);
 	va_list arglist;
 	va_start(arglist, pszFormat);
@@ -56,14 +66,17 @@ void CUtils::DebugShow(const char* pszFormat, ...)
 	_snprintf(buf, 8192, "%s\n", buf);
 	OutputDebugStringA(buf);
 
-	FILE *fp = fopen("c:\\Ango.txt", "a+");
-	if (fp != NULL)
+	FILE *fp = fopen(strPath+"\\AngoTime.txt", "a+");
+	if (fp == NULL)
 	{
-		fprintf(fp, buf);
-		fclose(fp);
+		DebugMsg(CStringA(GetLastErrorStr()));
+		return;
 	}
-#endif
 
+	fprintf(fp, buf);
+	fclose(fp);
+#endif
+	
 }
 
 int CUtils::TranDayweekToInt(int nDayofWeek, int & nDayValue)
@@ -131,7 +144,7 @@ BOOL CUtils::FileExist(LPCTSTR   pszFileName)
 
 CString CUtils::GetAppPath()
 {
-	TCHAR szLocalPath[MAX_PATH];
+	TCHAR szLocalPath[MAX_PATH] = {0};
 	GetModuleFileName(0, szLocalPath, MAX_PATH);
 
 	TCHAR szFullPath[4096] = { 0 };
@@ -143,7 +156,7 @@ CString CUtils::GetAppPath()
 
 CString CUtils::GetAppDir()
 {
-	TCHAR szLocalPath[MAX_PATH];
+	TCHAR szLocalPath[MAX_PATH] = {0};
 	GetModuleFileName(0, szLocalPath, MAX_PATH);
 
 	TCHAR szFullPath[4096] = { 0 };
@@ -152,6 +165,27 @@ CString CUtils::GetAppDir()
 	CString strTemp = szFullPath;
 	strTemp = strTemp.Left(strTemp.ReverseFind('\\'));
 	return strTemp;
+}
+
+CString CUtils::GetAppName()
+{
+	TCHAR szLocalPath[MAX_PATH] = { 0 };
+	GetModuleFileName(0, szLocalPath, MAX_PATH);
+
+	CString strTemp = szLocalPath;
+	int nPos = strTemp.ReverseFind('\\') + 1;
+	int nLen = strTemp.GetLength();
+	strTemp = strTemp.Right(nLen - nPos);
+	return strTemp;
+
+// 	TCHAR szLocalPath[MAX_PATH] = { 0 };
+// 	GetModuleFileName(0, szLocalPath, MAX_PATH);
+// 
+// 	CString strTemp = szLocalPath;
+// 	int nPos = strTemp.ReverseFind('\\') + 1;
+// 	int nLen = strTemp.GetLength();
+// 	strTemp = strTemp.Right(nLen - nPos);
+// 	return strTemp;
 }
 
 BOOL CUtils::IsFileType(LPCTSTR lpsz, LPCTSTR lpszType)
@@ -365,6 +399,191 @@ BOOL CUtils::IsWow64()
 
 	return bRet;
 }
+
+//BOOL bOnly  是否只要单例进程
+BOOL CUtils::ShellExecute(HWND hwnd, LPCTSTR lpOperation, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd, BOOL bOnly/*=FALSE*/)
+{
+	BOOL bRet = FALSE;
+	CString strMsg;
+	CString strOpration = lpOperation;
+	do 
+	{
+		if ( bOnly  && strOpration=="open" && lpFile!=NULL )
+		{
+			CString strTarget = FileNameFromPath(lpFile);
+			HANDLE hToken = NULL;
+			DWORD dwSessionId = 0;
+			if (FindProcess(hToken, dwSessionId, strTarget))
+			{
+				bRet = TRUE;
+				strMsg = "外部程序" + strTarget + "已经在运行了";
+				DebugShow((CStringA)strMsg);
+				break;
+			}
+		}
+
+		HINSTANCE hInstance = ::ShellExecute(hwnd, lpOperation, lpFile, lpParameters, lpDirectory, nShowCmd);
+		if ((DWORD)hInstance <= 32)
+		{
+			strMsg = "执行ShellExecute失败，"+GetShellExuecuteMsg((DWORD)hInstance);
+			DebugShow((CStringA)strMsg);
+			break;
+		}
+
+
+		bRet = TRUE;
+	} while (FALSE);
+
+
+	return bRet;
+}
+
+BOOL CUtils::FindProcess(HANDLE& hToken, DWORD& dwSessionId, CString strName)
+{
+
+	BOOL bIsFind = FALSE;
+	CString strExeFile;
+	//notice:only use in win2000/winxp/win2003
+	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+	if (!hSnapshot)
+	{
+		CUtils::DebugShow("Leave FindProcess::CreateToolhelp32Snapshot failed");
+		return FALSE;
+	}
+
+
+	// prepare to enumerate the processes....
+	PROCESSENTRY32 pe;
+
+	// remember to init the structure...
+	pe.dwSize = sizeof(PROCESSENTRY32);
+	BOOL retval = Process32First(hSnapshot, &pe);
+	while (retval)
+	{
+		strExeFile = pe.szExeFile;
+		//if (!_stricmp(pe.szExeFile,/*"winlogon.exe"*/  "explorer.exe"  /*"bdhidspred.exe"*/))
+		if (strExeFile == strName)
+		{
+			CUtils::DebugShow("IN CBDHIDSCoreService::FindDestopProc=> Process id:%ld  name:%s\n", pe.th32ProcessID, pe.szExeFile);
+			dwSessionId = 0L;
+
+			ProcessIdToSessionId(pe.th32ProcessID, &dwSessionId);
+
+			HANDLE hCurToken = NULL;
+			LUID DebugNameValue;
+			TOKEN_PRIVILEGES Privileges;
+			DWORD dwRet;
+			OpenProcessToken(GetCurrentProcess(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hCurToken);
+			LookupPrivilegeValueA(NULL, "SeDebugPrivilege", &DebugNameValue);
+			Privileges.PrivilegeCount = 1;
+			Privileges.Privileges[0].Luid = DebugNameValue;
+			Privileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+			AdjustTokenPrivileges(hCurToken, FALSE, &Privileges, sizeof(Privileges), NULL, &dwRet);
+			CloseHandle(hCurToken);
+
+
+			HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION,
+				FALSE, pe.th32ProcessID);
+			BOOL bRet = OpenProcessToken(hProcess, TOKEN_ALL_ACCESS, &hToken);
+
+			//hToken=GetToken(pe.th32ProcessID);
+			bIsFind = TRUE;
+			break;
+		}
+		retval = Process32Next(hSnapshot, &pe);
+	}
+
+	// since we are done, remember to close the snapshot handle
+	CloseHandle(hSnapshot);
+	return bIsFind;
+}
+
+
+CString CUtils::GetShellExuecuteMsg(DWORD dwError)
+{
+	CString strMsg;
+	do 
+	{
+		if (dwError > 32)
+		{
+			strMsg = "成功执行";
+			break;
+		}
+
+		switch (dwError)
+		{
+		case 0:
+		{
+			strMsg = "{内存不足}";
+			break;
+		}
+		case ERROR_FILE_NOT_FOUND:
+		{
+			strMsg = "{文件名错误}";
+			break;
+		}
+		case ERROR_PATH_NOT_FOUND:
+		{
+			strMsg = "{路径名错误}";
+			break;
+		}
+		case SE_ERR_ACCESSDENIED:
+		{
+			strMsg = "{权限不足，无法访问文件}";
+			break;
+		}
+		case SE_ERR_DLLNOTFOUND:
+		{
+			strMsg = "{DLL 文件无效}";
+			break;
+		}
+		case ERROR_BAD_FORMAT:
+		{
+			strMsg = "{EXE 文件无效}";
+			break;
+		}
+		case SE_ERR_SHARE:
+		{
+			strMsg = "{发生共享错误}";
+			break;
+		}
+		case SE_ERR_ASSOCINCOMPLETE:
+		{
+			strMsg = "{文件名不完全或无效}";
+			break;
+		}
+		case SE_ERR_DDETIMEOUT:
+		{
+			strMsg = "{超时}";
+			break;
+		}
+		case SE_ERR_DDEFAIL:
+		{
+			strMsg = "{DDE 事务失败}";
+			break;
+		}
+		case SE_ERR_DDEBUSY:
+		{
+			strMsg = " {正在处理其他 DDE 事务而不能完成该 DDE 事务}";
+			break;
+		}
+		case SE_ERR_NOASSOC:
+		{
+			strMsg = "{没有相关联的应用程序}";
+			break;
+		}
+		default:
+			strMsg = "{其它错误}";
+			break;
+		}
+
+
+	} while (FALSE);
+
+	return strMsg;
+
+}
+
 
 BOOL CUtils::IsRunAsAdmin()
 {

@@ -26,6 +26,7 @@ public:
 
 	static CString		GetAppPath();								//获取应用程序全路径包括文件名
 	static CString 		GetAppDir();								//获得应用程序的当前目录路径
+	static CString		GetAppName();
 	static CString 		FileNameFromPath(CString strPath);			//从文件路径提取文件名称
 
 	static BOOL    		FileExist(LPCTSTR   pszFileName);			//检查文件是否存在
@@ -42,9 +43,17 @@ public:
 	static BOOL			IsWow64();						//判断是否64位系统
 	static BOOL			SetRegAutoStart(BOOL bEnable, CString strKeyName, CString strKeyValue);
 
+	static BOOL			ShellExecute(HWND hwnd, LPCTSTR lpOperation, LPCTSTR lpFile, LPCTSTR lpParameters, LPCTSTR lpDirectory, INT nShowCmd, BOOL bOnly=FALSE);
+	static BOOL			FindProcess(HANDLE& hToken,DWORD& dwSessionId, CString strName);		//查找进程
+	static CString		GetShellExuecuteMsg(DWORD dwError);		//获取ShellExecute错误信息
+
+
 	static BOOL			IsRunAsAdmin();					//是否以管理员权限运行中
 	static BOOL			IsInAdminGroup(BOOL bCheckAdminMode = FALSE);//如果bCheckAdminMode是TRUE， 则除了检测Admin账号外，还检测是真的运行在Admin环境， 否则只是检测Admin账号。
 	static BOOL			EnablePrivilege(HANDLE hToken, LPCTSTR lpszPrivilegeName);		//按项提升权限
 	static BOOL			UpPrivilege();
+
+
+
 };
 

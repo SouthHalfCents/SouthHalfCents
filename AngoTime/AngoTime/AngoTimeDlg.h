@@ -111,6 +111,7 @@ public:
 	
 	
 	afx_msg void OnMenuMagicTime();
+	afx_msg void OnMenuLantern();
 };
 
 

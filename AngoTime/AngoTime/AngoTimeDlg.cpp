@@ -27,6 +27,8 @@ CAngoTimeDlg::CAngoTimeDlg(CWnd* pParent /*=NULL*/)
 	, m_Point_Start(0)
 	, m_Point_End(0)
 {
+
+	CUtils::DebugShow("启动程序");
 	m_point_lastHour	=	0;
 	m_point_lastMin		=	0;
 	m_point_lastSecL	=	0;
@@ -41,11 +43,13 @@ CAngoTimeDlg::CAngoTimeDlg(CWnd* pParent /*=NULL*/)
 
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_popMenu.LoadMenu(IDR_MENU_RBTN);	
+
+	
 }
 
 CAngoTimeDlg::~CAngoTimeDlg()
 {
-
+	CUtils::DebugShow("退出程序");
 }
 
 void CAngoTimeDlg::DoDataExchange(CDataExchange* pDX)
@@ -82,6 +86,7 @@ BEGIN_MESSAGE_MAP(CAngoTimeDlg, CDialogEx)
 	ON_COMMAND(ID_CFG_OTHER, &CAngoTimeDlg::OnCfgOther)
 	ON_COMMAND(ID_MENU_WEATHER, &CAngoTimeDlg::OnMenuWeather)
 	ON_COMMAND(ID_MENU_MAGIC_TIME, &CAngoTimeDlg::OnMenuMagicTime)
+	ON_COMMAND(ID_MENU_LANTERN, &CAngoTimeDlg::OnMenuLantern)
 END_MESSAGE_MAP()
 
 
@@ -446,15 +451,8 @@ void CAngoTimeDlg::OnMenuAngo()
 	CString strPath = CUtils::GetAppDir();
 	strPath += _T("\\Ango.exe");
 	//这个API会提示是否以管理员身份启动
-	ShellExecute(NULL, _T("open"), strPath, NULL, NULL, SW_SHOWNORMAL);
+	CUtils::ShellExecute(NULL, _T("open"), strPath, NULL, NULL, SW_SHOWNORMAL,TRUE);
 
-// 	PROCESS_INFORMATION pi;
-// 	STARTUPINFO si;
-// 	memset(&si, 0, sizeof(si));
-// 	si.cb = sizeof(si);
-// 	si.wShowWindow = SW_SHOW;
-// 	si.dwFlags = STARTF_USESHOWWINDOW;
-// 	BOOL fRet = CreateProcess(L"Ango.exe", NULL, NULL, FALSE, NULL, NULL, NULL, NULL, &si, &pi);
 }
 
 void CAngoTimeDlg::OnMenuExit()
@@ -683,15 +681,29 @@ void CAngoTimeDlg::OnMenuWeather()
 	CString strPath = CUtils::GetAppDir();
 	strPath += _T("\\AngoWeather.exe");
 	//这个API会提示是否以管理员身份启动
-	ShellExecute(NULL, _T("open"), strPath, NULL, NULL, SW_SHOWNORMAL);
+	
+	CUtils::ShellExecute(NULL, _T("open"), strPath, NULL, NULL, SW_SHOWNORMAL,TRUE);
 }
 
 //软媒时间
 void CAngoTimeDlg::OnMenuMagicTime()
 {
-	
 	CString strPath = CUtils::GetAppDir();
 	strPath += _T("\\Tools\\mytime\\mytime.exe");
 	//这个API会提示是否以管理员身份启动
-	ShellExecute(NULL, _T("open"), strPath, NULL, NULL, SW_SHOWNORMAL);
+
+	CUtils::ShellExecute(NULL, _T("open"), strPath, NULL, NULL, SW_SHOWNORMAL,TRUE);
+}
+
+//启动蓝灯翻墙
+void CAngoTimeDlg::OnMenuLantern()
+{
+	TCHAR szUser[MAX_PATH] = {0};
+	DWORD nlen = MAX_PATH;
+	GetUserName(szUser, &nlen);
+
+	TCHAR szBuf[8192] = {0};
+	_sntprintf(szBuf, 8192, _T("C:\\Users\\%s\\AppData\\Roaming\\Lantern\\lantern.exe"), szUser);
+
+	CUtils::ShellExecute(NULL, _T("open"), szBuf, NULL, NULL, SW_SHOWNORMAL,TRUE);
 }
