@@ -72,5 +72,5 @@ public:
 	HANDLE						m_hOnlyMutex;
 
 	afx_msg void				OnAngoTime();			//‘À––AngoTime
-	afx_msg void				OnToolMytime();
+	
 };

@@ -3,6 +3,7 @@
 
 #include <tlhelp32.h>
 
+
 CUtils::CUtils()
 {
 }
@@ -66,7 +67,10 @@ void CUtils::DebugShow(const char* pszFormat, ...)
 	_snprintf(buf, 8192, "%s\n", buf);
 	OutputDebugStringA(buf);
 
-	FILE *fp = fopen(strPath+"\\AngoTime.txt", "a+");
+	strPath += "\\" + strName;
+	strPath = strPath.Left(strPath.ReverseFind('.'));
+	strPath += ".txt";
+	FILE *fp = fopen(strPath, "a+");
 	if (fp == NULL)
 	{
 		DebugMsg(CStringA(GetLastErrorStr()));
@@ -269,7 +273,9 @@ std::string	CUtils::UTF8_GBK(char* strMsg)
 CString CUtils::GetLastErrorStr()
 {
 	DWORD dwError = GetLastError();
-	CString strMsg = GetStrFromError(dwError);
+	CString strMsg;
+	strMsg.Format(_T("%d:"), dwError);
+	strMsg += GetStrFromError(dwError);
 	return strMsg;
 }
 
@@ -514,66 +520,66 @@ CString CUtils::GetShellExuecuteMsg(DWORD dwError)
 		{
 		case 0:
 		{
-			strMsg = "{内存不足}";
+			strMsg = "{0:内存不足}";
 			break;
 		}
 		case ERROR_FILE_NOT_FOUND:
 		{
-			strMsg = "{文件名错误}";
+			strMsg = "{2:文件名错误}";
 			break;
 		}
 		case ERROR_PATH_NOT_FOUND:
 		{
-			strMsg = "{路径名错误}";
+			strMsg = "{3:路径名错误}";
 			break;
 		}
 		case SE_ERR_ACCESSDENIED:
 		{
-			strMsg = "{权限不足，无法访问文件}";
-			break;
-		}
-		case SE_ERR_DLLNOTFOUND:
-		{
-			strMsg = "{DLL 文件无效}";
+			strMsg = "{5:权限不足，无法访问文件}";
 			break;
 		}
 		case ERROR_BAD_FORMAT:
 		{
-			strMsg = "{EXE 文件无效}";
+			strMsg = "{11:EXE 文件无效}";
 			break;
 		}
 		case SE_ERR_SHARE:
 		{
-			strMsg = "{发生共享错误}";
+			strMsg = "{26:发生共享错误}";
 			break;
 		}
 		case SE_ERR_ASSOCINCOMPLETE:
 		{
-			strMsg = "{文件名不完全或无效}";
+			strMsg = "{27:文件名不完全或无效}";
 			break;
 		}
 		case SE_ERR_DDETIMEOUT:
 		{
-			strMsg = "{超时}";
+			strMsg = "{28:超时}";
 			break;
 		}
 		case SE_ERR_DDEFAIL:
 		{
-			strMsg = "{DDE 事务失败}";
+			strMsg = "{29:DDE 事务失败}";
 			break;
 		}
 		case SE_ERR_DDEBUSY:
 		{
-			strMsg = " {正在处理其他 DDE 事务而不能完成该 DDE 事务}";
+			strMsg = " {30:正在处理其他 DDE 事务而不能完成该 DDE 事务}";
 			break;
 		}
 		case SE_ERR_NOASSOC:
 		{
-			strMsg = "{没有相关联的应用程序}";
+			strMsg = "{31:没有相关联的应用程序}";
+			break;
+		}
+		case SE_ERR_DLLNOTFOUND:
+		{
+			strMsg = "{32:DLL 文件无效}";
 			break;
 		}
 		default:
-			strMsg = "{其它错误}";
+			strMsg.Format(_T("{%d:其它错误}"),dwError);
 			break;
 		}
 

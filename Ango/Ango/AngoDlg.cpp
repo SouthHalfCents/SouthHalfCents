@@ -53,7 +53,6 @@ BEGIN_MESSAGE_MAP(CAngoDlg, CDialogEx)
 	ON_COMMAND(ID_MENU_UP, &CAngoDlg::OnMenuUp)
 	ON_COMMAND(ID_MENU_DOWN, &CAngoDlg::OnMenuDown)
 	ON_COMMAND(ID_ANGO_TIME, &CAngoDlg::OnAngoTime)
-	ON_COMMAND(ID_TOOL_MYTIME, &CAngoDlg::OnToolMytime)
 END_MESSAGE_MAP()
 
 
@@ -119,7 +118,7 @@ BOOL CAngoDlg::OnInitDialog()
 
 	OnMenuShow();
 	OnMenuUp();
-	RegAutoStart();
+	//RegAutoStart();
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -454,18 +453,6 @@ void CAngoDlg::OnAngoTime()
 
 	CString strPath = CUtils::GetAppDir();
 	strPath += _T("\\AngoTime.exe");
-	//这个API会提示是否以管理员身份启动
-	ShellExecute(NULL, _T("open"), strPath, NULL, NULL, SW_SHOWNORMAL);
-
-}
-
-
-void CAngoDlg::OnToolMytime()
-{
-	BOOL bRet = CUtils::IsRunAsAdmin();
-
-	CString strPath = CUtils::GetAppDir();
-	strPath += _T("\\Ango.exe");
 
 	USES_CONVERSION;
 #ifdef  UNICODE                     
@@ -474,4 +461,12 @@ void CAngoDlg::OnToolMytime()
 	WinExec(strPath, SW_SHOW);
 #endif   
 
+	return;
+
+	//CString strPath = CUtils::GetAppDir();
+	//strPath += _T("\\AngoTime.exe");
+	//这个API会提示是否以管理员身份启动
+	ShellExecute(NULL, _T("open"), strPath, NULL, NULL, SW_SHOWNORMAL);
+
 }
+

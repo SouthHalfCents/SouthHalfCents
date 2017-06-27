@@ -832,6 +832,7 @@ BOOL CBDHIDSService::Win7_CreateDestopProcess(char *szPs)
 
 	//得到当前活动的会话ID，即登录用户的会话ID  
 	dwSessionId = WTSGetActiveConsoleSessionId();  
+	CUtils::DebugShow("sessionid: %d",dwSessionId);
 	do   
 	{  
 		WTSQueryUserToken(dwSessionId,&hUserToken);//读取当前登录用户的令牌信息  
