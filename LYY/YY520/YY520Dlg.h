@@ -72,5 +72,6 @@ public:
 	HANDLE						m_hOnlyMutex;
 
 	afx_msg void				OnAngoTime();			//运行AngoTime
+	afx_msg void				OnSnow();				///> 雪花启动、停止
 	
 };

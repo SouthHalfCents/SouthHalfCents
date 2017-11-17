@@ -2,7 +2,7 @@
 #include "Utils.h"
 
 #include <tlhelp32.h>
-
+#pragma warning(disable:4996)
 
 CUtils::CUtils()
 {

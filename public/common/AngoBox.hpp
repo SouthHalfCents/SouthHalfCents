@@ -129,7 +129,7 @@ public:
 		}
 		else
 		{
-			return -1;
+			return MessageBoxA(NULL, straMsg, straTitle, nType);
 		}
 	}
 	//    _In_opt_ LPCWSTR lpText,_In_opt_ LPCWSTR lpCaption,
@@ -146,7 +146,7 @@ public:
 		}
 		else
 		{
-			return -1;
+			return MessageBoxW(NULL, strMsg, strTitle, nType);
 		}
 	}
 

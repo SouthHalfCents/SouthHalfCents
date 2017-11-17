@@ -53,6 +53,7 @@ BEGIN_MESSAGE_MAP(CYY520Dlg, CDialogEx)
 	ON_COMMAND(ID_MENU_UP, &CYY520Dlg::OnMenuUp)
 	ON_COMMAND(ID_MENU_DOWN, &CYY520Dlg::OnMenuDown)
 	ON_COMMAND(ID_ANGO_TIME, &CYY520Dlg::OnAngoTime)
+	ON_COMMAND(ID_MENU_SNOW, &CYY520Dlg::OnSnow)
 END_MESSAGE_MAP()
 
 
@@ -452,7 +453,7 @@ void CYY520Dlg::OnAngoTime()
 {
 
 	CString strPath = CUtils::GetAppDir();
-	strPath += _T("\\AngoTime.exe");
+	strPath += _T("\\YY520Time.exe");
 
 	USES_CONVERSION;
 #ifdef  UNICODE                     
@@ -466,7 +467,21 @@ void CYY520Dlg::OnAngoTime()
 	//CString strPath = CUtils::GetAppDir();
 	//strPath += _T("\\AngoTime.exe");
 	//这个API会提示是否以管理员身份启动
-	ShellExecute(NULL, _T("open"), strPath, NULL, NULL, SW_SHOWNORMAL);
+	//ShellExecute(NULL, _T("open"), strPath, NULL, NULL, SW_SHOWNORMAL);
 
 }
 
+void CYY520Dlg::OnSnow()
+{
+	CString strPath = CUtils::GetAppDir();
+	strPath += _T("\\Snow.exe");
+
+	USES_CONVERSION;
+#ifdef  UNICODE                     
+	WinExec(T2A(strPath), SW_SHOW);
+#else           
+	WinExec(strPath, SW_SHOW);
+#endif   
+
+
+}
