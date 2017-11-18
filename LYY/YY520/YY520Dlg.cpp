@@ -176,7 +176,7 @@ int CYY520Dlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	//通知区域图标，托盘图标
 	m_trayIcon.m_pCwnd		=	this;
 	m_trayIcon.m_dwIconId	=	IDR_MAINFRAME;
-	m_trayIcon.m_strTips	=	"╮(￣▽￣)╭ ";
+	m_trayIcon.m_strTips	=	"爱你（づ￣3￣）づ";
 	m_trayIcon.InitTrayIcon();
 
 

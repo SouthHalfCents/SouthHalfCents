@@ -190,7 +190,7 @@ int CYY520TimeDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	//通知区域图标，托盘图标
 	m_trayIcon.m_pCwnd = this;
 	m_trayIcon.m_dwIconId = IDR_MAINFRAME;
-	m_trayIcon.m_strTips = "╮(￣▽￣)╭ ";
+	m_trayIcon.m_strTips = "爱你o(*≧▽≦)ツ";
 	m_trayIcon.InitTrayIcon();
 	return 0;
 }
