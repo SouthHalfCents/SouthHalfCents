@@ -60,7 +60,6 @@ END_MESSAGE_MAP()
 void CAngoDlg::OnClose()
 {
 	//StopWork();
-
 	if (m_hOnlyMutex)
 	{
 		CloseHandle(m_hOnlyMutex);
@@ -170,7 +169,6 @@ int CAngoDlg::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if (CDialogEx::OnCreate(lpCreateStruct) == -1)
 		return -1;
-
 
 	//通知区域图标，托盘图标
 	m_trayIcon.m_pCwnd		=	this;
